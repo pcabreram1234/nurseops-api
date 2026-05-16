@@ -141,3 +141,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+PORT=
+DATABASE_URL=
+REDIS_HOST=
+REDIS_PORT=
+JWT_SECRET=
+JWT_REFRESH_SECRET=
