@@ -101,3 +101,123 @@ src/
   common/
   infrastructure/
   config/
+````
+
+---
+
+# Environment Variables
+
+```env
+PORT=
+DATABASE_URL=
+REDIS_HOST=
+REDIS_PORT=
+JWT_SECRET=
+JWT_REFRESH_SECRET=
+```
+
+---
+
+# Installation
+
+## Clone repository
+
+```bash
+git clone https://github.com/your-user/nurseops-api.git
+```
+
+## Install dependencies
+
+```bash
+npm install
+```
+
+## Run development server
+
+```bash
+npm run start:dev
+```
+
+---
+
+# Docker
+
+```bash
+docker-compose up -d
+```
+
+---
+
+# API Documentation
+
+Swagger documentation:
+
+```bash
+/api/docs
+```
+
+---
+
+# Long-Term Vision
+
+NurseOps aims to become an intelligent operational platform for healthcare workforce management focused on:
+
+* operational efficiency
+* workload balance
+* staffing intelligence
+* fatigue reduction
+* real-time hospital operations
+
+---
+
+# License
+
+Private
+
+````
+
+---
+
+# REPOSITORIOS QUE TE RECOMIENDO DESDE YA
+
+---
+
+# Backend
+
+```text id="repo5"
+nurseops-api
+````
+
+---
+
+# Frontend Web
+
+```text id="repo6"
+nurseops-web
+```
+
+---
+
+# Mobile
+
+```text id="repo7"
+nurseops-mobile
+```
+
+---
+
+# Infrastructure (futuro)
+
+```text id="repo8"
+nurseops-infra
+```
+
+---
+
+# IA / Optimization future
+
+```text id="repo9"
+nurseops-optimizer
+```
+
+---
