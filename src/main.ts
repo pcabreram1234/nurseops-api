@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { ResponseInterceptor } from "@common/interceptors/response.interceptor";
 import { AuditInterceptor } from "@common/interceptors/audit.interceptor";
 import { PrismaService } from "@infra/database/prisma.service";
+import { GlobalExceptionFilter } from "@common/filters/global-exception.filter";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -65,6 +66,14 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   app.useGlobalInterceptors(new AuditInterceptor(app.get(PrismaService)));
+
+  /*
+  |--------------------------------------------------------------------------
+  | Global Exception Filter
+  |--------------------------------------------------------------------------
+  */
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   /*
   |--------------------------------------------------------------------------
