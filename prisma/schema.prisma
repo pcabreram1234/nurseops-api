@@ -792,7 +792,7 @@ model RolePermissions {
 
 model Permission {
   id              String            @id @default(uuid())
-  code            String
+  name            String            @unique
   description     String
   rolePermissions RolePermissions[]
 

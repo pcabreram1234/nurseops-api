@@ -26,7 +26,7 @@ CREATE TYPE "NurseRestrictionDescriptions" AS ENUM ('NO_PUEDE_HACER_AMANECIDAS',
 CREATE TYPE "EducationLevelTypes" AS ENUM ('ASSISTANT', 'TECHNICIAN', 'BACHELOR_DEGREE', 'SPECIALIZATION', 'MASTER_DEGREE', 'DOCTORATE');
 
 -- CreateEnum
-CREATE TYPE "NurseStatusType" AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE "NurseStatusType" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
 
 -- CreateEnum
 CREATE TYPE "ContracTypeList" AS ENUM ('PERMANENT', 'TEMPORAL', 'PER_DIEM', 'PART_TIME');
@@ -410,8 +410,9 @@ CREATE TABLE "users" (
     "departmentId" TEXT,
     "rolesId" TEXT,
     "status" "NurseStatusType" NOT NULL,
-    "refreshToken" TEXT NOT NULL,
-    "lastLoginAt" TIMESTAMP(3) NOT NULL,
+    "refreshToken" TEXT NOT NULL DEFAULT '',
+    "lastLoginAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -461,7 +462,7 @@ CREATE TABLE "role_permissions" (
 -- CreateTable
 CREATE TABLE "permissions" (
     "id" TEXT NOT NULL,
-    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
 
     CONSTRAINT "permissions_pkey" PRIMARY KEY ("id")
@@ -665,6 +666,9 @@ CREATE UNIQUE INDEX "audit_logs_userId_key" ON "audit_logs"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "modules_code_key" ON "modules"("code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "permissions_name_key" ON "permissions"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "nurse_preferences_userId_key" ON "nurse_preferences"("userId");

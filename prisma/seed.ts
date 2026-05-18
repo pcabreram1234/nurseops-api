@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PERMISSIONS } from "../src/modules/permissions/constants/permissions.constants";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -172,8 +173,57 @@ async function main() {
     },
   });
 
-  console.log("🌱 ¡Proceso de Seed completado con éxito!");
+  /*
+  |--------------------------------------------------------------------------
+  | EJEMPLO: CREACIÓN DE ROLES POR DEFECTO PARA UNA ORGANIZACIÓN DE PRUEBA
+  |--------------------------------------------------------------------------
+  */
+  // Si tienes una organización base, aquí puedes mapear los arreglos automáticos de permisos
+  // para los roles de 'SUPERVISOR' y 'ENFERMERO' usando tx.rolePermissions.createMany
+
+  console.log("🌱 Iniciando la siembra de Permisos Base...");
+
+  // 1. Aplanar el objeto de constantes para obtener una lista limpia de strings (Códigos)
+  const permissionCodes: string[] = [];
+
+  for (const category of Object.values(PERMISSIONS)) {
+    for (const code of Object.values(category)) {
+      permissionCodes.push(code);
+    }
+  }
+
+  // 2. Insertar o actualizar todos los permisos usando el campo 'code' como clave de búsqueda único
+  const upsertPermissionsPromises = permissionCodes.map((code) => {
+    // Generar una descripción amigable automatizada basada en el código
+    const description = `Permite realizar la acción de ${code.toLowerCase().replace(/_/g, " ")}`;
+
+    return prisma.permission.upsert({
+      // 🔒 Buscamos por el campo único 'code'.
+      // Si existe, no creará un duplicado ni alterará el UUID ya existente.
+      where: {
+        name: code,
+      },
+      // Si el permiso ya existe, podemos actualizar la descripción (útil si la cambias en el futuro)
+      update: {
+        description: description,
+      },
+      // Si no existe, Prisma autogenerará el 'id' (UUID) gracias al @default(uuid()) de tu schema
+      create: {
+        name: code,
+        description: description,
+      },
+    });
+  });
+
+  // Ejecutamos de forma paralela y esperamos a que todas terminen
+  await Promise.all(upsertPermissionsPromises);
+
+  console.log(
+    `✅ ${permissionCodes.length} Permisos sincronizados con éxito en la Base de Datos.`,
+  );
 }
+
+console.log("🌱 ¡Proceso de Seed completado con éxito!");
 
 main()
   .catch((e) => {
