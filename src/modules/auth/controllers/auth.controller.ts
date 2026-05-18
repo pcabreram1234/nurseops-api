@@ -11,6 +11,8 @@ import { LogOutDto } from "../dto/logout.dto";
 import { ChangePasswordDto } from "../dto/changePassword.dto";
 
 import { JwtAuthGuard } from "../guards/jwt-auth.guard";
+import { PermissionsGuard } from "../guards/permissions.guard";
+import { Permissions } from "../decorators/permissions.decorator";
 
 @Controller({
   path: "auth",
@@ -26,6 +28,8 @@ export class AuthController {
   }
 
   @Post("register")
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions("CREATE_USER")
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
@@ -37,7 +41,8 @@ export class AuthController {
   }
 
   @Patch("change-password")
-  @UseGuards(JwtAuthGuard) // 🔒 Protegido: Solo el usuario dueño de la cuenta puede hacer esto
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions("CHANGE_PASSWORD")
   async changePassword(
     @Req() req: any, // Usamos 'any' o una interfaz extendida para acceder a req.user.id de forma limpia
     @Body() changePasswordDto: ChangePasswordDto,

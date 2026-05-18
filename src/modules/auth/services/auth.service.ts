@@ -26,21 +26,57 @@ export class AuthService {
   | LOGIN
   |--------------------------------------------------------------------------
   */
-
   async login(loginDto: LoginDto) {
+    // 1. Validamos las credenciales del usuario
     const user = await this.validateUser(loginDto.email, loginDto.password);
 
-    const tokens = await this.generateTokens(user);
+    // 2. Buscamos al usuario en la BD incluyendo su rol y la tabla intermedia de permisos
+    const userWithPermissions = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        roles: {
+          // Asumiendo que tu relación en el modelo User se llama 'roles' o 'role'
+          include: {
+            rolePermissions: {
+              include: {
+                permissions: true, // Traemos la entidad final del permiso para sacar el campo 'code'
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // 3. Extraemos y aplanamos los códigos de los permisos en un arreglo de strings planos
+    // Resultado esperado: ['CREATE_USER', 'UPDATE_SCHEDULE', ...]
+    const permissions =
+      userWithPermissions?.roles?.rolePermissions?.map(
+        (rp) => rp.permissions.name,
+      ) || [];
+
+    // 4. Modificamos la generación de tokens para inyectar el rol y los permisos en el payload del JWT
+    const tokens = await this.generateTokens({
+      id: user.id,
+      email: user.email,
+      role: user.roles?.name, // "SUPER", "ADMIN", etc.
+      organizationId: user.organizationId,
+      permissions, // 👈 ¡CLAVE! Esto es lo que leerá tu PermissionsGuard
+    });
 
     await this.updateLastLogin(user.id);
 
     return {
       ...tokens,
-
-      user,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.firstName,
+        role: user.roles?.name,
+        organizationId: user.organizationId,
+        permissions, // Lo devolvemos también para que el Frontend (React/Angular) sepa qué mostrar
+      },
     };
   }
-
   /*
   |--------------------------------------------------------------------------
   | VALIDATE USER
