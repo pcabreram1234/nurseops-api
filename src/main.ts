@@ -3,7 +3,8 @@ import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import helmet from "helmet";
 import { ResponseInterceptor } from "@common/interceptors/response.interceptor";
-
+import { AuditInterceptor } from "@common/interceptors/audit.interceptor";
+import { PrismaService } from "@infra/database/prisma.service";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -62,6 +63,8 @@ async function bootstrap() {
   */
 
   app.useGlobalInterceptors(new ResponseInterceptor());
+
+  app.useGlobalInterceptors(new AuditInterceptor(app.get(PrismaService)));
 
   /*
   |--------------------------------------------------------------------------

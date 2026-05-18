@@ -70,6 +70,7 @@ model Organization {
   integrations             Integration[]
   notifications            Notification[]
   schedules                Schedule[]
+  auditLogs                AuditLog[]
 
   @@map("organizations")
 }
@@ -714,7 +715,7 @@ model User {
   rolesId          String?
   leaves           Leave[]           @relation("UserLeaves")
   nursePreferences NursePreferences?
-  auditLog         AuditLog?
+  auditLog         AuditLog[]
   notification     Notification?
   nurses           Nurse[]
   absences         Absence[]
@@ -727,20 +728,37 @@ model User {
   processedApprovals   ShiftChangeApprovals[] @relation("ApprovalApprover")
   shiftChangeDocuments ShiftChangeDocument[]  @relation("UserDocuments")
   shiftChangeApprovals ShiftChangeApprovals[]
+  auditLogId           String
 
   @@map("users")
 }
 
 model AuditLog {
-  id        String              @id @default(uuid())
-  userId    String              @unique
-  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action    ActionAuditLogTypes
-  moduleId  String
-  module    Module              @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  old_value Json
-  new_value Json
-  createdAt DateTime            @default(now())
+  id String @id @default(uuid())
+
+  // 1. Relación con el Usuario (CORREGIDO: Eliminado el @unique)
+  userId String? // Puesto como opcional por si hay acciones del sistema o antes del login
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // 2. NUEVO: Relación con la Organización (Multi-tenancy)
+  // Permite al ADMIN de un hospital ver solo la auditoría de su propia clínica
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  action ActionAuditLogTypes
+
+  moduleId String
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  old_value Json @default("{}")
+  new_value Json @default("{}") // Añadido default para evitar nulos accidentales
+
+  // 3. NUEVOS: Campos de infraestructura y rastreo técnico
+  ipAddress String? // Para saber la IP del enfermero/admin
+  userAgent String? // Para identificar el navegador, app móvil o dispositivo
+  requestId String? // Excelente práctica: Permite agrupar múltiples logs creados en una misma petición HTTP
+
+  createdAt DateTime @default(now()) // Puedes quitar 'createdAt: new Date()' en tu TS, Prisma lo maneja solo
 
   @@map("audit_logs")
 }
