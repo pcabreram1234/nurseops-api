@@ -1,0 +1,8 @@
+allowBuilds:
+  '@nestjs/core': false
+  '@prisma/engines': false
+  '@scarf/scarf': false
+  bcrypt: set this to true or false
+  esbuild: false
+  msgpackr-extract: false
+  prisma: false

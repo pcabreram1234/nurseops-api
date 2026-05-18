@@ -1,0 +1,1074 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client-js"
+  moduleFormat = "cjs" // 👈 OBLIGATORIO en Prisma 7 para NestJS
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// CENTRALIZACIÓN Y CONFIGURACIÓN
+// ==========================================
+
+model SystemConfiguration {
+  id    String                  @id @default(uuid())
+  key   SystemConfigurationKeys
+  value String
+}
+
+enum SystemConfigurationKeys {
+  MAX_MONTHLY_HOURS
+  MIN_REST_HOURS
+  ALLOW_DOUBLE_SHIFT
+  DEFAULT_SHIFT_DURATION
+  ENABLE_BIRTHDAY_DAY_OFF
+  AUTO_APPROVE_SHIFT_CHANGES
+  MAX_CONSECUTIVE_NIGHTS
+}
+
+model FeatureFlag {
+  id           String      @id @default(uuid())
+  feature_name FeaturTypes
+  isActive     Boolean     @default(false)
+}
+
+enum FeaturTypes {
+  AUTO_SCHEDULING
+  SHIFT_SWAP_AUTOMATION
+  AI_FATIGUE_ANALYSIS
+  WHATSAPP_NOTIFICATIONS
+  EMERGENCY__AI
+  DARK_MODE
+  MULTI_BRANCH_SUPPORT
+}
+
+model Organization {
+  id                       String                     @id @default(uuid())
+  name                     String
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  code                     String
+  timezone                 String
+  country                  String
+  status                   String                     @default("A")
+  settings                 OrganizationSetting?
+  departments              Department[]
+  users                    User[]
+  shifts                   Shift[]
+  rules                    WorkRules[]
+  shiftTemplates           ShiftTemplate[]
+  branches                 Branch[]
+  roles                    Roles[]
+  ruleGroups               RuleGroup[]
+  monthlyDistributionRules MonthlyDistributionRules[]
+  integrations             Integration[]
+  notifications            Notification[]
+  schedules                Schedule[]
+
+  @@map("organizations")
+}
+
+model OrganizationSetting {
+  id                        String       @id @default(uuid())
+  organizationId            String       @unique
+  organization              Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  birthday_free_day_enabled Boolean
+  max_monthly_hours         Int          @default(160)
+  require_shift_approval    Boolean      @default(false)
+  auto_balance_nigths       Boolean
+  allow_cross_departament   Boolean
+  allor_overtime            Boolean
+
+  // ➔ CAMPOS FUSIONADOS DE HOUR_LIMITS
+
+  max_weekly_hours Int @default(44)
+  overtime_limit   Int @default(20)
+
+  // ➔ CAMPOS FUSIONADOS DE NIGHT_SHIFT_LIMITS
+  max_nights             Int @default(10)
+  max_consecutive_nights Int @default(3)
+
+  @@map("organization_settings")
+}
+
+model Department {
+  id                       String                     @id @default(uuid())
+  name                     String
+  organizationId           String
+  organization             Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId                 String
+  branch                   Branch                     @relation(fields: [branchId], references: [id])
+  type                     String
+  minimum_staff            Int
+  critical_level           String
+  users                    User[]
+  shifts                   Shift[]
+  shiftTemplates           ShiftTemplate[]
+  monthlyDistributionRules MonthlyDistributionRules[]
+  schedules                Schedule[]
+  departmentSpecialities   DepartmentSpeciality[]
+  departmentConfigurations DepartmentConfiguration[]
+  operationalAlerts        OperationalAlert[]
+  nurses                   Nurse[]
+  emergencyCoverages       EmergencyCoverages[]
+
+  @@map("departments")
+}
+
+model DepartmentSpeciality {
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  specialityId String
+  speciality   Speciality @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+
+  @@id([departmentId, specialityId])
+  @@map("department_specialties")
+}
+
+model DepartmentConfiguration {
+  id                      String     @id @default(uuid())
+  departmentId            String
+  department              Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  max_nigths              Int
+  minimum_staff_per_shift Int
+  allow_externeal_support Boolean
+  allow_double_shift      Boolean
+
+  @@map("department_configurations")
+}
+
+model OperationalAlert {
+  id           String                 @id @default(uuid())
+  departmentId String
+  department   Department             @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  alertType    OperationalAlertyTypes
+  severity     PriorityTypes
+  status       OperationalAlertStatus @default(IN_PROGRESS)
+
+  @@map("operational_alerts")
+}
+
+enum OperationalAlertStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  IGNORED
+  ESCALATED
+}
+
+enum OperationalAlertyTypes {
+  STAFF_SHORTAGE
+  OVERTIME_RISK
+  FATIGUE_RISK
+  RULE_VIOLATION
+  NO_NIGHT_COVERAGE
+  MULTIPLE_ABSENCES
+  OVERLOADED_NURSE
+  UNBALANCED_DISTRIBUTION
+  EMERGENCY_COVERAGE_REQUIRED
+}
+
+model Schedule {
+  id               String            @id @default(uuid())
+  organizationId   String
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId     String
+  department       Department        @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  month            Int
+  year             Int
+  publishedAt      DateTime
+  optmizationRuns  OptmizationRun[]
+  scheduleVersions ScheduleVersion[]
+  scheduleEntries  ScheduleEntry[]
+
+  @@map("schedules")
+}
+
+model OptmizationRun {
+  id         String   @id @default(uuid())
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  startedAtd DateTime
+  fineshedAt DateTime
+  result     Json
+
+  @@map("optimization_runs")
+}
+
+model ScheduleVersion {
+  id         String   @id @default(uuid())
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  version    Int
+  createdAt  DateTime @default(now())
+
+  @@map("schedule_versions")
+}
+
+model ScheduleEntry {
+  id           String   @id @default(uuid())
+  scheduleId   String
+  schedule     Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  shiftId      String
+  shift        Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  assignedById String
+
+  @@map("schedule_entries")
+}
+
+model Nurse {
+  id                  String                @id @default(uuid())
+  userId              String
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId        String
+  department          Department            @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  contract_type       ContracTypeList       @default(PERMANENT)
+  hire_date           DateTime
+  status              NurseStatusType       @default(ACTIVE)
+  specialityId        String
+  speciality          Speciality            @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+  absences            Absence[]
+  nurseAvailabilities NurseAvailability[]
+  workLoadMetrics     WorkLoadMetrics[]
+  vacations           Vacation[]
+  nurseRestrictions   NurseRestriction[]
+  optimizationScores  OptimizationScore[]
+  emergencyCandidates EmergencyCandidates[]
+
+  @@map("nurses")
+}
+
+model Absence {
+  id           String   @id @default(uuid())
+  nurseId      String
+  nurse        Nurse    @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  date         DateTime
+  reason       String
+  reporterById String
+  reporter     User     @relation(fields: [reporterById], references: [id], onDelete: Cascade)
+
+  @@map("absences")
+}
+
+model NurseAvailability {
+  id                  String                      @id @default(uuid())
+  nurseId             String
+  nurse               Nurse                       @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  date                DateTime
+  availability_status NurseAvailabilityStatusType
+
+  @@map("nurse_availability")
+}
+
+enum NurseAvailabilityStatusType {
+  AVAILABLE
+  NOT_AVAILABLE
+}
+
+model WorkLoadMetrics {
+  id              String   @id @default(uuid())
+  nurseId         String
+  nurse           Nurse    @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  total_hours     Decimal
+  night_hours     Decimal
+  overtime_hours  Decimal
+  month           Int
+  year            Int
+  regular_hours   Decimal
+  nigth_hours     Decimal
+  weekend_hours   Decimal
+  holidy_hours    Decimal
+  emergency_hours Decimal
+  fatigue_score   Decimal
+  fairness_score  Decimal
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+
+  @@map("workload_metrics")
+}
+
+model Vacation {
+  id         String         @id @default(uuid())
+  nurseId    String
+  nurse      Nurse          @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  start_Date DateTime
+  end_Date   DateTime
+  status     VacationStatus
+
+  @@map("vacations")
+}
+
+enum VacationStatus {
+  DRAFT
+  PENDING_APPROVAL
+  UNDER_REVIEW
+  APPROVED
+  PARTIALLY_APPROVED
+  REJECTED
+  CANCELLED
+  EXPIRED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  SUSPENSION
+}
+
+model NurseProfile {
+  id                  String              @id @default(uuid())
+  nurseId             String
+  birthDate           DateTime
+  emergencyContact    String
+  educationLevel      EducationLevelTypes
+  health_restrictions String
+
+  @@map("nurse_profiles")
+}
+
+model NurseRestriction {
+  id                     String                @id @default(uuid())
+  nurseId                String
+  nurse                  Nurse                 @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  nurseRestrictionType   NurseRestrictionType? @relation(fields: [nurseRestrictionTypeId], references: [id])
+  nurseRestrictionTypeId String?
+}
+
+model NurseRestrictionType {
+  id                     String                       @id @default(uuid())
+  code                   String                       @unique
+  name                   NurseRestrictionTypes
+  description            NurseRestrictionDescriptions
+  severity               PriorityTypes
+  affects_scheduler      Boolean
+  affects_overtime       Boolean
+  affects_nights         Boolean
+  isActive               Boolean
+  restrictions           NurseRestriction[]
+  nurseRestrictionTypeId String
+
+  @@map("nurse_restrictions_types")
+}
+
+enum NurseRestrictionTypes {
+  NO_NIGHT_SHIFTS
+  ONLY_NIGHT_SHIFTS
+  ONLY_DAY_SHIFTS
+  ONLY_MORNING_SHIFTS
+  ONLY_AFTERNOON_SHIFTS
+  NO_WEEKENDS
+  WEEKENDS_ONLY
+  NO_HOLIDAYS
+  NO_DOUBLE_SHIFTS
+  NO_CONSECUTIVE_SHIFTS
+  NO_CONSECUTIVE_NIGHTS
+  LIMITED_CONSECUTIVE_DAYS
+  LIMITED_HOURS
+  NO_OVERTIME
+  MAX_40_HOURS_WEEK
+  MAX_8_HOURS_DAY
+  REDUCED_WORKLOAD
+  PART_TIME_ONLY
+  PREGNANCY_RESTRICTION
+  MEDICAL_RESTRICTION
+  NO_HEAVY_PATIENTS
+  NO_STANDING_LONG_HOURS
+  FATIGUE_RECOVERY
+  POST_SURGERY_LIMITATION
+  TEMPORARY_HEALTH_LIMITATION
+  CHRONIC_CONDITION
+  MENTAL_HEALTH_RESTRICTION
+  ONLY_ICU
+  ONLY_ER
+  ONLY_PEDIATRICS
+  NO_ICU
+  NO_ER
+  NO_SURGERY
+  RESTRICTED_DEPARTMENT_ACCESS
+  UNDER_TRAINING
+  SUPERVISION_REQUIRED
+  NO_CRITICAL_PATIENTS
+  JUNIOR_LIMITATION
+  INTERN_RESTRICTION
+  PROBATION_PERIOD
+  UNION_RESTRICTION
+  CONTRACT_LIMITATION
+  TEMPORARY_EMPLOYEE
+  AGENCY_STAFF_ONLY
+  NO_EXTRA_SHIFTS
+  FIXED_SCHEDULE_ONLY
+  NO_EMERGENCY_COVERAGE
+  LAST_MINUTE_UNAVAILABLE
+  CANNOT_BE_ON_CALL
+  RESTRICTED_MOBILITY
+  NO_FLOATING
+  HIGH_FATIGUE_RISK
+  LABOR_LAW_LIMITATION
+  MINIMUM_REST_REQUIRED
+  MAX_MONTHLY_HOURS_REACHED
+  LICENSE_RESTRICTION
+  CERTIFICATION_EXPIRED
+  TEMPORARY_AVAILABILITY
+  VACATION_TRANSITION
+  RETURNING_FROM_LEAVE
+  RECENT_OVERTIME_BLOCK
+  HIGH_RISK_PATIENT_RESTRICTION
+  INFECTIOUS_AREA_RESTRICTION
+  ISOLATION_AREA_RESTRICTION
+  BIOHAZARD_LIMITATION
+}
+
+enum NurseRestrictionDescriptions {
+  NO_PUEDE_HACER_AMANECIDAS
+  SOLO_TRABAJA_NOCHES
+  SOLO_TRABAJA_DIAS
+  SOLO_MAÑANAS
+  SOLO_TARDES
+  NO_TRABAJA_FINES_DE_SEMANA
+  SOLO_FINES_DE_SEMANA
+  NO_TRABAJA_FERIADOS
+  NO_PUEDE_HACER_DOBLE_TURNO
+  NO_TURNOS_SEGUIDOS
+  NO_NOCHES_CONSECUTIVAS
+  MAXIMO_DIAS_SEGUIDOS
+  HORAS_LIMITADAS
+  NO_OVERTIME
+  MAXIMO_40H
+  MAXIMO_8H_POR_DIA
+  CARGA_REDUCIDA
+  SOLO_MEDIO_TIEMPO
+  RESTRICCION_EMBARAZO
+  RESTRICCION_MEDICA_GENERAL
+  NO_PACIENTES_PESADOS
+  NO_LARGAS_HORAS_DE_PIE
+  RECUPERACION_FISICA
+  RECUPERACION_CIRUGIA
+  RESTRICCION_TEMPORAL
+  CONDICION_CRONICA
+  SALUD_MENTAL
+  SOLO_UCI
+  SOLO_EMERGENCIAS
+  SOLO_PEDIATRIA
+  NO_UCI
+  NO_EMERGENCIAS
+  NO_CIRUGIA
+  ACCESO_LIMITADO
+  EN_ENTRENAMIENTO
+  REQUIERE_SUPERVISION
+  NO_CRITICOS
+  RESTRICCION_JUNIOR
+  PASANTIA
+  PERIODO_PRUEBA
+  SINDICATO
+  RESTRICCION_CONTRACTUAL
+  TEMPORAL
+  PERSONAL_EXTERNO
+  NO_TURNOS_EXTRA
+  HORARIO_FIJO
+  NO_COBERTURA_URGENTE
+  NO_DISPONIBILIDAD_URGENTE
+  NO_GUARDIAS
+  NO_MOVERSE_ENTRE_DEPARTAMENTOS
+  NO_SOPORTE_CRUZADO
+  ALTO_RIESGO_FATIGA
+  RESTRICCION_LEGAL
+  DESCANSO_OBLIGATORIO
+  LIMITE_MENSUAL_ALCANZADO
+  LICENCIA_LIMITADA
+  CERTIFICACION_VENCIDA
+  DISPONIBILIDAD_TEMPORAL
+  CERCA_VACACIONES
+  REINTEGRACION
+  BLOQUEADA_POR_OVERTIME_RECIENTE
+  NO_PACIENTES_ALTO_RISGO
+  NO_AREAS_INFECCIOSAS
+  NO_AISLAMIENTO
+  RESTRICCION_BIOSEGURIDAD
+}
+
+enum EducationLevelTypes {
+  ASSISTANT
+  TECHNICIAN
+  BACHELOR_DEGREE
+  SPECIALIZATION
+  MASTER_DEGREE
+  DOCTORATE
+}
+
+model OptimizationScore {
+  id             String  @id @default(uuid())
+  nurseId        String
+  nurse          Nurse   @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  fairness_score Decimal
+  fatigue_score  Decimal
+  workload_score Decimal
+
+  @@map("optimization_scores")
+}
+
+model Speciality {
+  id                     String                 @id @default(uuid())
+  name                   String
+  description            String
+  departmentSpecialities DepartmentSpeciality[]
+  nurses                 Nurse[]
+
+  @@map("specialities")
+}
+
+enum NurseStatusType {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum ContracTypeList {
+  PERMANENT
+  TEMPORAL
+  PER_DIEM
+  PART_TIME
+}
+
+model Branch {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  address        String
+  departments    Department[]
+
+  @@map("branches")
+}
+
+model MonthlyDistributionRules {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId   String
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  rule_type      String
+  configuration  Json
+
+  @@map("monthly_distribution_rules")
+}
+
+model Integration {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider       ProviderList
+  configuration  Json
+  webhookLogs    WebhookLog[]
+
+  @@map("integrations")
+}
+
+enum ProviderList {
+  TWILIO
+  WHATSAPP
+  GOOGLE_CALENDAR
+  OUTLOOK
+  SAP
+  ORACLE_HR
+  BIOMETRIC_SYSTEM
+  SMTP
+  FIREBASE
+}
+
+model WebhookLog {
+  id            String      @id @default(uuid())
+  integrationId String
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  payload       Json
+  response      Json
+
+  @@map("webhook_logs")
+}
+
+model Notification {
+  id             String        @id @default(uuid())
+  userId         String        @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  message        String
+  readedAt       DateTime
+  createdAt      DateTime      @default(now())
+  priority       PriorityTypes
+  data           Json
+
+  @@map("notifications")
+}
+
+model NotificationType {
+  id         String                    @id @default(uuid())
+  code       String                    @unique
+  name       String
+  category   NotificationCategoryTypes
+  priority   PriorityTypes
+  templateId String
+  templae    NotificationTemplates     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  icon       String
+
+  @@map("notification_types")
+}
+
+model NotificationTemplates {
+  id                String             @id @default(uuid())
+  code              String             @unique
+  title_template    String
+  body_template     String
+  notificationTypes NotificationType[]
+
+  @@map("notification_templates")
+}
+
+enum NotificationCategoryTypes {
+  SCHEDULE_PUBLISHED
+  SCHEDULE_UPDATED
+  SCHEDULE_ASSIGNMENT
+  SCHEDULE_REMOVED
+  SCHEDULE_CONFLICT
+  SCHEDULE_REMINDER
+  SHIFT_CHANGE_REQUESTED
+  SHIFT_CHANGE_APPROVED
+  SHIFT_CHANGE_REJECTED
+  SHIFT_CHANGE_CANCELLED
+  SHIFT_CHANGE_EXPIRED
+  SHIFT_CHANGE_REQUIRES_CONFIRMATION
+  VACATION_REQUESTED
+  VACATION_APPROVED
+  VACATION_REJECTED
+  VACATION_REMINDER
+  VACATION_CONFLICT
+  LEAVE_REQUESTED
+  LEAVE_APPROVED
+  LEAVE_REJECTED
+  MEDICAL_DOCUMENT_REQUIRED
+  EMERGENCY_SHIFT_NEEDED
+  EMERGENCY_SHIFT_ASSIGNED
+  COVERAGE_SHORTAGE
+  COVERAGE_REQUEST
+  BACKUP_STAFF_REQUIRED
+  RULE_VIOLATION
+  OVERTIME_WARNING
+  NIGHT_SHIFT_LIMIT_REACHED
+  REST_PERIOD_VIOLATION
+  MONTHLY_HOUR_LIMIT_REACHED
+  APPROVAL_REQUIRED
+  APPROVAL_PENDING
+  APPROVAL_COMPLETED
+  APPROVAL_OVERDUE
+  DOCUMENT_EXPIRING
+  CREDENTIAL_EXPIRING
+  CONTRACT_UPDATE
+  POLICY_UPDATE
+  SYSTEM_MAINTENANCE
+  SECURITY_ALERT
+  PASSWORD_CHANGED
+  LOGIN_DETECTED
+  SCHEDULE_OPTIMIZED
+  FAIRNESS_ALERT
+  FATIGUE_RISK_DETECTED
+  STAFFING_PREDICTION_ALERT
+}
+
+enum PriorityTypes {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  CRITICAL
+  INFO
+}
+
+// ==========================================
+// USUARIOS Y ROLES (ENFERMERÍA / SUPERVISIÓN)
+// ==========================================
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  password       String
+  firstName      String
+  lastName       String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId   String?
+  department     Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  // Solicitudes de Cambio (Como solicitante o receptor)
+  sentChangeRequests     ShiftChangeRequest[] @relation("RequesterNurse")
+  receivedChangeRequests ShiftChangeRequest[] @relation("ReceiverNurse")
+  approvedChangeRequests ShiftChangeRequest[] @relation("ApproverSupervisor")
+  approvedLeavesRequest  Leave[]              @relation("LeavesApprover")
+
+  activityLogs     ActivityLog[]
+  roles            Roles?            @relation(fields: [rolesId], references: [id])
+  rolesId          String?
+  leaves           Leave[]           @relation("UserLeaves")
+  nursePreferences NursePreferences?
+  auditLog         AuditLog?
+  notification     Notification?
+  nurses           Nurse[]
+  absences         Absence[]
+  status           NurseStatusType
+  refreshToken     String            @default("")
+  lastLoginAt      DateTime          @default(now())
+  createdAt        DateTime          @default(now())
+
+  requestedApprovals   ShiftChangeApprovals[] @relation("ApprovalRequester")
+  processedApprovals   ShiftChangeApprovals[] @relation("ApprovalApprover")
+  shiftChangeDocuments ShiftChangeDocument[]  @relation("UserDocuments")
+  shiftChangeApprovals ShiftChangeApprovals[]
+
+  @@map("users")
+}
+
+model AuditLog {
+  id        String              @id @default(uuid())
+  userId    String              @unique
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    ActionAuditLogTypes
+  moduleId  String
+  module    Module              @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  old_value Json
+  new_value Json
+  createdAt DateTime            @default(now())
+
+  @@map("audit_logs")
+}
+
+enum ActionAuditLogTypes {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  PUBLISH
+  ASSIGN_SHIFT
+  CANCEL_SHIFT
+  AUTO_GENERATE
+}
+
+model Module {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  name        String
+  description String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  auditLogs   AuditLog[]
+
+  @@map("modules")
+}
+
+model Roles {
+  id              String            @id @default(uuid())
+  name            String // E.g., "Senior Nurse", "Junior Nurse", "Auxiliar"
+  organizationId  String
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users           User[]
+  rolePermissions RolePermissions[]
+
+  @@map("roles")
+}
+
+model RolePermissions {
+  roleId      String
+  roles       Roles      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permisionId String
+  permissions Permission @relation(fields: [permisionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permisionId])
+  @@map("role_permissions")
+}
+
+model Permission {
+  id              String            @id @default(uuid())
+  code            String
+  description     String
+  rolePermissions RolePermissions[]
+
+  @@map("permissions")
+}
+
+model NursePreferences {
+  id                String         @id @default(uuid())
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredShift    PreferredShift @default(MANANA) // Mañana, Tarde, Noche
+  avoid_shifts      PreferredShift @default(NOCHE)
+  maxNigthsPerMonth Int            @default(10)
+  maxDaysPerMonth   Int            @default(15)
+  preferredDaysOff  Int            @default(10)
+
+  @@map("nurse_preferences")
+}
+
+enum PreferredShift {
+  MANANA
+  TARDE
+  NOCHE
+  MANANA_TARDE
+  MANANA_NOCHE
+  NOCHE_TARDE
+}
+
+// ==========================================
+// CORE: GESTIÓN DE TURNOS (SHIFTS)
+// ==========================================
+
+model Shift {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  startTime      DateTime
+  endTime        DateTime
+  duration_hours DateTime
+  color          String
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  departmentId   String?
+
+  changeRequestsAsSource ShiftChangeRequest[] @relation("SourceShift")
+  changeRequestsAsTarget ShiftChangeRequest[] @relation("TargetShift")
+  scheduleEntries        ScheduleEntry[]
+  emergencyCoverages     EmergencyCoverages[]
+
+  @@map("shifts")
+}
+
+model EmergencyCoverages {
+  id                  String                @id @default(uuid())
+  department          Department?           @relation(fields: [departmentId], references: [id])
+  departmentId        String?
+  shiftId             String
+  shift               Shift                 @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  date                DateTime
+  priority            PriorityTypes
+  statuts             VacationStatus
+  emergencyCandidates EmergencyCandidates[]
+
+  @@map("emergency_coverages")
+}
+
+model EmergencyCandidates {
+  id         String             @id @default(uuid())
+  coverageId String
+  coverage   EmergencyCoverages @relation(fields: [coverageId], references: [id], onDelete: Cascade)
+  nurseId    String
+  nurse      Nurse              @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  score      Decimal
+  selected   Boolean
+
+  @@map("emergency_candidates")
+}
+
+model ShiftTemplate {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department     Department   @relation(fields: [id], references: [id], onDelete: Cascade)
+  name           String // E.g., "Turno Matutino Estándar"
+  configuration  Json
+  startTime      String // Almacenado como "07:00"
+  endTime        String // Almacenado como "15:00"
+
+  @@map("shift_templates")
+}
+
+// ==========================================
+// FLUJO OPERACIONAL: SOLICITUDES DE CAMBIO
+// ==========================================
+
+model ShiftChangeRequest {
+  id     String        @id @default(uuid())
+  status RequestStatus @default(AWAITING_OTHER_NURSE)
+
+  // Quién pide el cambio y a quién
+  requesterId String
+  requester   User    @relation("RequesterNurse", fields: [requesterId], references: [id])
+  receiverId  String?
+  receiver    User?   @relation("ReceiverNurse", fields: [receiverId], references: [id])
+
+  // Turnos involucrados
+  sourceShiftId String
+  sourceShift   Shift   @relation("SourceShift", fields: [sourceShiftId], references: [id], onDelete: Cascade)
+  targetShiftId String?
+  targetShift   Shift?  @relation("TargetShift", fields: [targetShiftId], references: [id], onDelete: SetNull)
+
+  // Aprobación del supervisor
+  approverId String?
+  approver   User?   @relation("ApproverSupervisor", fields: [approverId], references: [id])
+
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("shift_change_requests")
+}
+
+model ShiftChangeApprovals {
+  id          String               @id @default(uuid())
+  requesterId String
+  requester   User                 @relation("ApprovalRequester", fields: [requesterId], references: [id])
+  approverId  String?
+  approver    User?                @relation("ApprovalApprover", fields: [approverId], references: [id])
+  decision    ChangeApprovalsTypes @default(PENDING)
+  comments    String
+  user        User?                @relation(fields: [userId], references: [id])
+  userId      String?
+
+  @@map("shift_change_approvals")
+}
+
+model ShiftChangeDocument {
+  id          String  @id @default(uuid())
+  requesterId String
+  requester   User    @relation("UserDocuments", fields: [requesterId], references: [id])
+  documentUrl String
+  userId      String?
+
+  @@map("shift_change_documents")
+}
+
+enum ChangeApprovalsTypes {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+enum RequestStatus {
+  AWAITING_OTHER_NURSE
+  REJECTED_BY_NURSE
+  ACCEPTED_BY_NURSE
+  UNDER_SUPVERSION
+  APPROVED_BY_SUPERVISOR
+  REJECTED_BY_SUPERVISOR
+  CANCELLED
+  EXPIRED
+  COMPLETED
+  ROLLED_BACK
+  CONFLIC_DETECTED
+}
+
+// ==========================================
+// ALERTAS, REGLAS Y LOGS (DASHBOARD)
+// ==========================================
+
+model WorkRules {
+  id                  String                @id @default(uuid())
+  organizationId      String
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code                String // E.g., "RULE_MAX_NIGHTS"
+  name                String
+  description         String?
+  value               String // Parámetro dinámico para el validador
+  isActive            Boolean               @default(true)
+  workRuleCondintions WorkRuleCondintions[]
+  workRuleActions     WorkRuleActions[]
+  ruleGroupAssigments RuleGroupAssigment[]
+
+  @@map("work_rules")
+}
+
+model WorkRuleCondintions {
+  id              String    @id @default(ulid())
+  workRuleId      String
+  workRules       WorkRules @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
+  condintion_type String
+  operator        String
+  value           String
+
+  @@map("work_rule_conditions")
+}
+
+model WorkRuleActions {
+  id           String    @id @default(ulid())
+  workRuleId   String
+  workRules    WorkRules @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
+  action_type  String
+  action_value String
+}
+
+model RuleGroup {
+  id                  String               @id @default(uuid())
+  organizationId      String
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ruleGroupAssigments RuleGroupAssigment[]
+
+  @@map("rule_groups")
+}
+
+model RuleGroupAssigment {
+  id          String    @id @default(uuid())
+  workRuleId  String
+  workRules   WorkRules @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
+  ruleGroupId String
+  ruleGroup   RuleGroup @relation(fields: [ruleGroupId], references: [id], onDelete: Cascade)
+
+  @@map("rule_group_assignments")
+}
+
+model Leave {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
+  type         LeaveType
+  startDate    DateTime
+  endDate      DateTime
+  reason       String?
+  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedById String? // Es opcional (?) porque al crearse está en PENDING y no tiene aprobador aún
+  approvedBy   User?     @relation("LeavesApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@map("leaves")
+}
+
+enum LeaveType {
+  MEDICAL
+  SICK_LEAVE
+  INJURY
+  SURGERY_RECOVERY
+  MATERNITY
+  PATERNITY
+  FAMILY_EMERGENCY
+  BEREAVMENT
+  ADMNISTRATIVE
+  SUSPENSION
+  TRAINING
+  CONFERENCE
+  PERSONAL
+  STUDY
+  RELIGIOUS
+  UNPAID
+}
+
+model ActivityLog {
+  id        String          @id @default(uuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    ActivityLogType // E.g., "SHIFT_APPROVED", "RULE_VIOLATED"
+  details   Json // Texto JSON o descriptivo
+  createdAt DateTime        @default(now())
+
+  @@map("activity_logs")
+}
+
+enum ActivityLogType {
+  LOGIN
+  LOGOUT
+  VIEW_SCHEDULE
+  EXPORT_REPORT
+  CREATE_SHIFT
+  SEARCH_USER
+  OPEN_NOTIFICATION
+}

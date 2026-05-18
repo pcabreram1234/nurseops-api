@@ -1,0 +1,186 @@
+import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
+// Configuración obligatoria del adaptador para Prisma 7
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+async function main() {
+  console.log("🌱 Iniciando la inserción de datos de prueba...");
+
+  // 1. Crear Organización Principal
+  const organization = await prisma.organization.create({
+    data: {
+      name: "Hospital General Central",
+      code: "HGC-2026",
+      timezone: "America/Santo_Domingo",
+      country: "República Dominicana",
+      status: "A",
+    },
+  });
+  console.log(`✅ Organización creada: ${organization.name}`);
+
+  // 2. Crear Configuración de Organización (Relación 1:1 obligatoria)
+  await prisma.organizationSetting.create({
+    data: {
+      organizationId: organization.id,
+      birthday_free_day_enabled: true,
+      max_monthly_hours: 160,
+      require_shift_approval: true,
+      auto_balance_nigths: true,
+      allow_cross_departament: false,
+      allor_overtime: true,
+    },
+  });
+
+  // 3. Crear una Sucursal (Branch)
+  const branch = await prisma.branch.create({
+    data: {
+      organizationId: organization.id,
+      name: "Ala Norte - Urgencias",
+      address: "Av. Metropolitana #450",
+    },
+  });
+
+  // 4. Crear un Departamento vinculado a la Sucursal
+  const department = await prisma.department.create({
+    data: {
+      organizationId: organization.id,
+      branchId: branch.id,
+      name: "Unidad de Cuidados Intensivos (UCI)",
+      type: "CRITICAL_CARE",
+      minimum_staff: 3,
+      critical_level: "HIGH",
+    },
+  });
+
+  // 5. Crear Roles de Usuario
+  const adminRole = await prisma.roles.create({
+    data: {
+      name: "SUPERVISOR",
+      organizationId: organization.id,
+    },
+  });
+
+  const nurseRole = await prisma.roles.create({
+    data: {
+      name: "NURSE",
+      organizationId: organization.id,
+    },
+  });
+
+  // 6. Crear Usuarios (Supervisor y Enfermero)
+  // Nota: En producción las contraseñas deben estar encriptadas con bcrypt
+  const supervisorUser = await prisma.user.create({
+    data: {
+      email: "pcabreram1234@gmail.com",
+      password: "$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C", //8998414
+      firstName: "Phillip",
+      lastName: "Cabrera",
+      organizationId: organization.id,
+      departmentId: department.id,
+      rolesId: adminRole.id,
+      status: "ACTIVE",
+      refreshToken: "",
+      lastLoginAt: new Date(),
+    },
+  });
+
+  const nurseUser = await prisma.user.create({
+    data: {
+      email: "enfermero.prueba@hospital.com",
+      password: "PasswordSeguro123!",
+      firstName: "Carlos",
+      lastName: "Peralta",
+      organizationId: organization.id,
+      departmentId: department.id,
+      rolesId: nurseRole.id,
+      status: "ACTIVE",
+      refreshToken: "",
+      lastLoginAt: new Date(),
+    },
+  });
+  console.log("✅ Usuarios de prueba creados.");
+
+  // 7. Crear Especialidad médica
+  const speciality = await prisma.speciality.create({
+    data: {
+      name: "Cuidados Críticos Adultos",
+      description:
+        "Especialidad enfocada en la estabilización de pacientes en estado crítico.",
+    },
+  });
+
+  // Asociar especialidad al departamento (Tabla intermedia de tu relación N:M)
+  await prisma.departmentSpeciality.create({
+    data: {
+      departmentId: department.id,
+      specialityId: speciality.id,
+    },
+  });
+
+  // 8. Crear Perfil de Enfermero vinculado al Usuario
+  const nurseProfile = await prisma.nurse.create({
+    data: {
+      userId: nurseUser.id,
+      departmentId: department.id,
+      contract_type: "PERMANENT",
+      hire_date: new Date("2024-01-15"),
+      status: "ACTIVE",
+      specialityId: speciality.id,
+    },
+  });
+
+  // Preferencias del enfermero
+  await prisma.nursePreferences.create({
+    data: {
+      userId: nurseUser.id,
+      preferredShift: "MANANA",
+      avoid_shifts: "NOCHE",
+      maxNigthsPerMonth: 4,
+      maxDaysPerMonth: 20,
+      preferredDaysOff: 8,
+    },
+  });
+
+  // 9. Insertar un Turno (Shift) de muestra
+  const shift = await prisma.shift.create({
+    data: {
+      organizationId: organization.id,
+      departmentId: department.id,
+      startTime: new Date("2026-06-01T07:00:00Z"),
+      endTime: new Date("2026-06-01T15:00:00Z"),
+      duration_hours: new Date("1970-01-01T08:00:00Z"), // Objeto DateTime como pide tu modelo
+      color: "#3498db",
+    },
+  });
+
+  // 10. Insertar una Solicitud de cambio de turno de ejemplo
+  await prisma.shiftChangeRequest.create({
+    data: {
+      status: "AWAITING_OTHER_NURSE",
+      requesterId: nurseUser.id,
+      sourceShiftId: shift.id,
+      reason: "Cita médica familiar por la mañana",
+    },
+  });
+
+  console.log("🌱 ¡Proceso de Seed completado con éxito!");
+}
+
+main()
+  .catch((e) => {
+    console.error("❌ Error ejecutando el seed:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    // Cerramos el pool de conexiones al terminar
+    await pool.end();
+  });
