@@ -74,6 +74,7 @@ model Organization {
   nurses                   Nurse[]
   emergencyCoverages       EmergencyCoverages[]
   nursePreferences         NursePreferences[]
+  optimizationScores       OptimizationScore[]
 
   @@map("organizations")
 }
@@ -509,12 +510,19 @@ enum EducationLevelTypes {
 }
 
 model OptimizationScore {
-  id             String  @id @default(uuid())
-  nurseId        String
-  nurse          Nurse   @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  fairness_score Decimal
-  fatigue_score  Decimal
-  workload_score Decimal
+  id               String       @id @default(uuid())
+  nurseId          String
+  nurse            Nurse        @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fairness_score   Decimal
+  fatigue_score    Decimal
+  workload_score   Decimal
+  overtime_score   Decimal?
+  preference_score Decimal?
+  overall_score    Decimal?
+  calculatedAt     DateTime     @default(now())
+  metadata         Json?
 
   @@map("optimization_scores")
 }
