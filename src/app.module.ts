@@ -17,6 +17,7 @@ import { WorkloadMetricsModule } from "@modules/workload-metrics/workload-metric
 import { NurseProfilesModule } from "@modules/nurse-profiles/nurse-profiles.module";
 import { NurseRestrictionsModule } from "@modules/nurse-restrictions/nurse-restrictions.module";
 import { VacationsModule } from "@modules/vacations/vacations.module";
+import { BranchesModule } from "@modules/branches/branches.module";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { VacationsModule } from "@modules/vacations/vacations.module";
     NurseProfilesModule,
     NurseRestrictionsModule,
     VacationsModule,
+    BranchesModule,
   ],
 })
 export class AppModule {}

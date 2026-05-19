@@ -721,6 +721,19 @@ model Branch {
   name           String
   address        String
   departments    Department[]
+  city           String
+  state          String
+  country        String
+  zipCode        String
+  phone          String
+  email          String
+  latitude       Decimal
+  longitude      Decimal
+  timezone       String?      @default("UTC")
+  isMainBranch   Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@map("branches")
 }
