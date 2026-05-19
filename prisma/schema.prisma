@@ -82,6 +82,7 @@ model Organization {
   nurseProfiles            NurseProfile[]
   nurseAvailabilities      NurseAvailability[]
   nurseRestrictions        NurseRestriction[]
+  vacations                Vacation[]
 
   @@map("organizations")
 }
@@ -381,12 +382,22 @@ model WorkLoadMetrics {
 }
 
 model Vacation {
-  id         String         @id @default(uuid())
-  nurseId    String
-  nurse      Nurse          @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  start_Date DateTime
-  end_Date   DateTime
-  status     VacationStatus
+  id              String         @id @default(uuid())
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nurseId         String
+  nurse           Nurse          @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  start_Date      DateTime
+  end_Date        DateTime
+  status          VacationStatus
+  reason          String
+  notes           String
+  approvedById    String?
+  approvedBy      User?          @relation(fields: [approvedById], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   @@map("vacations")
 }
@@ -849,6 +860,7 @@ model User {
   auditLogId           String
   scheduleEntries      ScheduleEntry[]
   nurseRestrictions    NurseRestriction[]
+  vacations            Vacation[]
 
   @@map("users")
 }
