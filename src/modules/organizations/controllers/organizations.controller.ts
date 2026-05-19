@@ -12,16 +12,21 @@ import { CreateOrganizationDto } from "../dto/create-organization.dto";
 
 import { UpdateOrganizationDto } from "../dto/update-organization.dto";
 
+import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
+
+import { Permissions } from "@modules/auth/decorators/permissions.decorator";
+
 @Controller({
   path: "organizations",
   version: "1",
 })
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Post()
-  @Roles("ADMIN")
+  @Roles("SUPER")
+  @Permissions("CREATE-ORGANIZATION")
   create(
     @Body()
     createOrganizationDto: CreateOrganizationDto,
@@ -30,19 +35,22 @@ export class OrganizationsController {
   }
 
   @Get()
-  @Roles("ADMIN")
+  @Roles("SUPER","ADMIN")
+  @Permissions("READ_ORGANIZATION")
   findAll() {
     return this.organizationsService.findAll();
   }
 
   @Get(":id")
-  @Roles("ADMIN", "SUPERVISOR")
+  @Roles("SUPER", "ADMIN","SUPERVISOR")
+  @Permissions("READ_ORGANIZATION")
   findOne(@Param("id") id: string) {
     return this.organizationsService.findOne(id);
   }
 
   @Patch(":id")
-  @Roles("ADMIN")
+  @Roles("SUPER","ADMIN")
+  @Permissions("UPDATE-ORGANIZATION")
   update(
     @Param("id") id: string,
 
@@ -53,7 +61,7 @@ export class OrganizationsController {
   }
 
   @Delete(":id")
-  @Roles("ADMIN")
+  @Roles("SUPER")
   remove(@Param("id") id: string) {
     return this.organizationsService.remove(id);
   }

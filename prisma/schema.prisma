@@ -71,6 +71,9 @@ model Organization {
   notifications            Notification[]
   schedules                Schedule[]
   auditLogs                AuditLog[]
+  nurses                   Nurse[]
+  emergencyCoverages       EmergencyCoverages[]
+  nursePreferences         NursePreferences[]
 
   @@map("organizations")
 }
@@ -242,6 +245,10 @@ model Nurse {
   nurseRestrictions   NurseRestriction[]
   optimizationScores  OptimizationScore[]
   emergencyCandidates EmergencyCandidates[]
+  organizationId      String
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  emergencyCoverages  EmergencyCoverages[]
+  nursePreferences    NursePreferences?
 
   @@map("nurses")
 }
@@ -525,7 +532,9 @@ model Speciality {
 enum NurseStatusType {
   ACTIVE
   INACTIVE
-  DELETED
+  VACATION
+  LICENSE
+  SUSPENDED
 }
 
 enum ContracTypeList {
@@ -710,19 +719,18 @@ model User {
   approvedChangeRequests ShiftChangeRequest[] @relation("ApproverSupervisor")
   approvedLeavesRequest  Leave[]              @relation("LeavesApprover")
 
-  activityLogs     ActivityLog[]
-  roles            Roles?            @relation(fields: [rolesId], references: [id])
-  rolesId          String?
-  leaves           Leave[]           @relation("UserLeaves")
-  nursePreferences NursePreferences?
-  auditLog         AuditLog[]
-  notification     Notification?
-  nurses           Nurse[]
-  absences         Absence[]
-  status           NurseStatusType
-  refreshToken     String            @default("")
-  lastLoginAt      DateTime          @default(now())
-  createdAt        DateTime          @default(now())
+  activityLogs ActivityLog[]
+  roles        Roles?          @relation(fields: [rolesId], references: [id])
+  rolesId      String?
+  leaves       Leave[]         @relation("UserLeaves")
+  auditLog     AuditLog[]
+  notification Notification?
+  nurses       Nurse[]
+  absences     Absence[]
+  status       NurseStatusType
+  refreshToken String          @default("")
+  lastLoginAt  DateTime        @default(now())
+  createdAt    DateTime        @default(now())
 
   requestedApprovals   ShiftChangeApprovals[] @relation("ApprovalRequester")
   processedApprovals   ShiftChangeApprovals[] @relation("ApprovalApprover")
@@ -818,14 +826,21 @@ model Permission {
 }
 
 model NursePreferences {
-  id                String         @id @default(uuid())
-  userId            String         @unique
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  preferredShift    PreferredShift @default(MANANA) // Mañana, Tarde, Noche
-  avoid_shifts      PreferredShift @default(NOCHE)
-  maxNigthsPerMonth Int            @default(10)
-  maxDaysPerMonth   Int            @default(15)
-  preferredDaysOff  Int            @default(10)
+  id                 String         @id @default(uuid())
+  nurseId            String         @unique
+  nurse              Nurse          @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  organizationId     String
+  organization       Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  preferredShift     PreferredShift @default(MANANA) // Mañana, Tarde, Noche
+  avoid_shifts       PreferredShift @default(NOCHE)
+  maxNigthsPerMonth  Int            @default(10)
+  maxDaysPerMonth    Int            @default(15)
+  preferredDaysOff   Int            @default(10)
+  prefersWeekendsOff Boolean        @default(false)
+  allowOvertime      Boolean        @default(true)
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   @@map("nurse_preferences")
 }
@@ -872,6 +887,18 @@ model EmergencyCoverages {
   priority            PriorityTypes
   statuts             VacationStatus
   emergencyCandidates EmergencyCandidates[]
+  rank                Int?
+  available           Boolean               @default(true)
+  fatigueRisk         Float?
+  overtimeRisk        Float?
+  compatibilityScore  Float?
+  aiRecommendation    Json?
+  selected            Boolean               @default(false)
+  createdAt           DateTime              @default(now())
+  nurseId             String
+  nurse               Nurse                 @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  organizationId      String
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("emergency_coverages")
 }
@@ -883,6 +910,7 @@ model EmergencyCandidates {
   nurseId    String
   nurse      Nurse              @relation(fields: [nurseId], references: [id], onDelete: Cascade)
   score      Decimal
+  available  Boolean            @default(true)
   selected   Boolean
 
   @@map("emergency_candidates")
