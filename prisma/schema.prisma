@@ -88,24 +88,74 @@ model Organization {
 }
 
 model OrganizationSetting {
-  id                        String       @id @default(uuid())
-  organizationId            String       @unique
-  organization              Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  birthday_free_day_enabled Boolean
-  max_monthly_hours         Int          @default(160)
-  require_shift_approval    Boolean      @default(false)
-  auto_balance_nigths       Boolean
-  allow_cross_departament   Boolean
-  allor_overtime            Boolean
+  id             String @id @default(uuid())
+  organizationId String @unique
 
-  // ➔ CAMPOS FUSIONADOS DE HOUR_LIMITS
+  /**
+   * |--------------------------------------------------------------------------
+   * | GENERAL SETTINGS
+   * |--------------------------------------------------------------------------
+   */
 
-  max_weekly_hours Int @default(44)
-  overtime_limit   Int @default(20)
+  birthday_free_day_enabled Boolean @default(false)
+  require_shift_approval    Boolean @default(false)
+  auto_balance_nights       Boolean @default(true)
+  allow_cross_department    Boolean @default(false)
+  allow_overtime            Boolean @default(true)
 
-  // ➔ CAMPOS FUSIONADOS DE NIGHT_SHIFT_LIMITS
+  /**
+   * |--------------------------------------------------------------------------
+   * | HOURS LIMITS
+   * |--------------------------------------------------------------------------
+   */
+
+  max_monthly_hours Int @default(160)
+  max_weekly_hours  Int @default(44)
+  overtime_limit    Int @default(20)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | NIGHT LIMITS
+   * |--------------------------------------------------------------------------
+   */
+
   max_nights             Int @default(10)
   max_consecutive_nights Int @default(3)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | FATIGUE SETTINGS
+   * |--------------------------------------------------------------------------
+   */
+
+  minimum_rest_hours   Int @default(12)
+  max_consecutive_days Int @default(6)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | AUTOMATION
+   * |--------------------------------------------------------------------------
+   */
+
+  auto_assign_emergency Boolean @default(false)
+  auto_approve_swaps    Boolean @default(false)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | SYSTEM
+   * |--------------------------------------------------------------------------
+   */
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | RELATIONS
+   * |--------------------------------------------------------------------------
+   */
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("organization_settings")
 }

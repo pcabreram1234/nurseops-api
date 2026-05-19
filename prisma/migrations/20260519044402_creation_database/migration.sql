@@ -11,7 +11,19 @@ CREATE TYPE "OperationalAlertStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'RESOLVED',
 CREATE TYPE "OperationalAlertyTypes" AS ENUM ('STAFF_SHORTAGE', 'OVERTIME_RISK', 'FATIGUE_RISK', 'RULE_VIOLATION', 'NO_NIGHT_COVERAGE', 'MULTIPLE_ABSENCES', 'OVERLOADED_NURSE', 'UNBALANCED_DISTRIBUTION', 'EMERGENCY_COVERAGE_REQUIRED');
 
 -- CreateEnum
-CREATE TYPE "NurseAvailabilityStatusType" AS ENUM ('AVAILABLE', 'NOT_AVAILABLE');
+CREATE TYPE "ScheduleEntryStatus" AS ENUM ('ASSIGNED', 'CONFIRMED', 'PENDING', 'CANCELLED', 'REPLACED');
+
+-- CreateEnum
+CREATE TYPE "AbsenceType" AS ENUM ('SICKNESS', 'EMERGENCY', 'NO_SHOW', 'VACATION', 'MEDICAL_LICENSE', 'PERSONAL', 'UNJUSTIFIED');
+
+-- CreateEnum
+CREATE TYPE "AbsenceStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'COVERED');
+
+-- CreateEnum
+CREATE TYPE "NurseAvailabilityStatusType" AS ENUM ('AVAILABLE', 'PARTIAL', 'NOT_AVAILABLE');
+
+-- CreateEnum
+CREATE TYPE "ShiftPreferenceType" AS ENUM ('MORNING', 'AFTERNOON', 'NIGHT', 'FLEXIBLE');
 
 -- CreateEnum
 CREATE TYPE "VacationStatus" AS ENUM ('DRAFT', 'PENDING_APPROVAL', 'UNDER_REVIEW', 'APPROVED', 'PARTIALLY_APPROVED', 'REJECTED', 'CANCELLED', 'EXPIRED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'SUSPENSION');
@@ -26,7 +38,7 @@ CREATE TYPE "NurseRestrictionDescriptions" AS ENUM ('NO_PUEDE_HACER_AMANECIDAS',
 CREATE TYPE "EducationLevelTypes" AS ENUM ('ASSISTANT', 'TECHNICIAN', 'BACHELOR_DEGREE', 'SPECIALIZATION', 'MASTER_DEGREE', 'DOCTORATE');
 
 -- CreateEnum
-CREATE TYPE "NurseStatusType" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
+CREATE TYPE "NurseStatusType" AS ENUM ('ACTIVE', 'INACTIVE', 'VACATION', 'LICENSE', 'SUSPENDED');
 
 -- CreateEnum
 CREATE TYPE "ContracTypeList" AS ENUM ('PERMANENT', 'TEMPORAL', 'PER_DIEM', 'PART_TIME');
@@ -44,13 +56,16 @@ CREATE TYPE "PriorityTypes" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICA
 CREATE TYPE "ActionAuditLogTypes" AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'PUBLISH', 'ASSIGN_SHIFT', 'CANCEL_SHIFT', 'AUTO_GENERATE');
 
 -- CreateEnum
-CREATE TYPE "PreferredShift" AS ENUM ('MANANA', 'TARDE', 'NOCHE', 'MANANA_TARDE', 'MANANA_NOCHE', 'NOCHE_TARDE');
+CREATE TYPE "PreferredShift" AS ENUM ('MORNING', 'AFTERNOON', 'NIGHT', 'MORNING_AFTERNOON', 'MORNING_NIGHT', 'NIGTH_AFTERNOON');
 
 -- CreateEnum
 CREATE TYPE "ChangeApprovalsTypes" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'EXPIRED');
 
 -- CreateEnum
 CREATE TYPE "RequestStatus" AS ENUM ('AWAITING_OTHER_NURSE', 'REJECTED_BY_NURSE', 'ACCEPTED_BY_NURSE', 'UNDER_SUPVERSION', 'APPROVED_BY_SUPERVISOR', 'REJECTED_BY_SUPERVISOR', 'CANCELLED', 'EXPIRED', 'COMPLETED', 'ROLLED_BACK', 'CONFLIC_DETECTED');
+
+-- CreateEnum
+CREATE TYPE "LeaveStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
 
 -- CreateEnum
 CREATE TYPE "LeaveType" AS ENUM ('MEDICAL', 'SICK_LEAVE', 'INJURY', 'SURGERY_RECOVERY', 'MATERNITY', 'PATERNITY', 'FAMILY_EMERGENCY', 'BEREAVMENT', 'ADMNISTRATIVE', 'SUSPENSION', 'TRAINING', 'CONFERENCE', 'PERSONAL', 'STUDY', 'RELIGIOUS', 'UNPAID');
@@ -190,8 +205,17 @@ CREATE TABLE "schedule_entries" (
     "id" TEXT NOT NULL,
     "scheduleId" TEXT NOT NULL,
     "shiftId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" "ScheduleEntryStatus" NOT NULL DEFAULT 'ASSIGNED',
     "assignedById" TEXT NOT NULL,
+    "assignedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "notes" TEXT,
+    "isEmergencyCoverage" BOOLEAN NOT NULL DEFAULT false,
+    "optimizationScore" DECIMAL(65,30),
+    "date" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "nurseId" TEXT NOT NULL,
 
     CONSTRAINT "schedule_entries_pkey" PRIMARY KEY ("id")
 );
@@ -205,6 +229,7 @@ CREATE TABLE "nurses" (
     "hire_date" TIMESTAMP(3) NOT NULL,
     "status" "NurseStatusType" NOT NULL DEFAULT 'ACTIVE',
     "specialityId" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
 
     CONSTRAINT "nurses_pkey" PRIMARY KEY ("id")
 );
@@ -213,9 +238,19 @@ CREATE TABLE "nurses" (
 CREATE TABLE "absences" (
     "id" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "type" "AbsenceType" NOT NULL,
+    "status" "AbsenceStatus" NOT NULL DEFAULT 'PENDING',
     "reason" TEXT NOT NULL,
     "reporterById" TEXT NOT NULL,
+    "approvedById" TEXT,
+    "notes" TEXT,
+    "requiresCoverage" BOOLEAN NOT NULL DEFAULT true,
+    "emergencyLevel" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "absences_pkey" PRIMARY KEY ("id")
 );
@@ -223,9 +258,16 @@ CREATE TABLE "absences" (
 -- CreateTable
 CREATE TABLE "nurse_availability" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "availability_status" "NurseAvailabilityStatusType" NOT NULL,
+    "status" "NurseAvailabilityStatusType" NOT NULL,
+    "shiftPreference" "ShiftPreferenceType",
+    "availableForEmergency" BOOLEAN NOT NULL DEFAULT false,
+    "availableForOvertime" BOOLEAN NOT NULL DEFAULT false,
+    "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "nurse_availability_pkey" PRIMARY KEY ("id")
 );
@@ -233,9 +275,9 @@ CREATE TABLE "nurse_availability" (
 -- CreateTable
 CREATE TABLE "workload_metrics" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
     "total_hours" DECIMAL(65,30) NOT NULL,
-    "night_hours" DECIMAL(65,30) NOT NULL,
     "overtime_hours" DECIMAL(65,30) NOT NULL,
     "month" INTEGER NOT NULL,
     "year" INTEGER NOT NULL,
@@ -246,6 +288,8 @@ CREATE TABLE "workload_metrics" (
     "emergency_hours" DECIMAL(65,30) NOT NULL,
     "fatigue_score" DECIMAL(65,30) NOT NULL,
     "fairness_score" DECIMAL(65,30) NOT NULL,
+    "workload_score" DECIMAL(65,30) NOT NULL,
+    "burnout_risk" DECIMAL(65,30) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -255,10 +299,18 @@ CREATE TABLE "workload_metrics" (
 -- CreateTable
 CREATE TABLE "vacations" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
     "start_Date" TIMESTAMP(3) NOT NULL,
     "end_Date" TIMESTAMP(3) NOT NULL,
     "status" "VacationStatus" NOT NULL,
+    "reason" TEXT NOT NULL,
+    "notes" TEXT NOT NULL,
+    "approvedById" TEXT,
+    "approvedAt" TIMESTAMP(3),
+    "rejectionReason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "vacations_pkey" PRIMARY KEY ("id")
 );
@@ -267,10 +319,18 @@ CREATE TABLE "vacations" (
 CREATE TABLE "nurse_profiles" (
     "id" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "birthDate" TIMESTAMP(3) NOT NULL,
     "emergencyContact" TEXT NOT NULL,
+    "emergencyContactPhone" TEXT NOT NULL,
     "educationLevel" "EducationLevelTypes" NOT NULL,
+    "yearsOfExperience" INTEGER,
+    "certifications" JSONB,
+    "languages" JSONB,
+    "notes" TEXT,
     "health_restrictions" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "nurse_profiles_pkey" PRIMARY KEY ("id")
 );
@@ -278,8 +338,17 @@ CREATE TABLE "nurse_profiles" (
 -- CreateTable
 CREATE TABLE "NurseRestriction" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
-    "nurseRestrictionTypeId" TEXT,
+    "restrictionTypeId" TEXT,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
+    "notes" TEXT,
+    "isTemporary" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdById" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "NurseRestriction_pkey" PRIMARY KEY ("id")
 );
@@ -294,7 +363,10 @@ CREATE TABLE "nurse_restrictions_types" (
     "affects_scheduler" BOOLEAN NOT NULL,
     "affects_overtime" BOOLEAN NOT NULL,
     "affects_nights" BOOLEAN NOT NULL,
+    "isSystem" BOOLEAN NOT NULL,
     "isActive" BOOLEAN NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "nurseRestrictionTypeId" TEXT NOT NULL,
 
     CONSTRAINT "nurse_restrictions_types_pkey" PRIMARY KEY ("id")
@@ -304,9 +376,15 @@ CREATE TABLE "nurse_restrictions_types" (
 CREATE TABLE "optimization_scores" (
     "id" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "fairness_score" DECIMAL(65,30) NOT NULL,
     "fatigue_score" DECIMAL(65,30) NOT NULL,
     "workload_score" DECIMAL(65,30) NOT NULL,
+    "overtime_score" DECIMAL(65,30),
+    "preference_score" DECIMAL(65,30),
+    "overall_score" DECIMAL(65,30),
+    "calculatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "metadata" JSONB,
 
     CONSTRAINT "optimization_scores_pkey" PRIMARY KEY ("id")
 );
@@ -413,6 +491,7 @@ CREATE TABLE "users" (
     "refreshToken" TEXT NOT NULL DEFAULT '',
     "lastLoginAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "auditLogId" TEXT NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -420,11 +499,15 @@ CREATE TABLE "users" (
 -- CreateTable
 CREATE TABLE "audit_logs" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "userId" TEXT,
+    "organizationId" TEXT,
     "action" "ActionAuditLogTypes" NOT NULL,
     "moduleId" TEXT NOT NULL,
-    "old_value" JSONB NOT NULL,
-    "new_value" JSONB NOT NULL,
+    "old_value" JSONB NOT NULL DEFAULT '{}',
+    "new_value" JSONB NOT NULL DEFAULT '{}',
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "requestId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
@@ -471,12 +554,18 @@ CREATE TABLE "permissions" (
 -- CreateTable
 CREATE TABLE "nurse_preferences" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "preferredShift" "PreferredShift" NOT NULL DEFAULT 'MANANA',
-    "avoid_shifts" "PreferredShift" NOT NULL DEFAULT 'NOCHE',
+    "nurseId" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "preferredShift" "PreferredShift" NOT NULL DEFAULT 'MORNING',
+    "avoid_shifts" "PreferredShift" NOT NULL DEFAULT 'NIGHT',
     "maxNigthsPerMonth" INTEGER NOT NULL DEFAULT 10,
     "maxDaysPerMonth" INTEGER NOT NULL DEFAULT 15,
     "preferredDaysOff" INTEGER NOT NULL DEFAULT 10,
+    "prefersWeekendsOff" BOOLEAN NOT NULL DEFAULT false,
+    "allowOvertime" BOOLEAN NOT NULL DEFAULT true,
+    "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "nurse_preferences_pkey" PRIMARY KEY ("id")
 );
@@ -502,6 +591,16 @@ CREATE TABLE "emergency_coverages" (
     "date" TIMESTAMP(3) NOT NULL,
     "priority" "PriorityTypes" NOT NULL,
     "statuts" "VacationStatus" NOT NULL,
+    "rank" INTEGER,
+    "available" BOOLEAN NOT NULL DEFAULT true,
+    "fatigueRisk" DOUBLE PRECISION,
+    "overtimeRisk" DOUBLE PRECISION,
+    "compatibilityScore" DOUBLE PRECISION,
+    "aiRecommendation" JSONB,
+    "selected" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "nurseId" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
 
     CONSTRAINT "emergency_coverages_pkey" PRIMARY KEY ("id")
 );
@@ -512,6 +611,7 @@ CREATE TABLE "emergency_candidates" (
     "coverageId" TEXT NOT NULL,
     "nurseId" TEXT NOT NULL,
     "score" DECIMAL(65,30) NOT NULL,
+    "available" BOOLEAN NOT NULL DEFAULT true,
     "selected" BOOLEAN NOT NULL,
 
     CONSTRAINT "emergency_candidates_pkey" PRIMARY KEY ("id")
@@ -621,13 +721,19 @@ CREATE TABLE "rule_group_assignments" (
 -- CreateTable
 CREATE TABLE "leaves" (
     "id" TEXT NOT NULL,
+    "organiztionId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "type" "LeaveType" NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3) NOT NULL,
     "reason" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "status" "LeaveStatus" NOT NULL DEFAULT 'PENDING',
     "approvedById" TEXT,
+    "rejectionReason" TEXT,
+    "emergencyCoverageRequired" BOOLEAN NOT NULL DEFAULT false,
+    "affectsSchedule" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "leaves_pkey" PRIMARY KEY ("id")
 );
@@ -647,6 +753,9 @@ CREATE TABLE "activity_logs" (
 CREATE UNIQUE INDEX "organization_settings_organizationId_key" ON "organization_settings"("organizationId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "nurse_profiles_nurseId_key" ON "nurse_profiles"("nurseId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "nurse_restrictions_types_code_key" ON "nurse_restrictions_types"("code");
 
 -- CreateIndex
@@ -662,16 +771,13 @@ CREATE UNIQUE INDEX "notification_templates_code_key" ON "notification_templates
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "audit_logs_userId_key" ON "audit_logs"("userId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "modules_code_key" ON "modules"("code");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "permissions_name_key" ON "permissions"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "nurse_preferences_userId_key" ON "nurse_preferences"("userId");
+CREATE UNIQUE INDEX "nurse_preferences_nurseId_key" ON "nurse_preferences"("nurseId");
 
 -- AddForeignKey
 ALTER TABLE "organization_settings" ADD CONSTRAINT "organization_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -713,6 +819,15 @@ ALTER TABLE "schedule_entries" ADD CONSTRAINT "schedule_entries_scheduleId_fkey"
 ALTER TABLE "schedule_entries" ADD CONSTRAINT "schedule_entries_shiftId_fkey" FOREIGN KEY ("shiftId") REFERENCES "shifts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "schedule_entries" ADD CONSTRAINT "schedule_entries_assignedById_fkey" FOREIGN KEY ("assignedById") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "schedule_entries" ADD CONSTRAINT "schedule_entries_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "schedule_entries" ADD CONSTRAINT "schedule_entries_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "nurses" ADD CONSTRAINT "nurses_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -722,28 +837,64 @@ ALTER TABLE "nurses" ADD CONSTRAINT "nurses_departmentId_fkey" FOREIGN KEY ("dep
 ALTER TABLE "nurses" ADD CONSTRAINT "nurses_specialityId_fkey" FOREIGN KEY ("specialityId") REFERENCES "specialities"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "nurses" ADD CONSTRAINT "nurses_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "absences" ADD CONSTRAINT "absences_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "absences" ADD CONSTRAINT "absences_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "absences" ADD CONSTRAINT "absences_reporterById_fkey" FOREIGN KEY ("reporterById") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "absences" ADD CONSTRAINT "absences_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "nurse_availability" ADD CONSTRAINT "nurse_availability_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "nurse_availability" ADD CONSTRAINT "nurse_availability_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "workload_metrics" ADD CONSTRAINT "workload_metrics_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "workload_metrics" ADD CONSTRAINT "workload_metrics_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "vacations" ADD CONSTRAINT "vacations_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "vacations" ADD CONSTRAINT "vacations_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "vacations" ADD CONSTRAINT "vacations_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "nurse_profiles" ADD CONSTRAINT "nurse_profiles_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "nurse_profiles" ADD CONSTRAINT "nurse_profiles_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NurseRestriction" ADD CONSTRAINT "NurseRestriction_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "NurseRestriction" ADD CONSTRAINT "NurseRestriction_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "NurseRestriction" ADD CONSTRAINT "NurseRestriction_nurseRestrictionTypeId_fkey" FOREIGN KEY ("nurseRestrictionTypeId") REFERENCES "nurse_restrictions_types"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "NurseRestriction" ADD CONSTRAINT "NurseRestriction_restrictionTypeId_fkey" FOREIGN KEY ("restrictionTypeId") REFERENCES "nurse_restrictions_types"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NurseRestriction" ADD CONSTRAINT "NurseRestriction_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "optimization_scores" ADD CONSTRAINT "optimization_scores_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "optimization_scores" ADD CONSTRAINT "optimization_scores_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "branches" ADD CONSTRAINT "branches_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -779,7 +930,10 @@ ALTER TABLE "users" ADD CONSTRAINT "users_departmentId_fkey" FOREIGN KEY ("depar
 ALTER TABLE "users" ADD CONSTRAINT "users_rolesId_fkey" FOREIGN KEY ("rolesId") REFERENCES "roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "modules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -794,7 +948,10 @@ ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_roleId_fkey" FOR
 ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_permisionId_fkey" FOREIGN KEY ("permisionId") REFERENCES "permissions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "nurse_preferences" ADD CONSTRAINT "nurse_preferences_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "nurse_preferences" ADD CONSTRAINT "nurse_preferences_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "nurse_preferences" ADD CONSTRAINT "nurse_preferences_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "shifts" ADD CONSTRAINT "shifts_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -807,6 +964,12 @@ ALTER TABLE "emergency_coverages" ADD CONSTRAINT "emergency_coverages_department
 
 -- AddForeignKey
 ALTER TABLE "emergency_coverages" ADD CONSTRAINT "emergency_coverages_shiftId_fkey" FOREIGN KEY ("shiftId") REFERENCES "shifts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "emergency_coverages" ADD CONSTRAINT "emergency_coverages_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "nurses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "emergency_coverages" ADD CONSTRAINT "emergency_coverages_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "emergency_candidates" ADD CONSTRAINT "emergency_candidates_coverageId_fkey" FOREIGN KEY ("coverageId") REFERENCES "emergency_coverages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -864,6 +1027,9 @@ ALTER TABLE "rule_group_assignments" ADD CONSTRAINT "rule_group_assignments_work
 
 -- AddForeignKey
 ALTER TABLE "rule_group_assignments" ADD CONSTRAINT "rule_group_assignments_ruleGroupId_fkey" FOREIGN KEY ("ruleGroupId") REFERENCES "rule_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "leaves" ADD CONSTRAINT "leaves_organiztionId_fkey" FOREIGN KEY ("organiztionId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "leaves" ADD CONSTRAINT "leaves_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
