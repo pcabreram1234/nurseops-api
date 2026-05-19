@@ -75,6 +75,7 @@ model Organization {
   emergencyCoverages       EmergencyCoverages[]
   nursePreferences         NursePreferences[]
   optimizationScores       OptimizationScore[]
+  scheduleEntries          ScheduleEntry[]
 
   @@map("organizations")
 }
@@ -217,15 +218,35 @@ model ScheduleVersion {
 }
 
 model ScheduleEntry {
-  id           String   @id @default(uuid())
-  scheduleId   String
-  schedule     Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  shiftId      String
-  shift        Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  assignedById String
+  id                  String              @id @default(uuid())
+  scheduleId          String
+  schedule            Schedule            @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  shiftId             String
+  shift               Shift               @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  status              ScheduleEntryStatus @default(ASSIGNED)
+  assignedById        String
+  assignedBy          User                @relation(fields: [assignedById], references: [id], onDelete: Cascade)
+  assignedAt          DateTime            @default(now())
+  notes               String?
+  isEmergencyCoverage Boolean             @default(false)
+  optimizationScore   Decimal?
+  date                DateTime
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organizationId      String
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nurseId             String
+  nurse               Nurse               @relation(fields: [nurseId], references: [id], onDelete: Cascade)
 
   @@map("schedule_entries")
+}
+
+enum ScheduleEntryStatus {
+  ASSIGNED
+  CONFIRMED
+  PENDING
+  CANCELLED
+  REPLACED
 }
 
 model Nurse {
@@ -250,6 +271,7 @@ model Nurse {
   organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   emergencyCoverages  EmergencyCoverages[]
   nursePreferences    NursePreferences?
+  scheduleEntries     ScheduleEntry[]
 
   @@map("nurses")
 }
@@ -745,6 +767,7 @@ model User {
   shiftChangeDocuments ShiftChangeDocument[]  @relation("UserDocuments")
   shiftChangeApprovals ShiftChangeApprovals[]
   auditLogId           String
+  scheduleEntries      ScheduleEntry[]
 
   @@map("users")
 }

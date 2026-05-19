@@ -10,6 +10,7 @@ import { NursesModule } from "@modules/nurses/nurses.module";
 import { EmergencyCandidatesModule } from "@modules/emergency-candidates/emergency-candidates.module";
 import { NursePreferencesModule } from "@modules/nurse-preferences/nurse-preferences.module";
 import { OptimizationScoresModule } from "@modules/optimization-scores/optimization-scores.module";
+import { ScheduleEntriesModule } from "@modules/schedule-entries/schedule-entries.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OptimizationScoresModule } from "@modules/optimization-scores/optimizat
     EmergencyCandidatesModule,
     NursePreferencesModule,
     OptimizationScoresModule,
+    ScheduleEntriesModule,
   ],
 })
 export class AppModule {}
