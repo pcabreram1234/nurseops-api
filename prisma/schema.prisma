@@ -164,12 +164,24 @@ model Department {
   id                       String                     @id @default(uuid())
   name                     String
   organizationId           String
+  code                     String                     @unique
+  description              String
   organization             Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   branchId                 String
   branch                   Branch                     @relation(fields: [branchId], references: [id])
-  type                     String
-  minimum_staff            Int
-  critical_level           String
+  type                     DepartmentType
+  criticalLevel            DepartmentCriticalLevel
+  minimum_staff            Int                        @default(1)
+  optimalStaff             Int                        @default(1)
+  maxCapacity              Int
+  allowOvertime            Boolean
+  allowsCrossDepartment    Boolean                    @default(false)
+  requiresSpecialization   Boolean                    @default(false)
+  isEmergencyDepartment    Boolean                    @default(false)
+  emergencyPriority        Int?                       @default(1)
+  isActive                 Boolean                    @default(true)
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
   users                    User[]
   shifts                   Shift[]
   shiftTemplates           ShiftTemplate[]
@@ -182,6 +194,28 @@ model Department {
   emergencyCoverages       EmergencyCoverages[]
 
   @@map("departments")
+}
+
+enum DepartmentType {
+  ICU
+  ER
+  PEDIATRICS
+  SURGERY
+  CARDIOLOGY
+  RADIOLOGY
+  ONCOLOGY
+  MATERNITY
+  LABORATORY
+  TRAUMA
+  INTERNAL_MEDICINE
+  GENERAL
+}
+
+enum DepartmentCriticalLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
 model DepartmentSpeciality {
