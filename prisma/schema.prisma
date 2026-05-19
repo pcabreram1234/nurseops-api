@@ -77,6 +77,7 @@ model Organization {
   optimizationScores       OptimizationScore[]
   scheduleEntries          ScheduleEntry[]
   absences                 Absence[]
+  leaves                   Leave[]
 
   @@map("organizations")
 }
@@ -1127,18 +1128,32 @@ model RuleGroupAssigment {
 }
 
 model Leave {
-  id           String    @id @default(uuid())
-  userId       String
-  user         User      @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
-  type         LeaveType
-  startDate    DateTime
-  endDate      DateTime
-  reason       String?
-  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED
-  approvedById String? // Es opcional (?) porque al crearse está en PENDING y no tiene aprobador aún
-  approvedBy   User?     @relation("LeavesApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  id                        String       @id @default(uuid())
+  organiztionId             String
+  organization              Organization @relation(fields: [organiztionId], references: [id], onDelete: Cascade)
+  userId                    String
+  user                      User         @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
+  type                      LeaveType
+  startDate                 DateTime
+  endDate                   DateTime
+  reason                    String?
+  status                    LeaveStatus  @default(PENDING) // PENDING, APPROVED, REJECTED
+  approvedById              String? // Es opcional (?) porque al crearse está en PENDING y no tiene aprobador aún
+  approvedBy                User?        @relation("LeavesApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectionReason           String?
+  emergencyCoverageRequired Boolean      @default(false)
+  affectsSchedule           Boolean      @default(true)
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
 
   @@map("leaves")
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum LeaveType {

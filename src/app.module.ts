@@ -12,6 +12,7 @@ import { NursePreferencesModule } from "@modules/nurse-preferences/nurse-prefere
 import { OptimizationScoresModule } from "@modules/optimization-scores/optimization-scores.module";
 import { ScheduleEntriesModule } from "@modules/schedule-entries/schedule-entries.module";
 import { AbsencesModule } from "@modules/absences/absences.module";
+import { LeavesModule } from "@modules/leaves/leaves.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AbsencesModule } from "@modules/absences/absences.module";
     OptimizationScoresModule,
     ScheduleEntriesModule,
     AbsencesModule,
+    LeavesModule,
   ],
 })
 export class AppModule {}
