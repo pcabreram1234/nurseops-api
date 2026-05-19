@@ -79,6 +79,7 @@ model Organization {
   absences                 Absence[]
   leaves                   Leave[]
   workLoadMetrics          WorkLoadMetrics[]
+  nurseProfiles            NurseProfile[]
 
   @@map("organizations")
 }
@@ -275,6 +276,7 @@ model Nurse {
   emergencyCoverages  EmergencyCoverages[]
   nursePreferences    NursePreferences?
   scheduleEntries     ScheduleEntry[]
+  nurseProfiles       NurseProfile[]
 
   @@map("nurses")
 }
@@ -387,12 +389,22 @@ enum VacationStatus {
 }
 
 model NurseProfile {
-  id                  String              @id @default(uuid())
-  nurseId             String
-  birthDate           DateTime
-  emergencyContact    String
-  educationLevel      EducationLevelTypes
-  health_restrictions String
+  id                    String              @id @default(uuid())
+  nurseId               String              @unique
+  nurse                 Nurse               @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  organizationId        String
+  organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  birthDate             DateTime
+  emergencyContact      String
+  emergencyContactPhone String
+  educationLevel        EducationLevelTypes
+  yearsOfExperience     Int?
+  certifications        Json?
+  languages             Json?
+  notes                 String?
+  health_restrictions   String
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
   @@map("nurse_profiles")
 }
