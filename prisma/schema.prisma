@@ -78,6 +78,7 @@ model Organization {
   scheduleEntries          ScheduleEntry[]
   absences                 Absence[]
   leaves                   Leave[]
+  workLoadMetrics          WorkLoadMetrics[]
 
   @@map("organizations")
 }
@@ -335,11 +336,12 @@ enum NurseAvailabilityStatusType {
 }
 
 model WorkLoadMetrics {
-  id              String   @id @default(uuid())
+  id              String       @id @default(uuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   nurseId         String
-  nurse           Nurse    @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  nurse           Nurse        @relation(fields: [nurseId], references: [id], onDelete: Cascade)
   total_hours     Decimal
-  night_hours     Decimal
   overtime_hours  Decimal
   month           Int
   year            Int
@@ -350,8 +352,10 @@ model WorkLoadMetrics {
   emergency_hours Decimal
   fatigue_score   Decimal
   fairness_score  Decimal
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime
+  workload_score  Decimal
+  burnout_risk    Decimal
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@map("workload_metrics")
 }

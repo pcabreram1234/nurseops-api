@@ -13,6 +13,7 @@ import { OptimizationScoresModule } from "@modules/optimization-scores/optimizat
 import { ScheduleEntriesModule } from "@modules/schedule-entries/schedule-entries.module";
 import { AbsencesModule } from "@modules/absences/absences.module";
 import { LeavesModule } from "@modules/leaves/leaves.module";
+import { WorkloadMetricsModule } from "@modules/workload-metrics/workload-metrics.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { LeavesModule } from "@modules/leaves/leaves.module";
     ScheduleEntriesModule,
     AbsencesModule,
     LeavesModule,
+    WorkloadMetricsModule,
   ],
 })
 export class AppModule {}
