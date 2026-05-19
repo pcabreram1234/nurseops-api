@@ -15,6 +15,7 @@ import { AbsencesModule } from "@modules/absences/absences.module";
 import { LeavesModule } from "@modules/leaves/leaves.module";
 import { WorkloadMetricsModule } from "@modules/workload-metrics/workload-metrics.module";
 import { NurseProfilesModule } from "@modules/nurse-profiles/nurse-profiles.module";
+import { NurseRestrictionsModule } from "@modules/nurse-restrictions/nurse-restrictions.module";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { NurseProfilesModule } from "@modules/nurse-profiles/nurse-profiles.modu
     LeavesModule,
     WorkloadMetricsModule,
     NurseProfilesModule,
+    NurseRestrictionsModule,
   ],
 })
 export class AppModule {}

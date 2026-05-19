@@ -81,6 +81,7 @@ model Organization {
   workLoadMetrics          WorkLoadMetrics[]
   nurseProfiles            NurseProfile[]
   nurseAvailabilities      NurseAvailability[]
+  nurseRestrictions        NurseRestriction[]
 
   @@map("organizations")
 }
@@ -427,11 +428,22 @@ model NurseProfile {
 }
 
 model NurseRestriction {
-  id                     String                @id @default(uuid())
-  nurseId                String
-  nurse                  Nurse                 @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  nurseRestrictionType   NurseRestrictionType? @relation(fields: [nurseRestrictionTypeId], references: [id])
-  nurseRestrictionTypeId String?
+  id                String                @id @default(uuid())
+  organizationId    String
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nurseId           String
+  nurse             Nurse                 @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  restrictionType   NurseRestrictionType? @relation(fields: [restrictionTypeId], references: [id])
+  restrictionTypeId String?
+  startDate         DateTime?
+  endDate           DateTime?
+  notes             String?
+  isTemporary       Boolean               @default(false)
+  isActive          Boolean               @default(true)
+  createdById       String?
+  createdBy         User?                 @relation(fields: [createdById], references: [id])
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 }
 
 model NurseRestrictionType {
@@ -443,7 +455,10 @@ model NurseRestrictionType {
   affects_scheduler      Boolean
   affects_overtime       Boolean
   affects_nights         Boolean
+  isSystem               Boolean
   isActive               Boolean
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime                     @updatedAt
   restrictions           NurseRestriction[]
   nurseRestrictionTypeId String
 
@@ -833,6 +848,7 @@ model User {
   shiftChangeApprovals ShiftChangeApprovals[]
   auditLogId           String
   scheduleEntries      ScheduleEntry[]
+  nurseRestrictions    NurseRestriction[]
 
   @@map("users")
 }
