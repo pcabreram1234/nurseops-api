@@ -1080,22 +1080,43 @@ enum PreferredShift {
 // ==========================================
 
 model Shift {
-  id             String       @id @default(uuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  startTime      DateTime
-  endTime        DateTime
-  duration_hours DateTime
-  color          String
-  department     Department?  @relation(fields: [departmentId], references: [id])
-  departmentId   String?
-
+  id                     String               @id @default(uuid())
+  organizationId         String
+  organization           Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name                   String
+  code                   String               @unique
+  type                   ShiftType
+  startTime              DateTime
+  endTime                DateTime
+  durationHours          DateTime
+  color                  String?
+  department             Department?          @relation(fields: [departmentId], references: [id])
+  departmentId           String?
+  isNightShift           Boolean              @default(false)
+  isEmergencyShift       Boolean              @default(false)
+  requiresSpecialization Boolean              @default(false)
+  allowsOvertime         Boolean              @default(true)
+  minimumStaffRequired   Int                  @default(1)
+  isActive               Boolean              @default(true)
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
   changeRequestsAsSource ShiftChangeRequest[] @relation("SourceShift")
   changeRequestsAsTarget ShiftChangeRequest[] @relation("TargetShift")
   scheduleEntries        ScheduleEntry[]
   emergencyCoverages     EmergencyCoverages[]
 
   @@map("shifts")
+}
+
+enum ShiftType {
+  MORNING
+  AFTERNOON
+  NIGHT
+  FULL_DAY
+  ON_CALL
+  EMERGENCY
+  WEEKEND
+  HOLIDAY
 }
 
 model EmergencyCoverages {
