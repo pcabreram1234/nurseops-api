@@ -76,6 +76,7 @@ model Organization {
   nursePreferences         NursePreferences[]
   optimizationScores       OptimizationScore[]
   scheduleEntries          ScheduleEntry[]
+  absences                 Absence[]
 
   @@map("organizations")
 }
@@ -277,15 +278,44 @@ model Nurse {
 }
 
 model Absence {
-  id           String   @id @default(uuid())
-  nurseId      String
-  nurse        Nurse    @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  date         DateTime
-  reason       String
-  reporterById String
-  reporter     User     @relation(fields: [reporterById], references: [id], onDelete: Cascade)
+  id               String        @id @default(uuid())
+  nurseId          String
+  nurse            Nurse         @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  date             DateTime
+  endDate          DateTime      @default(now())
+  type             AbsenceType
+  status           AbsenceStatus @default(PENDING)
+  reason           String
+  reporterById     String
+  approvedById     String?
+  notes            String?
+  requiresCoverage Boolean       @default(true)
+  emergencyLevel   Int?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  reporter         User          @relation(fields: [reporterById], references: [id], onDelete: Cascade)
+  approvedBy       User?         @relation("absence_approver", fields: [approvedById], references: [id])
 
   @@map("absences")
+}
+
+enum AbsenceType {
+  SICKNESS
+  EMERGENCY
+  NO_SHOW
+  VACATION
+  MEDICAL_LICENSE
+  PERSONAL
+  UNJUSTIFIED
+}
+
+enum AbsenceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COVERED
 }
 
 model NurseAvailability {
@@ -748,6 +778,7 @@ model User {
   receivedChangeRequests ShiftChangeRequest[] @relation("ReceiverNurse")
   approvedChangeRequests ShiftChangeRequest[] @relation("ApproverSupervisor")
   approvedLeavesRequest  Leave[]              @relation("LeavesApprover")
+  absenceApprover        Absence[]            @relation("absence_approver")
 
   activityLogs ActivityLog[]
   roles        Roles?          @relation(fields: [rolesId], references: [id])
