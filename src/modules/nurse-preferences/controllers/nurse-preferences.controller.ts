@@ -19,6 +19,12 @@ import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
+import { CreateNursePreferenceDto } from "../dto/create-nurse-preference.dto";
+
+import { UpdateNursePreferenceDto } from "../dto/update-nurse-preference.dto";
+
+import { NursePreferenceFilterDto } from "../dto/nurse-preference-filter.dto";
+
 @Controller({
   path: "nurse-preferences",
   version: "1",
@@ -31,19 +37,19 @@ export class NursePreferencesController {
 
   @Post()
   @Permissions("CREATE_NURSE_PREFERENCE")
-  create(@Body() dto: any, @CurrentUser() user: any) {
+  create(@Body() dto: CreateNursePreferenceDto, @CurrentUser() user: any) {
     return this.nursePreferencesService.create(dto, user);
   }
 
   @Get()
   @Permissions("VIEW_NURSE_PREFERENCES")
-  findAll(@Query() query: any, @CurrentUser() user: any) {
+  findAll(@Query() query: NursePreferenceFilterDto, @CurrentUser() user: any) {
     return this.nursePreferencesService.findAll(query, user);
   }
 
   @Patch(":id")
   @Permissions("UPDATE_NURSE_PREFERENCE")
-  update(@Param("id") id: string, @Body() dto: any, @CurrentUser() user: any) {
+  update(@Param("id") id: string, @Body() dto: UpdateNursePreferenceDto, @CurrentUser() user: any) {
     return this.nursePreferencesService.update(id, dto, user);
   }
 }

@@ -14,6 +14,8 @@ import { PermissionsService } from "../services/permissions.service";
 
 import { CreatePermissionDto } from "../dto/create-permission.dto";
 
+import { QueryPermissionsDto } from "../dto/query-permissions.dto";
+
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
 import { RolesGuard } from "@modules/auth/guards/roles.guards";
@@ -30,15 +32,12 @@ export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Post()
-  create(
-    @Body()
-    dto: CreatePermissionDto,
-  ) {
+  create(@Body() dto: CreatePermissionDto) {
     return this.permissionsService.create(dto);
   }
 
   @Get()
-  findAll(@Query() query: any) {
+  findAll(@Query() query: QueryPermissionsDto) {
     return this.permissionsService.findAll(query);
   }
 
@@ -48,11 +47,7 @@ export class PermissionsController {
   }
 
   @Patch(":id")
-  update(
-    @Param("id") id: string,
-
-    @Body() body: any,
-  ) {
+  update(@Param("id") id: string, @Body() body: any) {
     return this.permissionsService.update(id, body);
   }
 

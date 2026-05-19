@@ -15,6 +15,8 @@ import { RolesService } from "../services/roles.service";
 
 import { CreateRoleDto } from "../dto/create-role.dto";
 
+import { QueryRolesDto } from "../dto/query-roles.dto";
+
 import { AssignPermissionsDto } from "../dto/assign-permissions.dto";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
@@ -33,16 +35,12 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Post()
-  create(
-    @Body()
-    createRoleDto: CreateRoleDto,
-    @Req() req: any,
-  ) {
+  create(@Body() createRoleDto: CreateRoleDto, @Req() req: any) {
     return this.rolesService.create(createRoleDto, req.user);
   }
 
   @Get()
-  findAll(@Query() query: any, @Req() req: any) {
+  findAll(@Query() query: QueryRolesDto, @Req() req: any) {
     return this.rolesService.findAll(query, req.user);
   }
 
@@ -52,12 +50,7 @@ export class RolesController {
   }
 
   @Patch(":id")
-  update(
-    @Param("id") id: string,
-
-    @Body() body: any,
-    @Req() req: any,
-  ) {
+  update(@Param("id") id: string, @Body() body: any, @Req() req: any) {
     return this.rolesService.update(id, body, req.user);
   }
 
@@ -76,8 +69,7 @@ export class RolesController {
   assignPermissions(
     @Param("id") id: string,
     @Req() req: any,
-    @Body()
-    dto: AssignPermissionsDto,
+    @Body() dto: AssignPermissionsDto,
   ) {
     return this.rolesService.assignPermissions(id, dto, req.user);
   }

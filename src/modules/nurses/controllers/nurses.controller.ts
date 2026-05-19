@@ -20,6 +20,12 @@ import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
+import { CreateNurseDto } from "../dto/create-nurse.dto";
+
+import { UpdateNurseDto } from "../dto/update-nurse.dto";
+
+import { NurseFilterDto } from "../dto/nurse-filter.dto";
+
 @Controller({
   path: "nurses",
   version: "1",
@@ -30,13 +36,13 @@ export class NursesController {
 
   @Post()
   @Permissions("CREATE_NURSE")
-  create(@Body() dto: any, @CurrentUser() user: any) {
+  create(@Body() dto: CreateNurseDto, @CurrentUser() user: any) {
     return this.nursesService.create(dto, user);
   }
 
   @Get()
   @Permissions("VIEW_NURSES")
-  findAll(@Query() query: any, @CurrentUser() user: any) {
+  findAll(@Query() query: NurseFilterDto, @CurrentUser() user: any) {
     return this.nursesService.findAll(query, user);
   }
 
@@ -48,7 +54,7 @@ export class NursesController {
 
   @Patch(":id")
   @Permissions("UPDATE_NURSE")
-  update(@Param("id") id: string, @Body() dto: any, @CurrentUser() user: any) {
+  update(@Param("id") id: string, @Body() dto: UpdateNurseDto, @CurrentUser() user: any) {
     return this.nursesService.update(id, dto, user);
   }
 
