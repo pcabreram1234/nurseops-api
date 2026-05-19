@@ -8,6 +8,7 @@ import { RolesModule } from "@modules/roles/roles.module";
 import { UsersModule } from "@modules/users/users.module";
 import { NursesModule } from "@modules/nurses/nurses.module";
 import { EmergencyCandidatesModule } from "@modules/emergency-candidates/emergency-candidates.module";
+import { NursePreferencesModule } from "@modules/nurse-preferences/nurse-preferences.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { EmergencyCandidatesModule } from "@modules/emergency-candidates/emergen
     RolesModule,
     NursesModule,
     EmergencyCandidatesModule,
+    NursePreferencesModule,
   ],
 })
 export class AppModule {}
