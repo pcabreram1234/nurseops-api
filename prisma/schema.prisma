@@ -80,6 +80,7 @@ model Organization {
   leaves                   Leave[]
   workLoadMetrics          WorkLoadMetrics[]
   nurseProfiles            NurseProfile[]
+  nurseAvailabilities      NurseAvailability[]
 
   @@map("organizations")
 }
@@ -323,18 +324,34 @@ enum AbsenceStatus {
 }
 
 model NurseAvailability {
-  id                  String                      @id @default(uuid())
-  nurseId             String
-  nurse               Nurse                       @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  date                DateTime
-  availability_status NurseAvailabilityStatusType
+  id                    String                      @id @default(uuid())
+  organizationId        String
+  organization          Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nurseId               String
+  nurse                 Nurse                       @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  date                  DateTime
+  status                NurseAvailabilityStatusType
+  shiftPreference       ShiftPreferenceType?
+  availableForEmergency Boolean                     @default(false)
+  availableForOvertime  Boolean                     @default(false)
+  notes                 String?
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
 
   @@map("nurse_availability")
 }
 
 enum NurseAvailabilityStatusType {
   AVAILABLE
+  PARTIAL
   NOT_AVAILABLE
+}
+
+enum ShiftPreferenceType {
+  MORNING
+  AFTERNOON
+  NIGHT
+  FLEXIBLE
 }
 
 model WorkLoadMetrics {
@@ -910,8 +927,8 @@ model NursePreferences {
   nurse              Nurse          @relation(fields: [nurseId], references: [id], onDelete: Cascade)
   organizationId     String
   organization       Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  preferredShift     PreferredShift @default(MANANA) // Mañana, Tarde, Noche
-  avoid_shifts       PreferredShift @default(NOCHE)
+  preferredShift     PreferredShift @default(MORNING) // Mañana, Tarde, Noche
+  avoid_shifts       PreferredShift @default(NIGHT)
   maxNigthsPerMonth  Int            @default(10)
   maxDaysPerMonth    Int            @default(15)
   preferredDaysOff   Int            @default(10)
@@ -925,12 +942,12 @@ model NursePreferences {
 }
 
 enum PreferredShift {
-  MANANA
-  TARDE
-  NOCHE
-  MANANA_TARDE
-  MANANA_NOCHE
-  NOCHE_TARDE
+  MORNING
+  AFTERNOON
+  NIGHT
+  MORNING_AFTERNOON
+  MORNING_NIGHT
+  NIGTH_AFTERNOON
 }
 
 // ==========================================
