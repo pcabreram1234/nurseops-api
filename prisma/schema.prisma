@@ -824,7 +824,11 @@ model Integration {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   provider       ProviderList
   configuration  Json
+  name           String?
+  isActive       Boolean      @default(true)
   webhookLogs    WebhookLog[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@map("integrations")
 }
@@ -839,6 +843,11 @@ enum ProviderList {
   BIOMETRIC_SYSTEM
   SMTP
   FIREBASE
+  SENDGRID
+  SLACK
+  WORKDAY
+  OPENAI
+  CUSTOM
 }
 
 model WebhookLog {
