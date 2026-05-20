@@ -1331,10 +1331,16 @@ model WorkRuleActions {
 }
 
 model RuleGroup {
-  id                  String               @id @default(uuid())
-  organizationId      String
-  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  ruleGroupAssigments RuleGroupAssigment[]
+  id             String               @id @default(uuid())
+  organizationId String
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignments    RuleGroupAssigment[]
+  name           String
+  code           String
+  description    String
+  isActive       Boolean
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@map("rule_groups")
 }
@@ -1345,6 +1351,8 @@ model RuleGroupAssigment {
   workRules   WorkRule  @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
   ruleGroupId String
   ruleGroup   RuleGroup @relation(fields: [ruleGroupId], references: [id], onDelete: Cascade)
+  priority    Int       @default(1)
+  createdAt   DateTime  @default(now())
 
   @@map("rule_group_assignments")
 }
