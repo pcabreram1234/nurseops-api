@@ -21,6 +21,7 @@ import { BranchesModule } from "@modules/branches/branches.module";
 import { DepartmentsModule } from "@modules/departments/departments.module";
 import { NotificationsModule } from "@modules/notifications/notifications.module";
 import { SchedulesModule } from "@modules/schedules/schedules.module";
+import { WorkRulesModule } from "@modules/work-rules/work-rules.module";
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { SchedulesModule } from "@modules/schedules/schedules.module";
     DepartmentsModule,
     NotificationsModule,
     SchedulesModule,
+    WorkRulesModule
   ],
 })
 export class AppModule {}

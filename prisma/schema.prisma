@@ -61,7 +61,7 @@ model Organization {
   departments              Department[]
   users                    User[]
   shifts                   Shift[]
-  rules                    WorkRules[]
+  rules                    WorkRule[]
   shiftTemplates           ShiftTemplate[]
   branches                 Branch[]
   roles                    Roles[]
@@ -1277,26 +1277,34 @@ enum RequestStatus {
 // ALERTAS, REGLAS Y LOGS (DASHBOARD)
 // ==========================================
 
-model WorkRules {
+model WorkRule {
   id                  String                @id @default(uuid())
   organizationId      String
   organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   code                String // E.g., "RULE_MAX_NIGHTS"
   name                String
+  type                WorkRuleTypes         @default(CONFIGURABLE)
   description         String?
   value               String // Parámetro dinámico para el validador
   isActive            Boolean               @default(true)
-  workRuleCondintions WorkRuleCondintions[]
+  workRuleConditions  WorkRuleCondintions[]
   workRuleActions     WorkRuleActions[]
   ruleGroupAssigments RuleGroupAssigment[]
 
   @@map("work_rules")
 }
 
+enum WorkRuleTypes {
+  HARD
+  SOFT
+  CONFIGURABLE
+  EVENT
+}
+
 model WorkRuleCondintions {
-  id              String    @id @default(ulid())
+  id              String   @id @default(ulid())
   workRuleId      String
-  workRules       WorkRules @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
+  workRules       WorkRule @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
   condintion_type String
   operator        String
   value           String
@@ -1305,9 +1313,9 @@ model WorkRuleCondintions {
 }
 
 model WorkRuleActions {
-  id           String    @id @default(ulid())
+  id           String   @id @default(ulid())
   workRuleId   String
-  workRules    WorkRules @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
+  workRules    WorkRule @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
   action_type  String
   action_value String
 }
@@ -1324,7 +1332,7 @@ model RuleGroup {
 model RuleGroupAssigment {
   id          String    @id @default(uuid())
   workRuleId  String
-  workRules   WorkRules @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
+  workRules   WorkRule  @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
   ruleGroupId String
   ruleGroup   RuleGroup @relation(fields: [ruleGroupId], references: [id], onDelete: Cascade)
 
