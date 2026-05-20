@@ -23,6 +23,7 @@ import { NotificationsModule } from "@modules/notifications/notifications.module
 import { SchedulesModule } from "@modules/schedules/schedules.module";
 import { WorkRulesModule } from "@modules/work-rules/work-rules.module";
 import { RuleGroupsModule } from "@modules/rule-groups/rule-groups.module";
+import { EmergencyCoveragesModule } from "@modules/emergency-coverages/emergency-coverages.module";
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { RuleGroupsModule } from "@modules/rule-groups/rule-groups.module";
     SchedulesModule,
     WorkRulesModule,
     RuleGroupsModule,
+    EmergencyCoveragesModule,
   ],
 })
 export class AppModule {}
