@@ -19,6 +19,8 @@ import { NurseRestrictionsModule } from "@modules/nurse-restrictions/nurse-restr
 import { VacationsModule } from "@modules/vacations/vacations.module";
 import { BranchesModule } from "@modules/branches/branches.module";
 import { DepartmentsModule } from "@modules/departments/departments.module";
+import { NotificationsModule } from "@modules/notifications/notifications.module";
+import { SchedulesModule } from "@modules/schedules/schedules.module";
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { DepartmentsModule } from "@modules/departments/departments.module";
     VacationsModule,
     BranchesModule,
     DepartmentsModule,
+    NotificationsModule,
+    SchedulesModule,
   ],
 })
 export class AppModule {}
