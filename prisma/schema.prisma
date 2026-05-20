@@ -49,14 +49,14 @@ enum FeaturTypes {
 }
 
 model Organization {
-  id                       String                     @id @default(uuid())
+  id                       String                    @id @default(uuid())
   name                     String
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @updatedAt
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
   code                     String
   timezone                 String
   country                  String
-  status                   String                     @default("A")
+  status                   String                    @default("A")
   settings                 OrganizationSetting?
   departments              Department[]
   users                    User[]
@@ -66,7 +66,7 @@ model Organization {
   branches                 Branch[]
   roles                    Roles[]
   ruleGroups               RuleGroup[]
-  monthlyDistributionRules MonthlyDistributionRules[]
+  monthlyDistributionRules MonthlyDistributionRule[]
   integrations             Integration[]
   notifications            Notification[]
   schedules                Schedule[]
@@ -161,31 +161,31 @@ model OrganizationSetting {
 }
 
 model Department {
-  id                       String                     @id @default(uuid())
+  id                       String                    @id @default(uuid())
   name                     String
   organizationId           String
-  code                     String                     @unique
+  code                     String                    @unique
   description              String
-  organization             Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization             Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   branchId                 String
-  branch                   Branch                     @relation(fields: [branchId], references: [id])
+  branch                   Branch                    @relation(fields: [branchId], references: [id])
   type                     DepartmentType
   criticalLevel            DepartmentCriticalLevel
-  minimum_staff            Int                        @default(1)
-  optimalStaff             Int                        @default(1)
+  minimum_staff            Int                       @default(1)
+  optimalStaff             Int                       @default(1)
   maxCapacity              Int
   allowOvertime            Boolean
-  allowsCrossDepartment    Boolean                    @default(false)
-  requiresSpecialization   Boolean                    @default(false)
-  isEmergencyDepartment    Boolean                    @default(false)
-  emergencyPriority        Int?                       @default(1)
-  isActive                 Boolean                    @default(true)
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @updatedAt
+  allowsCrossDepartment    Boolean                   @default(false)
+  requiresSpecialization   Boolean                   @default(false)
+  isEmergencyDepartment    Boolean                   @default(false)
+  emergencyPriority        Int?                      @default(1)
+  isActive                 Boolean                   @default(true)
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
   users                    User[]
   shifts                   Shift[]
   shiftTemplates           ShiftTemplate[]
-  monthlyDistributionRules MonthlyDistributionRules[]
+  monthlyDistributionRules MonthlyDistributionRule[]
   schedules                Schedule[]
   departmentSpecialities   DepartmentSpeciality[]
   departmentConfigurations DepartmentConfiguration[]
@@ -796,16 +796,26 @@ model Branch {
   @@map("branches")
 }
 
-model MonthlyDistributionRules {
-  id             String       @id @default(uuid())
+model MonthlyDistributionRule {
+  id             String                      @id @default(uuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   departmentId   String
-  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  rule_type      String
+  department     Department                  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  type           MonthlyDistributionRuleType
   configuration  Json
 
   @@map("monthly_distribution_rules")
+}
+
+enum MonthlyDistributionRuleType {
+  BALANCE_NIGHTS
+  BALANCE_WEEKENDS
+  LIMIT_OVERTIME
+  ROTATE_HOLIDAYS
+  FAIRNESS_PRIORITY
+  DISTRIBUTE_NEW_STAFF
+  ICU_ROTATION
 }
 
 model Integration {

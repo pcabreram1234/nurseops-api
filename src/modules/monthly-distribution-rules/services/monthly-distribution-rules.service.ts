@@ -2,22 +2,18 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
 
-import { CreateWorkRuleDto } from "../dto/create-work-rule.dto";
-
-import { UpdateWorkRuleDto } from "../dto/update-work-rule.dto";
-
 @Injectable()
-export class WorkRulesService {
+export class MonthlyDistributionRulesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateWorkRuleDto) {
-    return this.prisma.workRule.create({
+  async create(dto: any) {
+    return this.prisma.monthlyDistributionRule.create({
       data: dto,
     });
   }
 
   async findAll(organizationId: string) {
-    return this.prisma.workRule.findMany({
+    return this.prisma.monthlyDistributionRule.findMany({
       where: {
         organizationId,
       },
@@ -25,21 +21,21 @@ export class WorkRulesService {
   }
 
   async findOne(id: string) {
-    const rule = await this.prisma.workRule.findUnique({
+    const rule = await this.prisma.monthlyDistributionRule.findUnique({
       where: { id },
     });
 
     if (!rule) {
-      throw new NotFoundException("Work rule not found");
+      throw new NotFoundException("Distribution rule not found");
     }
 
     return rule;
   }
 
-  async update(id: string, dto: UpdateWorkRuleDto) {
+  async update(id: string, dto: any) {
     await this.findOne(id);
 
-    return this.prisma.workRule.update({
+    return this.prisma.monthlyDistributionRule.update({
       where: { id },
 
       data: dto,
@@ -48,7 +44,8 @@ export class WorkRulesService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.workRule.delete({
+
+    return this.prisma.monthlyDistributionRule.delete({
       where: { id },
     });
   }
