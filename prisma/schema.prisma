@@ -84,6 +84,7 @@ model Organization {
   nurseRestrictions        NurseRestriction[]
   vacations                Vacation[]
   departmentConfigurations DepartmentConfiguration[]
+  specialities             Speciality[]
 
   @@map("organizations")
 }
@@ -755,9 +756,15 @@ model OptimizationScore {
 model Speciality {
   id                     String                 @id @default(uuid())
   name                   String
+  organizationId         String
+  organization           Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code                   String
   description            String
   departmentSpecialities DepartmentSpeciality[]
   nurses                 Nurse[]
+  isActive               Boolean                @default(true)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
 
   @@map("specialities")
 }
