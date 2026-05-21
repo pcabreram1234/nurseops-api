@@ -24,6 +24,10 @@ import { SchedulesModule } from "@modules/schedules/schedules.module";
 import { WorkRulesModule } from "@modules/work-rules/work-rules.module";
 import { RuleGroupsModule } from "@modules/rule-groups/rule-groups.module";
 import { EmergencyCoveragesModule } from "@modules/emergency-coverages/emergency-coverages.module";
+import { ScheduleVersionsModule } from "@modules/schedule-versions/schedule-versions.module";
+import { ShiftTemplatesModule } from "@modules/shift-templates/shift-templates.module";
+import { SpecialitiesModule } from "@modules/specialities/specialities.module";
+import { DepartmentConfigurationsModule } from "@modules/department-configurations/department-configurations.module";
 
 @Module({
   imports: [
@@ -53,6 +57,10 @@ import { EmergencyCoveragesModule } from "@modules/emergency-coverages/emergency
     WorkRulesModule,
     RuleGroupsModule,
     EmergencyCoveragesModule,
+    ScheduleVersionsModule,
+    ShiftTemplatesModule,
+    SpecialitiesModule,
+    DepartmentConfigurationsModule,
   ],
 })
 export class AppModule {}
