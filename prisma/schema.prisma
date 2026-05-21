@@ -1380,11 +1380,19 @@ model WorkRuleConditions {
 }
 
 model WorkRuleActions {
-  id           String   @id @default(ulid())
-  workRuleId   String
-  workRules    WorkRule @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
-  action_type  String
-  action_value String
+  id              String   @id @default(ulid())
+  workRuleId      String
+  workRules       WorkRule @relation(fields: [workRuleId], references: [id], onDelete: Cascade)
+  action_type     String
+  action_value    String
+  priority        Int      @default(1)
+  enabled         Boolean  @default(true)
+  stop_execution  Boolean  @default(false)
+  async_execution Boolean  @default(false)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  @@map("work_rule_actions")
 }
 
 model RuleGroup {
