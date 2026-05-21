@@ -83,6 +83,7 @@ model Organization {
   nurseAvailabilities      NurseAvailability[]
   nurseRestrictions        NurseRestriction[]
   vacations                Vacation[]
+  departmentConfigurations DepartmentConfiguration[]
 
   @@map("organizations")
 }
@@ -229,13 +230,17 @@ model DepartmentSpeciality {
 }
 
 model DepartmentConfiguration {
-  id                      String     @id @default(uuid())
+  id                      String       @id @default(uuid())
+  organizationId          String
+  organization            Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   departmentId            String
-  department              Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  max_nigths              Int
+  department              Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  max_nights              Int
   minimum_staff_per_shift Int
   allow_externeal_support Boolean
   allow_double_shift      Boolean
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
 
   @@map("department_configurations")
 }
