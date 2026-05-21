@@ -85,6 +85,7 @@ model Organization {
   vacations                Vacation[]
   departmentConfigurations DepartmentConfiguration[]
   specialities             Speciality[]
+  shiftChangeRequests      ShiftChangeRequest[]
 
   @@map("organizations")
 }
@@ -1264,8 +1265,10 @@ model ShiftTemplate {
 // ==========================================
 
 model ShiftChangeRequest {
-  id     String        @id @default(uuid())
-  status RequestStatus @default(AWAITING_OTHER_NURSE)
+  id             String        @id @default(uuid())
+  status         RequestStatus @default(AWAITING_OTHER_NURSE)
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Quién pide el cambio y a quién
   requesterId String
@@ -1280,8 +1283,16 @@ model ShiftChangeRequest {
   targetShift   Shift?  @relation("TargetShift", fields: [targetShiftId], references: [id], onDelete: SetNull)
 
   // Aprobación del supervisor
-  approverId String?
-  approver   User?   @relation("ApproverSupervisor", fields: [approverId], references: [id])
+  approverId       String?
+  approver         User?     @relation("ApproverSupervisor", fields: [approverId], references: [id])
+  supervisorNotes  String?
+  autoApproved     Boolean   @default(false)
+  emergencyRequest Boolean   @default(false)
+  aiRiskScore      Float?
+  aiRecommendation Json?
+  expiresAt        DateTime?
+  approvedAt       DateTime?
+  rejectedAt       DateTime?
 
   reason    String?
   createdAt DateTime @default(now())
@@ -1329,6 +1340,7 @@ enum RequestStatus {
   UNDER_SUPVERSION
   APPROVED_BY_SUPERVISOR
   REJECTED_BY_SUPERVISOR
+  REJECTED
   CANCELLED
   EXPIRED
   COMPLETED
