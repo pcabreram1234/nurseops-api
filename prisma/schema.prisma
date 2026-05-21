@@ -221,10 +221,14 @@ enum DepartmentCriticalLevel {
 }
 
 model DepartmentSpeciality {
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  specialityId String
-  speciality   Speciality @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+  departmentId  String
+  department    Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  specialityId  String
+  speciality    Speciality @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+  required      Boolean    @default(true)
+  priority      Int        @default(1)
+  minimum_staff Int?
+  createdAt     DateTime   @default(now())
 
   @@id([departmentId, specialityId])
   @@map("department_specialties")
