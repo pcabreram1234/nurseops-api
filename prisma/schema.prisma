@@ -1236,11 +1236,19 @@ model ShiftTemplate {
   id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  department     Department   @relation(fields: [id], references: [id], onDelete: Cascade)
+  departmentId   String
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   name           String // E.g., "Turno Matutino Estándar"
+  description    String
   configuration  Json
   startTime      String // Almacenado como "07:00"
   endTime        String // Almacenado como "15:00"
+  color          String?
+  isActive       Boolean      @default(true)
+  autoAssignable Boolean      @default(true)
+  priority       Int          @default(1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@map("shift_templates")
 }
