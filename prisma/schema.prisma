@@ -87,6 +87,7 @@ model Organization {
   specialities             Speciality[]
   shiftChangeRequests      ShiftChangeRequest[]
   shiftChangeApprovals     ShiftChangeApprovals[]
+  shiftChangeDocuments     ShiftChangeDocument[]
 
   @@map("organizations")
 }
@@ -1025,6 +1026,7 @@ model User {
   vacations            Vacation[]
   schedules            Schedule[]
   scheduleVersions     ScheduleVersion[]
+  uploadDocuments      ShiftChangeDocument[]  @relation("UploadedDocuments")
 
   @@map("users")
 }
@@ -1298,6 +1300,7 @@ model ShiftChangeRequest {
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   shiftChangeApprovals ShiftChangeApprovals[]
+  shiftChangeDocuments ShiftChangeDocument[]
 
   @@map("shift_change_requests")
 }
@@ -1327,13 +1330,42 @@ model ShiftChangeApprovals {
 }
 
 model ShiftChangeDocument {
-  id          String  @id @default(uuid())
-  requesterId String
-  requester   User    @relation("UserDocuments", fields: [requesterId], references: [id])
-  documentUrl String
-  userId      String?
+  id                   String                  @id @default(uuid())
+  organizationId       String
+  organization         Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  shiftChangeRequestId String
+  shiftChangeRequest   ShiftChangeRequest      @relation(fields: [shiftChangeRequestId], references: [id], onDelete: Cascade)
+  requesterId          String
+  requester            User                    @relation("UserDocuments", fields: [requesterId], references: [id])
+  uploadedById         String?
+  uploadedBy           User?                   @relation("UploadedDocuments", fields: [uploadedById], references: [id])
+  documentType         ShiftChangeDocumentType
+  fileName             String
+  documentUrl          String
+  mimeType             String
+  size                 Int
+  description          String?
+  verified             Boolean                 @default(false)
+  verifiedById         String?
+  verifiedAt           DateTime?
+  expiresAt            DateTime?
+  aiAnalysis           Json?
+  metadata             Json?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  deletedAt            DateTime?
 
   @@map("shift_change_documents")
+}
+
+enum ShiftChangeDocumentType {
+  MEDICAL_CERTIFICATE
+  EMERGENCY_JUSTIFICATION
+  SUPERVISOR_APPROVAL
+  LEGAL_DOCUMENT
+  FATIGUE_REPORT
+  INCIDENT_REPORT
+  OTHER
 }
 
 enum ChangeApprovalsTypes {
