@@ -348,7 +348,7 @@ model OptimizationRun {
   id         String   @id @default(uuid())
   scheduleId String
   schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  startedAtd DateTime
+  startedAt DateTime
   fineshedAt DateTime
   result     Json
 
