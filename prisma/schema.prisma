@@ -1115,6 +1115,12 @@ model Module {
   code        String     @unique
   name        String
   description String
+  category    String?
+  version     String?
+  icon        String?
+  route       String?
+  isCore      Boolean
+  isSystem    Boolean
   isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
   auditLogs   AuditLog[]

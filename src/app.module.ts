@@ -35,6 +35,7 @@ import { ShiftChangeRequestsModule } from "@modules/shift-change-requests/shift-
 import { ShiftChangeDocumentsModule } from "@modules/shift-change-documents/shift-change-documents.module";
 import { NotificationTypesModule } from "@modules/notification-types/notification-types.module";
 import { NotificationTemplatesModule } from "@modules/notification-templates/notification-templates.module";
+import { ModulesModule } from "@modules/modules/modules.module";
 
 @Module({
   imports: [
@@ -79,7 +80,8 @@ import { NotificationTemplatesModule } from "@modules/notification-templates/not
     ShiftChangeRequestsModule,
     ShiftChangeDocumentsModule,
     NotificationTypesModule,
-    NotificationTemplatesModule
+    NotificationTemplatesModule,
+    ModulesModule
   ],
 })
 export class AppModule { }
