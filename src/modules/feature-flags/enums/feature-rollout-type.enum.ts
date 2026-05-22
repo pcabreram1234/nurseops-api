@@ -1,0 +1,5 @@
+export enum FeatureRolloutType {
+    IMMEDIATE = 'IMMEDIATE',
+    PERCENTAGE = 'PERCENTAGE',
+    DEPARTMENT_SPECIFIC = 'DEPARTMENT_SPECIFIC',
+}
