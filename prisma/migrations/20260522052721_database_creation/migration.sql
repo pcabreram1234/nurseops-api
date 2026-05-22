@@ -59,6 +59,9 @@ CREATE TYPE "MonthlyDistributionRuleType" AS ENUM ('BALANCE_NIGHTS', 'BALANCE_WE
 CREATE TYPE "ProviderList" AS ENUM ('TWILIO', 'WHATSAPP', 'GOOGLE_CALENDAR', 'OUTLOOK', 'SAP', 'ORACLE_HR', 'BIOMETRIC_SYSTEM', 'SMTP', 'FIREBASE', 'SENDGRID', 'SLACK', 'WORKDAY', 'OPENAI', 'CUSTOM');
 
 -- CreateEnum
+CREATE TYPE "NotificationChannelType" AS ENUM ('EMAIL', 'SMS', 'PUSH', 'WHATSAPP', 'IN_APP');
+
+-- CreateEnum
 CREATE TYPE "NotificationCategoryTypes" AS ENUM ('SCHEDULE_PUBLISHED', 'SCHEDULE_UPDATED', 'SCHEDULE_ASSIGNMENT', 'SCHEDULE_REMOVED', 'SCHEDULE_CONFLICT', 'SCHEDULE_REMINDER', 'SHIFT_CHANGE_REQUESTED', 'SHIFT_CHANGE_APPROVED', 'SHIFT_CHANGE_REJECTED', 'SHIFT_CHANGE_CANCELLED', 'SHIFT_CHANGE_EXPIRED', 'SHIFT_CHANGE_REQUIRES_CONFIRMATION', 'VACATION_REQUESTED', 'VACATION_APPROVED', 'VACATION_REJECTED', 'VACATION_REMINDER', 'VACATION_CONFLICT', 'LEAVE_REQUESTED', 'LEAVE_APPROVED', 'LEAVE_REJECTED', 'MEDICAL_DOCUMENT_REQUIRED', 'EMERGENCY_SHIFT_NEEDED', 'EMERGENCY_SHIFT_ASSIGNED', 'COVERAGE_SHORTAGE', 'COVERAGE_REQUEST', 'BACKUP_STAFF_REQUIRED', 'RULE_VIOLATION', 'OVERTIME_WARNING', 'NIGHT_SHIFT_LIMIT_REACHED', 'REST_PERIOD_VIOLATION', 'MONTHLY_HOUR_LIMIT_REACHED', 'APPROVAL_REQUIRED', 'APPROVAL_PENDING', 'APPROVAL_COMPLETED', 'APPROVAL_OVERDUE', 'DOCUMENT_EXPIRING', 'CREDENTIAL_EXPIRING', 'CONTRACT_UPDATE', 'POLICY_UPDATE', 'SYSTEM_MAINTENANCE', 'SECURITY_ALERT', 'PASSWORD_CHANGED', 'LOGIN_DETECTED', 'SCHEDULE_OPTIMIZED', 'FAIRNESS_ALERT', 'FATIGUE_RISK_DETECTED', 'STAFFING_PREDICTION_ALERT');
 
 -- CreateEnum
@@ -542,12 +545,23 @@ CREATE TABLE "notifications" (
 -- CreateTable
 CREATE TABLE "notification_types" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT,
     "category" "NotificationCategoryTypes" NOT NULL,
     "priority" "PriorityTypes" NOT NULL,
     "templateId" TEXT NOT NULL,
     "icon" TEXT NOT NULL,
+    "channels" JSONB,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "allowPush" BOOLEAN NOT NULL DEFAULT true,
+    "allowEmail" BOOLEAN NOT NULL DEFAULT true,
+    "allowSMS" BOOLEAN NOT NULL DEFAULT false,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "notification_types_pkey" PRIMARY KEY ("id")
 );
@@ -555,9 +569,23 @@ CREATE TABLE "notification_types" (
 -- CreateTable
 CREATE TABLE "notification_templates" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "channel" "NotificationChannelType" NOT NULL,
+    "language" TEXT NOT NULL DEFAULT 'es',
+    "version" INTEGER NOT NULL DEFAULT 1,
     "code" TEXT NOT NULL,
-    "title_template" TEXT NOT NULL,
-    "body_template" TEXT NOT NULL,
+    "titleTemplate" TEXT NOT NULL,
+    "bodyTemplate" TEXT NOT NULL,
+    "htmlTemplate" TEXT NOT NULL,
+    "variables" JSONB NOT NULL,
+    "metadata" JSONB NOT NULL,
+    "previewPayload" JSONB NOT NULL,
+    "isActive" BOOLEAN NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "notification_templates_pkey" PRIMARY KEY ("id")
 );
@@ -604,6 +632,12 @@ CREATE TABLE "modules" (
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "category" TEXT,
+    "version" TEXT,
+    "icon" TEXT,
+    "route" TEXT,
+    "isCore" BOOLEAN NOT NULL,
+    "isSystem" BOOLEAN NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -1098,7 +1132,13 @@ ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN K
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "notification_types" ADD CONSTRAINT "notification_types_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "notification_types" ADD CONSTRAINT "notification_types_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "notification_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "notification_templates" ADD CONSTRAINT "notification_templates_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;

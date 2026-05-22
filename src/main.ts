@@ -4,7 +4,6 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import helmet from "helmet";
 import { ResponseInterceptor } from "@common/interceptors/response.interceptor";
 import { AuditInterceptor } from "@common/interceptors/audit.interceptor";
-import { PrismaService } from "@infra/database/prisma.service";
 import { GlobalExceptionFilter } from "@common/filters/global-exception.filter";
 import { AppModule } from "./app.module";
 
@@ -65,7 +64,7 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  app.useGlobalInterceptors(app.get(AuditInterceptor));
+  // app.useGlobalInterceptors(app.get(AuditInterceptor));
 
   /*
   |--------------------------------------------------------------------------

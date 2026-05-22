@@ -1,6 +1,10 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
+import { AuditInterceptor } from "@common/interceptors/audit.interceptor";
+import { AuditActionMapperService } from "@modules/audit-log/services/audit-action-mapper.service";
+import { AuditRouteFilterService } from "@modules/audit-log/services/audit-route-filter.service";
+import { AuditSanitizerService } from "@modules/audit-log/services/audit-sanitizer.service";
 
 import { PrismaModule } from "@infra/database/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -36,6 +40,7 @@ import { ShiftChangeDocumentsModule } from "@modules/shift-change-documents/shif
 import { NotificationTypesModule } from "@modules/notification-types/notification-types.module";
 import { NotificationTemplatesModule } from "@modules/notification-templates/notification-templates.module";
 import { ModulesModule } from "@modules/modules/modules.module";
+import { ActivityLogsModule } from "@modules/activity-logs/activity-logs.module";
 
 @Module({
   imports: [
@@ -81,7 +86,9 @@ import { ModulesModule } from "@modules/modules/modules.module";
     ShiftChangeDocumentsModule,
     NotificationTypesModule,
     NotificationTemplatesModule,
-    ModulesModule
+    ModulesModule,
+    ActivityLogsModule
   ],
+  providers: [AuditInterceptor, AuditActionMapperService, AuditRouteFilterService, AuditSanitizerService]
 })
 export class AppModule { }
