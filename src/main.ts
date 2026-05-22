@@ -65,7 +65,7 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  app.useGlobalInterceptors(new AuditInterceptor(app.get(PrismaService)));
+  app.useGlobalInterceptors(app.get(AuditInterceptor));
 
   /*
   |--------------------------------------------------------------------------
