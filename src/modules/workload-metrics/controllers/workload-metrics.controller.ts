@@ -22,6 +22,8 @@ import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 import { CreateWorkloadMetricDto } from "../dto/create-workload-metric.dto";
 import { UpdateWorkloadMetricDto } from "../dto/update-workload-metric.dto";
 import { WorkloadMetricFilterDto } from "../dto/workload-metric-filter.dto";
+import { WorkloadSummaryDto } from "../dto/workload-summary.dto";
+import { WorkloadAnalyticsService } from "../services/workload-analytics.service";
 
 @Controller({
   path: "workload-metrics",
@@ -31,7 +33,8 @@ import { WorkloadMetricFilterDto } from "../dto/workload-metric-filter.dto";
 export class WorkloadMetricsController {
   constructor(
     private readonly workloadMetricsService: WorkloadMetricsService,
-  ) {}
+    private readonly analyticsService: WorkloadAnalyticsService,
+  ) { }
 
   @Post()
   @Permissions("CREATE_WORKLOAD_METRICS")
@@ -43,6 +46,12 @@ export class WorkloadMetricsController {
   @Permissions("VIEW_WORKLOAD_METRICS")
   findAll(@Query() query: WorkloadMetricFilterDto, @CurrentUser() user: any) {
     return this.workloadMetricsService.findAll(query, user);
+  }
+
+  @Get('dashboard')
+  @Permissions('VIEW_CLINICAL_ANALYTICS')
+  getDashboard(@Query() query: WorkloadSummaryDto) {
+    return this.analyticsService.getOrganizationDashboard(query);
   }
 
   @Patch(":id")

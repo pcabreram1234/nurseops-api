@@ -1,10 +1,38 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-
 import { PrismaService } from "@infra/database/prisma.service";
+import { WorkloadMetricFilterDto } from '../dto/workload-metric-filter.dto';
+import { WorkloadCacheService } from './workload-cache.service';
+
 
 @Injectable()
 export class WorkloadMetricsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: WorkloadCacheService,
+  ) { }
+
+  async findHistoricalMetrics(filters: WorkloadMetricFilterDto, user: any) {
+    if (filters.nurseId && filters.month && filters.year) {
+      const cached = await this.cache.getNurseMetrics(filters.nurseId, filters.month, filters.year);
+      if (cached) return cached;
+    }
+
+    const records = await this.prisma.workLoadMetrics.findMany({
+      where: {
+        organizationId: user.organizationId,
+        ...(filters.nurseId && { nurseId: filters.nurseId }),
+        ...(filters.month && { month: filters.month }),
+        ...(filters.year && { year: filters.year }),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (filters.nurseId && filters.month && filters.year && records.length > 0) {
+      await this.cache.setNurseMetrics(filters.nurseId, filters.month, filters.year, records[0]);
+    }
+
+    return records;
+  }
 
   async create(dto: any, user: any) {
     return this.prisma.workLoadMetrics.create({

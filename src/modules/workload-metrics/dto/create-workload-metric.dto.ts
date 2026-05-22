@@ -1,47 +1,53 @@
-import { IsUUID, IsNumber, IsInt, IsOptional } from "class-validator";
+import { IsString, IsNotEmpty, IsNumber, Min, Max, IsNumberString } from 'class-validator';
 
 export class CreateWorkloadMetricDto {
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
+  organizationId!: string;
+
+  @IsString()
+  @IsNotEmpty()
   nurseId!: string;
 
-  @IsInt()
+  @IsNumberString()
+  total_hours!: string;
+
+  @IsNumberString()
+  overtime_hours!: string;
+
+  @IsNumber()
+  @Min(1)
+  @Max(12)
   month!: number;
 
-  @IsInt()
+  @IsNumber()
+  @Min(2020)
   year!: number;
 
-  @IsNumber()
-  total_hours!: number;
+  @IsNumberString()
+  regular_hours!: string;
 
-  @IsNumber()
-  regular_hours!: number;
+  @IsNumberString()
+  nigth_hours!: string;
 
-  @IsNumber()
-  night_hours!: number;
+  @IsNumberString()
+  weekend_hours!: string;
 
-  @IsNumber()
-  weekend_hours!: number;
+  @IsNumberString()
+  holidy_hours!: string;
 
-  @IsNumber()
-  holiday_hours!: number;
+  @IsNumberString()
+  emergency_hours!: string;
 
-  @IsNumber()
-  overtime_hours!: number;
+  @IsNumberString()
+  fatigue_score!: string;
 
-  @IsNumber()
-  emergency_hours!: number;
+  @IsNumberString()
+  fairness_score!: string;
 
-  @IsNumber()
-  fatigue_score!: number;
+  @IsNumberString()
+  workload_score!: string;
 
-  @IsNumber()
-  fairness_score!: number;
-
-  @IsOptional()
-  @IsNumber()
-  workload_score?: number;
-
-  @IsOptional()
-  @IsNumber()
-  burnout_risk?: number;
+  @IsNumberString()
+  burnout_risk!: string;
 }
