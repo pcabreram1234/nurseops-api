@@ -89,6 +89,7 @@ model Organization {
   shiftChangeApprovals     ShiftChangeApprovals[]
   shiftChangeDocuments     ShiftChangeDocument[]
   notificationTypes        NotificationType[]
+  notificationTemplates    NotificationTemplates[]
 
   @@map("organizations")
 }
@@ -927,13 +928,36 @@ model NotificationType {
 }
 
 model NotificationTemplates {
-  id                String             @id @default(uuid())
-  code              String             @unique
-  title_template    String
-  body_template     String
+  id                String                  @id @default(uuid())
+  organizationId    String
+  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name              String
+  description       String
+  channel           NotificationChannelType
+  language          String                  @default("es")
+  version           Int                     @default(1)
+  code              String                  @unique
+  titleTemplate     String
+  bodyTemplate      String
+  htmlTemplate      String
+  variables         Json
+  metadata          Json
+  previewPayload    Json
+  isActive          Boolean
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  deletedAt         DateTime?
   notificationTypes NotificationType[]
 
   @@map("notification_templates")
+}
+
+enum NotificationChannelType {
+  EMAIL
+  SMS
+  PUSH
+  WHATSAPP
+  IN_APP
 }
 
 enum NotificationCategoryTypes {
