@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+
+import { EventEmitterModule } from '@nestjs/event-emitter';
+
 import { ScheduleModule } from '@nestjs/schedule';
 import { ShiftChangeApprovalsController } from './controllers/shift-change-approvals.controller';
 import { ShiftChangeApprovalsService } from './services/shift-change-approvals.service';
@@ -28,6 +31,7 @@ import { RemindPendingApprovalsJob } from './jobs/remind-pending-approvals.job';
 @Module({
   imports: [
     ScheduleModule.forRoot(), // Soporte para los @Cron Jobs de expiración
+    EventEmitterModule.forRoot()
   ],
   controllers: [ShiftChangeApprovalsController],
   providers: [
@@ -39,22 +43,22 @@ import { RemindPendingApprovalsJob } from './jobs/remind-pending-approvals.job';
     ApprovalNotificationService,
     ApprovalAiService,
     ShiftChangeApprovalsGateway,
-    
+
     // Validators de la cadena
     ApprovalPermissionValidator,
     ApprovalFlowValidator,
     ApprovalExpirationValidator,
     ApprovalStatusValidator,
-    
+
     // Listeners del bus de eventos interno
     ApprovalCreatedListener,
     ShiftChangeApprovedListener,
     ShiftChangeRejectedListener,
-    
+
     // Automatizaciones en background
     ExpireApprovalsJob,
     RemindPendingApprovalsJob,
   ],
   exports: [ShiftChangeApprovalsService, ApprovalEngineService],
 })
-export class ShiftChangeApprovalsModule {}
+export class ShiftChangeApprovalsModule { }

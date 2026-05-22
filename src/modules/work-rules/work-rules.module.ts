@@ -12,6 +12,7 @@ import { MaxHoursValidator } from "./validators/max-hours.validator";
 import { NightShiftsValidator } from "./validators/night-shifts.validator";
 import { ConsecutiveDaysValidator } from "./validators/consecutive-days.validator";
 import { WorkRuleListener } from "./listeners/work-rule.listener";
+import { WorkRuleRegistryService } from "./services/work-rule-registry.service";
 
 @Module({
   imports: [PrismaModule],
@@ -20,6 +21,8 @@ import { WorkRuleListener } from "./listeners/work-rule.listener";
 
   providers: [
     WorkRulesService,
+
+    WorkRuleRegistryService,
 
     WorkRuleEngineService,
 
@@ -33,4 +36,4 @@ import { WorkRuleListener } from "./listeners/work-rule.listener";
   ],
   exports: [WorkRulesService, WorkRuleEngineService],
 })
-export class WorkRulesModule {}
+export class WorkRulesModule { }

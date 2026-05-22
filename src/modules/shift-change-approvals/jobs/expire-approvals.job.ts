@@ -1,18 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '@infra/database/prisma.service';
 import { ApprovalStatus } from '../enums/approval-status.enum';
 
 @Injectable()
 export class ExpireApprovalsJob {
   private readonly logger = new Logger(ExpireApprovalsJob.name);
 
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleCron() {
     this.logger.log('Initiating automatic verification of approval expirations...');
-    
+
     const now = new Date();
     const result = await this.prisma.shiftChangeApprovals.updateMany({
       where: {

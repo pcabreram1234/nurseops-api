@@ -12,10 +12,11 @@ import { PrismaService } from "@infra/database/prisma.service";
 import { CreateUserDto } from "../dto/create-user.dto";
 
 import { UpdateUserDto } from "../dto/update-user.dto";
+import { randomUUID } from "node:crypto";
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /*
   |--------------------------------------------------------------------------
@@ -43,6 +44,7 @@ export class UsersService {
         password: hashedPassword,
 
         status: "ACTIVE",
+        auditLogId: randomUUID()
       },
 
       include: {
@@ -192,7 +194,7 @@ export class UsersService {
       },
 
       data: {
-        status: "DELETED",
+        status: "INACTIVE",
       },
       select: { id: true, email: true },
     });

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '@infra/database/prisma.service';
 import { ApprovalLevel } from '../enums/approval-level.enum';
 
 @Injectable()
 export class ApprovalFlowService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async determineRequiredLevel(departmentId: string): Promise<ApprovalLevel> {
     // Lógica dinámica: Si el departamento es crítico (ej: Quirófano o UCI), escala a Head of Dept.

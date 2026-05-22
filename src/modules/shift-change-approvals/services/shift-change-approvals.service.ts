@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '@infra/database/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateShiftChangeApprovalDto } from '../dto/create-shift-change-approval.dto';
 import { ShiftChangeApprovalFilterDto } from '../dto/shift-change-approval-filter.dto';
@@ -12,7 +12,7 @@ import { ApprovalCreatedEvent } from '../events/approval-created.event';
 @Injectable()
 export class ShiftChangeApprovalsService {
   constructor(
-    private readonly prisma: PrismaClient,
+    private readonly prisma: PrismaService,
     private readonly flowService: ApprovalFlowService,
     private readonly aiService: ApprovalAiService,
     private readonly notificationService: ApprovalNotificationService,

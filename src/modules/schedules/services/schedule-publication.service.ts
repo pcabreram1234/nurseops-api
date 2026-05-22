@@ -27,7 +27,7 @@ export class SchedulePublicationService {
 
     @InjectQueue("notifications")
     private readonly notificationsQueue: Queue,
-  ) {}
+  ) { }
 
   async publish(id: string, dto: any, user: any) {
     /*

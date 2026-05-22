@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient, ActionAuditLogTypes } from '@prisma/client';
+import { ActionAuditLogTypes } from '@prisma/client';
+import { PrismaService } from '@infra/database/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApprovalValidatorService } from './approval-validator.service';
 import { ApprovalAuditService } from './approval-audit.service';
@@ -12,11 +13,11 @@ import { ApprovalRejectedEvent } from '../events/approval-rejected.event';
 @Injectable()
 export class ApprovalEngineService {
   constructor(
-    private readonly prisma: PrismaClient,
+    private readonly prisma: PrismaService,
     private readonly validatorService: ApprovalValidatorService,
     private readonly auditService: ApprovalAuditService,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   async processApproval(approvalId: string, action: ActionAuditLogTypes, context: ApprovalContext, commentOrReason: string) {
     const approval = await this.prisma.shiftChangeApprovals.findUnique({
@@ -46,7 +47,7 @@ export class ApprovalEngineService {
           where: { id: approval?.id },
           data: { nurseId: approval?.requesterId },
         });
-        
+
         this.eventEmitter.emit(APPROVAL_EVENTS.APPROVED, new ApprovalApprovedEvent(approvalId, context.organizationId, context.userId));
       } else {
         this.eventEmitter.emit(APPROVAL_EVENTS.REJECTED, new ApprovalRejectedEvent(approvalId, context.organizationId, commentOrReason));

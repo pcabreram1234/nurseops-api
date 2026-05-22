@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { BullModule } from "@nestjs/bullmq";
 
 import { PrismaModule } from "@infra/database/prisma.module";
 
@@ -7,14 +8,18 @@ import { SchedulesPublicationController } from "./controllers/schedule-publicati
 
 import { SchedulesService } from "./services/schedules.service";
 import { SchedulePublicationService } from "./services/schedule-publication.service";
+import { ScheduleValidationService } from "./services/schedule-validation.service";
+import { ScheduleVersionService } from "./services/schedule-version.service";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, BullModule.registerQueue({
+    name: "notifications",
+  }),],
 
   controllers: [SchedulesController, SchedulesPublicationController],
 
-  providers: [SchedulesService, SchedulePublicationService],
+  providers: [SchedulesService, SchedulePublicationService, ScheduleValidationService, ScheduleVersionService],
 
-  exports: [SchedulesService, SchedulePublicationService],
+  exports: [SchedulesService, SchedulePublicationService, ScheduleValidationService, ScheduleVersionService],
 })
-export class SchedulesModule {}
+export class SchedulesModule { }

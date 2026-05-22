@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { BullModule } from "@nestjs/bullmq";
 
 import { PrismaModule } from "@infra/database/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -32,11 +33,18 @@ import { DepartmentSpecialitiesModule } from "@modules/department_specialities/d
 import { ShiftChangeApprovalsModule } from "@modules/shift-change-approvals/shift-change-approvals.module";
 import { ShiftChangeRequestsModule } from "@modules/shift-change-requests/shift-change-requests.module";
 import { ShiftChangeDocumentsModule } from "@modules/shift-change-documents/shift-change-documents.module";
+import { NotificationTypesModule } from "@modules/notification-types/notification-types.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      }
     }),
     PrismaModule,
     AuthModule,
@@ -68,7 +76,8 @@ import { ShiftChangeDocumentsModule } from "@modules/shift-change-documents/shif
     DepartmentSpecialitiesModule,
     ShiftChangeApprovalsModule,
     ShiftChangeRequestsModule,
-    ShiftChangeDocumentsModule
+    ShiftChangeDocumentsModule,
+    NotificationTypesModule
   ],
 })
 export class AppModule { }

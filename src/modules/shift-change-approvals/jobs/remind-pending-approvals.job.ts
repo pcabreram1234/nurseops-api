@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '@infra/database/prisma.service';
 import { ApprovalStatus } from '../enums/approval-status.enum';
 
 @Injectable()
 export class RemindPendingApprovalsJob {
   private readonly logger = new Logger(RemindPendingApprovalsJob.name);
 
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   @Cron(CronExpression.EVERY_DAY_AT_8AM) // Corre todas las mañanas a las 8 AM
   async handleCron() {
