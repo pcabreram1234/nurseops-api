@@ -88,6 +88,7 @@ model Organization {
   shiftChangeRequests      ShiftChangeRequest[]
   shiftChangeApprovals     ShiftChangeApprovals[]
   shiftChangeDocuments     ShiftChangeDocument[]
+  notificationTypes        NotificationType[]
 
   @@map("organizations")
 }
@@ -901,14 +902,26 @@ model Notification {
 }
 
 model NotificationType {
-  id         String                    @id @default(uuid())
-  code       String                    @unique
-  name       String
-  category   NotificationCategoryTypes
-  priority   PriorityTypes
-  templateId String
-  templae    NotificationTemplates     @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  icon       String
+  id             String                    @id @default(uuid())
+  organizationId String
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String                    @unique
+  name           String
+  description    String?
+  category       NotificationCategoryTypes
+  priority       PriorityTypes
+  templateId     String
+  templae        NotificationTemplates     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  icon           String
+  channels       Json?
+  isActive       Boolean                   @default(true)
+  allowPush      Boolean                   @default(true)
+  allowEmail     Boolean                   @default(true)
+  allowSMS       Boolean                   @default(false)
+  metadata       Json?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  deletedAt      DateTime?
 
   @@map("notification_types")
 }
