@@ -1,8 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, DepartmentType } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PERMISSIONS } from "../src/modules/permissions/constants/permissions.constants";
 import * as dotenv from "dotenv";
+import { randomUUID, } from "node:crypto";
 
 dotenv.config();
 
@@ -47,7 +48,12 @@ async function main() {
       organizationId: organization.id,
       name: "Ala Norte - Urgencias",
       address: "Av. Metropolitana #450",
-    },
+      city: "Santo Domingo",
+      state: "Distrito Nacional",
+      country: "República Dominicana",
+      zipCode: "10101",
+      phone: "+1-809-555-0101",
+    } as any,
   });
 
   // 4. Crear un Departamento vinculado a la Sucursal
@@ -56,9 +62,13 @@ async function main() {
       organizationId: organization.id,
       branchId: branch.id,
       name: "Unidad de Cuidados Intensivos (UCI)",
-      type: "CRITICAL_CARE",
+      type: DepartmentType.ICU,
       minimum_staff: 3,
-      critical_level: "HIGH",
+      criticalLevel: "HIGH",
+      code: "UCI-001",
+      description: "Departamento de cuidados intensivos para pacientes críticos.",
+      maxCapacity: 20,
+      allowOvertime: true,
     },
   });
 
@@ -91,6 +101,7 @@ async function main() {
       status: "ACTIVE",
       refreshToken: "",
       lastLoginAt: new Date(),
+      auditLogId: randomUUID()
     },
   });
 
@@ -106,6 +117,7 @@ async function main() {
       status: "ACTIVE",
       refreshToken: "",
       lastLoginAt: new Date(),
+      auditLogId: randomUUID()
     },
   });
   console.log("✅ Usuarios de prueba creados.");
@@ -114,6 +126,8 @@ async function main() {
   const speciality = await prisma.speciality.create({
     data: {
       name: "Cuidados Críticos Adultos",
+      code: "SP-CRIT-001",
+      organizationId: organization.id,
       description:
         "Especialidad enfocada en la estabilización de pacientes en estado crítico.",
     },
@@ -131,6 +145,7 @@ async function main() {
   const nurseProfile = await prisma.nurse.create({
     data: {
       userId: nurseUser.id,
+      organizationId: organization.id,
       departmentId: department.id,
       contract_type: "PERMANENT",
       hire_date: new Date("2024-01-15"),
@@ -142,12 +157,13 @@ async function main() {
   // Preferencias del enfermero
   await prisma.nursePreferences.create({
     data: {
-      userId: nurseUser.id,
-      preferredShift: "MANANA",
-      avoid_shifts: "NOCHE",
+      nurseId: nurseUser.id,
+      preferredShift: "MORNING",
+      avoid_shifts: "NIGHT",
       maxNigthsPerMonth: 4,
       maxDaysPerMonth: 20,
       preferredDaysOff: 8,
+      organizationId: organization.id
     },
   });
 
@@ -156,9 +172,12 @@ async function main() {
     data: {
       organizationId: organization.id,
       departmentId: department.id,
+      name: "Morning Shift",
+      code: "MSHIFT",
+      type: "MORNING",
       startTime: new Date("2026-06-01T07:00:00Z"),
       endTime: new Date("2026-06-01T15:00:00Z"),
-      duration_hours: new Date("1970-01-01T08:00:00Z"), // Objeto DateTime como pide tu modelo
+      durationHours: new Date("1970-01-01T08:00:00Z"), // Objeto DateTime como pide tu modelo
       color: "#3498db",
     },
   });
@@ -167,6 +186,7 @@ async function main() {
   await prisma.shiftChangeRequest.create({
     data: {
       status: "AWAITING_OTHER_NURSE",
+      organizationId: organization.id,
       requesterId: nurseUser.id,
       sourceShiftId: shift.id,
       reason: "Cita médica familiar por la mañana",

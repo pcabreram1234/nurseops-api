@@ -5,10 +5,19 @@ CREATE TYPE "SystemConfigurationKeys" AS ENUM ('MAX_MONTHLY_HOURS', 'MIN_REST_HO
 CREATE TYPE "FeaturTypes" AS ENUM ('AUTO_SCHEDULING', 'SHIFT_SWAP_AUTOMATION', 'AI_FATIGUE_ANALYSIS', 'WHATSAPP_NOTIFICATIONS', 'EMERGENCY__AI', 'DARK_MODE', 'MULTI_BRANCH_SUPPORT');
 
 -- CreateEnum
+CREATE TYPE "DepartmentType" AS ENUM ('ICU', 'ER', 'PEDIATRICS', 'SURGERY', 'CARDIOLOGY', 'RADIOLOGY', 'ONCOLOGY', 'MATERNITY', 'LABORATORY', 'TRAUMA', 'INTERNAL_MEDICINE', 'GENERAL');
+
+-- CreateEnum
+CREATE TYPE "DepartmentCriticalLevel" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+
+-- CreateEnum
 CREATE TYPE "OperationalAlertStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'RESOLVED', 'IGNORED', 'ESCALATED');
 
 -- CreateEnum
 CREATE TYPE "OperationalAlertyTypes" AS ENUM ('STAFF_SHORTAGE', 'OVERTIME_RISK', 'FATIGUE_RISK', 'RULE_VIOLATION', 'NO_NIGHT_COVERAGE', 'MULTIPLE_ABSENCES', 'OVERLOADED_NURSE', 'UNBALANCED_DISTRIBUTION', 'EMERGENCY_COVERAGE_REQUIRED');
+
+-- CreateEnum
+CREATE TYPE "ScheduleStatus" AS ENUM ('DRAFT', 'GENERATING', 'GENERATED', 'UNDER_REVIEW', 'APPROVED', 'PUBLISHED', 'ARCHIVED', 'CANCELLED');
 
 -- CreateEnum
 CREATE TYPE "ScheduleEntryStatus" AS ENUM ('ASSIGNED', 'CONFIRMED', 'PENDING', 'CANCELLED', 'REPLACED');
@@ -44,7 +53,10 @@ CREATE TYPE "NurseStatusType" AS ENUM ('ACTIVE', 'INACTIVE', 'VACATION', 'LICENS
 CREATE TYPE "ContracTypeList" AS ENUM ('PERMANENT', 'TEMPORAL', 'PER_DIEM', 'PART_TIME');
 
 -- CreateEnum
-CREATE TYPE "ProviderList" AS ENUM ('TWILIO', 'WHATSAPP', 'GOOGLE_CALENDAR', 'OUTLOOK', 'SAP', 'ORACLE_HR', 'BIOMETRIC_SYSTEM', 'SMTP', 'FIREBASE');
+CREATE TYPE "MonthlyDistributionRuleType" AS ENUM ('BALANCE_NIGHTS', 'BALANCE_WEEKENDS', 'LIMIT_OVERTIME', 'ROTATE_HOLIDAYS', 'FAIRNESS_PRIORITY', 'DISTRIBUTE_NEW_STAFF', 'ICU_ROTATION');
+
+-- CreateEnum
+CREATE TYPE "ProviderList" AS ENUM ('TWILIO', 'WHATSAPP', 'GOOGLE_CALENDAR', 'OUTLOOK', 'SAP', 'ORACLE_HR', 'BIOMETRIC_SYSTEM', 'SMTP', 'FIREBASE', 'SENDGRID', 'SLACK', 'WORKDAY', 'OPENAI', 'CUSTOM');
 
 -- CreateEnum
 CREATE TYPE "NotificationCategoryTypes" AS ENUM ('SCHEDULE_PUBLISHED', 'SCHEDULE_UPDATED', 'SCHEDULE_ASSIGNMENT', 'SCHEDULE_REMOVED', 'SCHEDULE_CONFLICT', 'SCHEDULE_REMINDER', 'SHIFT_CHANGE_REQUESTED', 'SHIFT_CHANGE_APPROVED', 'SHIFT_CHANGE_REJECTED', 'SHIFT_CHANGE_CANCELLED', 'SHIFT_CHANGE_EXPIRED', 'SHIFT_CHANGE_REQUIRES_CONFIRMATION', 'VACATION_REQUESTED', 'VACATION_APPROVED', 'VACATION_REJECTED', 'VACATION_REMINDER', 'VACATION_CONFLICT', 'LEAVE_REQUESTED', 'LEAVE_APPROVED', 'LEAVE_REJECTED', 'MEDICAL_DOCUMENT_REQUIRED', 'EMERGENCY_SHIFT_NEEDED', 'EMERGENCY_SHIFT_ASSIGNED', 'COVERAGE_SHORTAGE', 'COVERAGE_REQUEST', 'BACKUP_STAFF_REQUIRED', 'RULE_VIOLATION', 'OVERTIME_WARNING', 'NIGHT_SHIFT_LIMIT_REACHED', 'REST_PERIOD_VIOLATION', 'MONTHLY_HOUR_LIMIT_REACHED', 'APPROVAL_REQUIRED', 'APPROVAL_PENDING', 'APPROVAL_COMPLETED', 'APPROVAL_OVERDUE', 'DOCUMENT_EXPIRING', 'CREDENTIAL_EXPIRING', 'CONTRACT_UPDATE', 'POLICY_UPDATE', 'SYSTEM_MAINTENANCE', 'SECURITY_ALERT', 'PASSWORD_CHANGED', 'LOGIN_DETECTED', 'SCHEDULE_OPTIMIZED', 'FAIRNESS_ALERT', 'FATIGUE_RISK_DETECTED', 'STAFFING_PREDICTION_ALERT');
@@ -59,10 +71,22 @@ CREATE TYPE "ActionAuditLogTypes" AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'APPROV
 CREATE TYPE "PreferredShift" AS ENUM ('MORNING', 'AFTERNOON', 'NIGHT', 'MORNING_AFTERNOON', 'MORNING_NIGHT', 'NIGTH_AFTERNOON');
 
 -- CreateEnum
+CREATE TYPE "ShiftType" AS ENUM ('MORNING', 'AFTERNOON', 'NIGHT', 'FULL_DAY', 'ON_CALL', 'EMERGENCY', 'WEEKEND', 'HOLIDAY');
+
+-- CreateEnum
+CREATE TYPE "EmergencyCoverageStatus" AS ENUM ('OPEN', 'MATCHING', 'CANDIDATES_FOUND', 'ASSIGNED', 'ACCEPTED', 'REJECTED', 'CANCELLED', 'EXPIRED', 'COMPLETED');
+
+-- CreateEnum
+CREATE TYPE "ShiftChangeDocumentType" AS ENUM ('MEDICAL_CERTIFICATE', 'EMERGENCY_JUSTIFICATION', 'SUPERVISOR_APPROVAL', 'LEGAL_DOCUMENT', 'FATIGUE_REPORT', 'INCIDENT_REPORT', 'OTHER');
+
+-- CreateEnum
 CREATE TYPE "ChangeApprovalsTypes" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'EXPIRED');
 
 -- CreateEnum
-CREATE TYPE "RequestStatus" AS ENUM ('AWAITING_OTHER_NURSE', 'REJECTED_BY_NURSE', 'ACCEPTED_BY_NURSE', 'UNDER_SUPVERSION', 'APPROVED_BY_SUPERVISOR', 'REJECTED_BY_SUPERVISOR', 'CANCELLED', 'EXPIRED', 'COMPLETED', 'ROLLED_BACK', 'CONFLIC_DETECTED');
+CREATE TYPE "RequestStatus" AS ENUM ('AWAITING_OTHER_NURSE', 'REJECTED_BY_NURSE', 'ACCEPTED_BY_NURSE', 'UNDER_SUPVERSION', 'APPROVED_BY_SUPERVISOR', 'REJECTED_BY_SUPERVISOR', 'REJECTED', 'CANCELLED', 'EXPIRED', 'COMPLETED', 'ROLLED_BACK', 'CONFLIC_DETECTED');
+
+-- CreateEnum
+CREATE TYPE "WorkRuleTypes" AS ENUM ('HARD', 'SOFT', 'CONFIGURABLE', 'EVENT');
 
 -- CreateEnum
 CREATE TYPE "LeaveStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
@@ -109,16 +133,22 @@ CREATE TABLE "organizations" (
 CREATE TABLE "organization_settings" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
-    "birthday_free_day_enabled" BOOLEAN NOT NULL,
-    "max_monthly_hours" INTEGER NOT NULL DEFAULT 160,
+    "birthday_free_day_enabled" BOOLEAN NOT NULL DEFAULT false,
     "require_shift_approval" BOOLEAN NOT NULL DEFAULT false,
-    "auto_balance_nigths" BOOLEAN NOT NULL,
-    "allow_cross_departament" BOOLEAN NOT NULL,
-    "allor_overtime" BOOLEAN NOT NULL,
+    "auto_balance_nights" BOOLEAN NOT NULL DEFAULT true,
+    "allow_cross_department" BOOLEAN NOT NULL DEFAULT false,
+    "allow_overtime" BOOLEAN NOT NULL DEFAULT true,
+    "max_monthly_hours" INTEGER NOT NULL DEFAULT 160,
     "max_weekly_hours" INTEGER NOT NULL DEFAULT 44,
     "overtime_limit" INTEGER NOT NULL DEFAULT 20,
     "max_nights" INTEGER NOT NULL DEFAULT 10,
     "max_consecutive_nights" INTEGER NOT NULL DEFAULT 3,
+    "minimum_rest_hours" INTEGER NOT NULL DEFAULT 12,
+    "max_consecutive_days" INTEGER NOT NULL DEFAULT 6,
+    "auto_assign_emergency" BOOLEAN NOT NULL DEFAULT false,
+    "auto_approve_swaps" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "organization_settings_pkey" PRIMARY KEY ("id")
 );
@@ -128,10 +158,22 @@ CREATE TABLE "departments" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "branchId" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "minimum_staff" INTEGER NOT NULL,
-    "critical_level" TEXT NOT NULL,
+    "type" "DepartmentType" NOT NULL,
+    "criticalLevel" "DepartmentCriticalLevel" NOT NULL,
+    "minimum_staff" INTEGER NOT NULL DEFAULT 1,
+    "optimalStaff" INTEGER NOT NULL DEFAULT 1,
+    "maxCapacity" INTEGER NOT NULL,
+    "allowOvertime" BOOLEAN NOT NULL,
+    "allowsCrossDepartment" BOOLEAN NOT NULL DEFAULT false,
+    "requiresSpecialization" BOOLEAN NOT NULL DEFAULT false,
+    "isEmergencyDepartment" BOOLEAN NOT NULL DEFAULT false,
+    "emergencyPriority" INTEGER DEFAULT 1,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "departments_pkey" PRIMARY KEY ("id")
 );
@@ -140,6 +182,10 @@ CREATE TABLE "departments" (
 CREATE TABLE "department_specialties" (
     "departmentId" TEXT NOT NULL,
     "specialityId" TEXT NOT NULL,
+    "required" BOOLEAN NOT NULL DEFAULT true,
+    "priority" INTEGER NOT NULL DEFAULT 1,
+    "minimum_staff" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "department_specialties_pkey" PRIMARY KEY ("departmentId","specialityId")
 );
@@ -147,11 +193,14 @@ CREATE TABLE "department_specialties" (
 -- CreateTable
 CREATE TABLE "department_configurations" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
     "departmentId" TEXT NOT NULL,
-    "max_nigths" INTEGER NOT NULL,
+    "max_nights" INTEGER NOT NULL,
     "minimum_staff_per_shift" INTEGER NOT NULL,
     "allow_externeal_support" BOOLEAN NOT NULL,
     "allow_double_shift" BOOLEAN NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "department_configurations_pkey" PRIMARY KEY ("id")
 );
@@ -174,9 +223,33 @@ CREATE TABLE "schedules" (
     "departmentId" TEXT NOT NULL,
     "month" INTEGER NOT NULL,
     "year" INTEGER NOT NULL,
-    "publishedAt" TIMESTAMP(3) NOT NULL,
+    "status" "ScheduleStatus" NOT NULL DEFAULT 'DRAFT',
+    "publishedAt" TIMESTAMP(3),
+    "publishedById" TEXT,
+    "autoGenerated" BOOLEAN NOT NULL DEFAULT false,
+    "optimizationScore" DECIMAL(65,30),
+    "generationTimeMs" INTEGER,
+    "hasConflicts" BOOLEAN NOT NULL DEFAULT false,
+    "totalConflicts" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "schedules_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "schedule_versions" (
+    "id" TEXT NOT NULL,
+    "scheduleId" TEXT NOT NULL,
+    "version" INTEGER NOT NULL,
+    "snapshot" JSONB NOT NULL,
+    "createdById" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "changeSummary" TEXT,
+    "published" BOOLEAN NOT NULL DEFAULT false,
+    "rollbackable" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "schedule_versions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -188,16 +261,6 @@ CREATE TABLE "optimization_runs" (
     "result" JSONB NOT NULL,
 
     CONSTRAINT "optimization_runs_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "schedule_versions" (
-    "id" TEXT NOT NULL,
-    "scheduleId" TEXT NOT NULL,
-    "version" INTEGER NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "schedule_versions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -393,7 +456,12 @@ CREATE TABLE "optimization_scores" (
 CREATE TABLE "specialities" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "specialities_pkey" PRIMARY KEY ("id")
 );
@@ -404,6 +472,19 @@ CREATE TABLE "branches" (
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "address" TEXT NOT NULL,
+    "city" TEXT NOT NULL,
+    "state" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "zipCode" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "latitude" DECIMAL(65,30) NOT NULL,
+    "longitude" DECIMAL(65,30) NOT NULL,
+    "timezone" TEXT DEFAULT 'UTC',
+    "isMainBranch" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "branches_pkey" PRIMARY KEY ("id")
 );
@@ -413,7 +494,7 @@ CREATE TABLE "monthly_distribution_rules" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "departmentId" TEXT NOT NULL,
-    "rule_type" TEXT NOT NULL,
+    "type" "MonthlyDistributionRuleType" NOT NULL,
     "configuration" JSONB NOT NULL,
 
     CONSTRAINT "monthly_distribution_rules_pkey" PRIMARY KEY ("id")
@@ -425,6 +506,10 @@ CREATE TABLE "integrations" (
     "organizationId" TEXT NOT NULL,
     "provider" "ProviderList" NOT NULL,
     "configuration" JSONB NOT NULL,
+    "name" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "integrations_pkey" PRIMARY KEY ("id")
 );
@@ -446,7 +531,7 @@ CREATE TABLE "notifications" (
     "organizationId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "message" TEXT NOT NULL,
-    "readedAt" TIMESTAMP(3) NOT NULL,
+    "readedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "priority" "PriorityTypes" NOT NULL,
     "data" JSONB NOT NULL,
@@ -574,11 +659,22 @@ CREATE TABLE "nurse_preferences" (
 CREATE TABLE "shifts" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "type" "ShiftType" NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
-    "duration_hours" TIMESTAMP(3) NOT NULL,
-    "color" TEXT NOT NULL,
+    "durationHours" TIMESTAMP(3) NOT NULL,
+    "color" TEXT,
     "departmentId" TEXT,
+    "isNightShift" BOOLEAN NOT NULL DEFAULT false,
+    "isEmergencyShift" BOOLEAN NOT NULL DEFAULT false,
+    "requiresSpecialization" BOOLEAN NOT NULL DEFAULT false,
+    "allowsOvertime" BOOLEAN NOT NULL DEFAULT true,
+    "minimumStaffRequired" INTEGER NOT NULL DEFAULT 1,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "shifts_pkey" PRIMARY KEY ("id")
 );
@@ -590,7 +686,7 @@ CREATE TABLE "emergency_coverages" (
     "shiftId" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "priority" "PriorityTypes" NOT NULL,
-    "statuts" "VacationStatus" NOT NULL,
+    "status" "EmergencyCoverageStatus" NOT NULL,
     "rank" INTEGER,
     "available" BOOLEAN NOT NULL DEFAULT true,
     "fatigueRisk" DOUBLE PRECISION,
@@ -598,9 +694,11 @@ CREATE TABLE "emergency_coverages" (
     "compatibilityScore" DOUBLE PRECISION,
     "aiRecommendation" JSONB,
     "selected" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "nurseId" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdById" TEXT,
 
     CONSTRAINT "emergency_coverages_pkey" PRIMARY KEY ("id")
 );
@@ -621,10 +719,18 @@ CREATE TABLE "emergency_candidates" (
 CREATE TABLE "shift_templates" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
+    "departmentId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "configuration" JSONB NOT NULL,
     "startTime" TEXT NOT NULL,
     "endTime" TEXT NOT NULL,
+    "color" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "autoAssignable" BOOLEAN NOT NULL DEFAULT true,
+    "priority" INTEGER NOT NULL DEFAULT 1,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "shift_templates_pkey" PRIMARY KEY ("id")
 );
@@ -633,11 +739,20 @@ CREATE TABLE "shift_templates" (
 CREATE TABLE "shift_change_requests" (
     "id" TEXT NOT NULL,
     "status" "RequestStatus" NOT NULL DEFAULT 'AWAITING_OTHER_NURSE',
+    "organizationId" TEXT NOT NULL,
     "requesterId" TEXT NOT NULL,
     "receiverId" TEXT,
     "sourceShiftId" TEXT NOT NULL,
     "targetShiftId" TEXT,
     "approverId" TEXT,
+    "supervisorNotes" TEXT,
+    "autoApproved" BOOLEAN NOT NULL DEFAULT false,
+    "emergencyRequest" BOOLEAN NOT NULL DEFAULT false,
+    "aiRiskScore" DOUBLE PRECISION,
+    "aiRecommendation" JSONB,
+    "expiresAt" TIMESTAMP(3),
+    "approvedAt" TIMESTAMP(3),
+    "rejectedAt" TIMESTAMP(3),
     "reason" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -648,11 +763,20 @@ CREATE TABLE "shift_change_requests" (
 -- CreateTable
 CREATE TABLE "shift_change_approvals" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "shiftChangeRequestId" TEXT NOT NULL,
     "requesterId" TEXT NOT NULL,
     "approverId" TEXT,
     "decision" "ChangeApprovalsTypes" NOT NULL DEFAULT 'PENDING',
+    "level" INTEGER NOT NULL DEFAULT 1,
+    "autoApproved" BOOLEAN NOT NULL DEFAULT false,
     "comments" TEXT NOT NULL,
-    "userId" TEXT,
+    "aiRecommendation" JSONB,
+    "approvedAt" TIMESTAMP(3),
+    "rejectedAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "shift_change_approvals_pkey" PRIMARY KEY ("id")
 );
@@ -660,9 +784,25 @@ CREATE TABLE "shift_change_approvals" (
 -- CreateTable
 CREATE TABLE "shift_change_documents" (
     "id" TEXT NOT NULL,
+    "organizationId" TEXT NOT NULL,
+    "shiftChangeRequestId" TEXT NOT NULL,
     "requesterId" TEXT NOT NULL,
+    "uploadedById" TEXT,
+    "documentType" "ShiftChangeDocumentType" NOT NULL,
+    "fileName" TEXT NOT NULL,
     "documentUrl" TEXT NOT NULL,
-    "userId" TEXT,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "description" TEXT,
+    "verified" BOOLEAN NOT NULL DEFAULT false,
+    "verifiedById" TEXT,
+    "verifiedAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3),
+    "aiAnalysis" JSONB,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "shift_change_documents_pkey" PRIMARY KEY ("id")
 );
@@ -673,6 +813,7 @@ CREATE TABLE "work_rules" (
     "organizationId" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "type" "WorkRuleTypes" NOT NULL DEFAULT 'CONFIGURABLE',
     "description" TEXT,
     "value" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -684,27 +825,43 @@ CREATE TABLE "work_rules" (
 CREATE TABLE "work_rule_conditions" (
     "id" TEXT NOT NULL,
     "workRuleId" TEXT NOT NULL,
-    "condintion_type" TEXT NOT NULL,
+    "condition_type" TEXT NOT NULL,
     "operator" TEXT NOT NULL,
     "value" TEXT NOT NULL,
+    "logical_group" TEXT,
+    "priority" INTEGER NOT NULL DEFAULT 1,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "work_rule_conditions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "WorkRuleActions" (
+CREATE TABLE "work_rule_actions" (
     "id" TEXT NOT NULL,
     "workRuleId" TEXT NOT NULL,
     "action_type" TEXT NOT NULL,
     "action_value" TEXT NOT NULL,
+    "priority" INTEGER NOT NULL DEFAULT 1,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "stop_execution" BOOLEAN NOT NULL DEFAULT false,
+    "async_execution" BOOLEAN NOT NULL DEFAULT false,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "WorkRuleActions_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "work_rule_actions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "rule_groups" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "rule_groups_pkey" PRIMARY KEY ("id")
 );
@@ -714,6 +871,8 @@ CREATE TABLE "rule_group_assignments" (
     "id" TEXT NOT NULL,
     "workRuleId" TEXT NOT NULL,
     "ruleGroupId" TEXT NOT NULL,
+    "priority" INTEGER NOT NULL DEFAULT 1,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "rule_group_assignments_pkey" PRIMARY KEY ("id")
 );
@@ -753,13 +912,19 @@ CREATE TABLE "activity_logs" (
 CREATE UNIQUE INDEX "organization_settings_organizationId_key" ON "organization_settings"("organizationId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "departments_code_key" ON "departments"("code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "schedules_departmentId_month_year_key" ON "schedules"("departmentId", "month", "year");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "schedule_versions_scheduleId_version_key" ON "schedule_versions"("scheduleId", "version");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "nurse_profiles_nurseId_key" ON "nurse_profiles"("nurseId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "nurse_restrictions_types_code_key" ON "nurse_restrictions_types"("code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "notifications_userId_key" ON "notifications"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "notification_types_code_key" ON "notification_types"("code");
@@ -779,6 +944,9 @@ CREATE UNIQUE INDEX "permissions_name_key" ON "permissions"("name");
 -- CreateIndex
 CREATE UNIQUE INDEX "nurse_preferences_nurseId_key" ON "nurse_preferences"("nurseId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "shifts_code_key" ON "shifts"("code");
+
 -- AddForeignKey
 ALTER TABLE "organization_settings" ADD CONSTRAINT "organization_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -795,6 +963,9 @@ ALTER TABLE "department_specialties" ADD CONSTRAINT "department_specialties_depa
 ALTER TABLE "department_specialties" ADD CONSTRAINT "department_specialties_specialityId_fkey" FOREIGN KEY ("specialityId") REFERENCES "specialities"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "department_configurations" ADD CONSTRAINT "department_configurations_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "department_configurations" ADD CONSTRAINT "department_configurations_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -807,10 +978,16 @@ ALTER TABLE "schedules" ADD CONSTRAINT "schedules_organizationId_fkey" FOREIGN K
 ALTER TABLE "schedules" ADD CONSTRAINT "schedules_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "optimization_runs" ADD CONSTRAINT "optimization_runs_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "schedules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "schedules" ADD CONSTRAINT "schedules_publishedById_fkey" FOREIGN KEY ("publishedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "schedule_versions" ADD CONSTRAINT "schedule_versions_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "schedule_versions" ADD CONSTRAINT "schedule_versions_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "schedules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "optimization_runs" ADD CONSTRAINT "optimization_runs_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "schedules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "schedule_entries" ADD CONSTRAINT "schedule_entries_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "schedules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -897,6 +1074,9 @@ ALTER TABLE "optimization_scores" ADD CONSTRAINT "optimization_scores_nurseId_fk
 ALTER TABLE "optimization_scores" ADD CONSTRAINT "optimization_scores_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "specialities" ADD CONSTRAINT "specialities_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "branches" ADD CONSTRAINT "branches_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -981,7 +1161,10 @@ ALTER TABLE "emergency_candidates" ADD CONSTRAINT "emergency_candidates_nurseId_
 ALTER TABLE "shift_templates" ADD CONSTRAINT "shift_templates_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shift_templates" ADD CONSTRAINT "shift_templates_id_fkey" FOREIGN KEY ("id") REFERENCES "departments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "shift_templates" ADD CONSTRAINT "shift_templates_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "shift_change_requests" ADD CONSTRAINT "shift_change_requests_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "shift_change_requests" ADD CONSTRAINT "shift_change_requests_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -999,16 +1182,28 @@ ALTER TABLE "shift_change_requests" ADD CONSTRAINT "shift_change_requests_target
 ALTER TABLE "shift_change_requests" ADD CONSTRAINT "shift_change_requests_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "shift_change_approvals" ADD CONSTRAINT "shift_change_approvals_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "shift_change_approvals" ADD CONSTRAINT "shift_change_approvals_shiftChangeRequestId_fkey" FOREIGN KEY ("shiftChangeRequestId") REFERENCES "shift_change_requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "shift_change_approvals" ADD CONSTRAINT "shift_change_approvals_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "shift_change_approvals" ADD CONSTRAINT "shift_change_approvals_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shift_change_approvals" ADD CONSTRAINT "shift_change_approvals_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "shift_change_documents" ADD CONSTRAINT "shift_change_documents_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "shift_change_documents" ADD CONSTRAINT "shift_change_documents_shiftChangeRequestId_fkey" FOREIGN KEY ("shiftChangeRequestId") REFERENCES "shift_change_requests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "shift_change_documents" ADD CONSTRAINT "shift_change_documents_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "shift_change_documents" ADD CONSTRAINT "shift_change_documents_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "work_rules" ADD CONSTRAINT "work_rules_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1017,7 +1212,7 @@ ALTER TABLE "work_rules" ADD CONSTRAINT "work_rules_organizationId_fkey" FOREIGN
 ALTER TABLE "work_rule_conditions" ADD CONSTRAINT "work_rule_conditions_workRuleId_fkey" FOREIGN KEY ("workRuleId") REFERENCES "work_rules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WorkRuleActions" ADD CONSTRAINT "WorkRuleActions_workRuleId_fkey" FOREIGN KEY ("workRuleId") REFERENCES "work_rules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "work_rule_actions" ADD CONSTRAINT "work_rule_actions_workRuleId_fkey" FOREIGN KEY ("workRuleId") REFERENCES "work_rules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "rule_groups" ADD CONSTRAINT "rule_groups_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;

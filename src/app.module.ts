@@ -28,6 +28,10 @@ import { ScheduleVersionsModule } from "@modules/schedule-versions/schedule-vers
 import { ShiftTemplatesModule } from "@modules/shift-templates/shift-templates.module";
 import { SpecialitiesModule } from "@modules/specialities/specialities.module";
 import { DepartmentConfigurationsModule } from "@modules/department-configurations/department-configurations.module";
+import { DepartmentSpecialitiesModule } from "@modules/department_specialities/department-specialities.module";
+import { ShiftChangeApprovalsModule } from "@modules/shift-change-approvals/shift-change-approvals.module";
+import { ShiftChangeRequestsModule } from "@modules/shift-change-requests/shift-change-requests.module";
+import { ShiftChangeDocumentsModule } from "@modules/shift-change-documents/shift-change-documents.module";
 
 @Module({
   imports: [
@@ -61,6 +65,10 @@ import { DepartmentConfigurationsModule } from "@modules/department-configuratio
     ShiftTemplatesModule,
     SpecialitiesModule,
     DepartmentConfigurationsModule,
+    DepartmentSpecialitiesModule,
+    ShiftChangeApprovalsModule,
+    ShiftChangeRequestsModule,
+    ShiftChangeDocumentsModule
   ],
 })
-export class AppModule {}
+export class AppModule { }
