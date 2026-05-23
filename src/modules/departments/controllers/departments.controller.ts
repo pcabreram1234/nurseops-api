@@ -34,7 +34,7 @@ import { AssignNursesDto } from "../dto/assign-nurses.dto";
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class DepartmentsController {
-  constructor(private readonly departmentsService: DepartmentsService) {}
+  constructor(private readonly departmentsService: DepartmentsService) { }
 
   /*
   |--------------------------------------------------------------------------
@@ -80,8 +80,7 @@ export class DepartmentsController {
 
   @Patch(":id")
   @Permissions("UPDATE_DEPARTMENT")
-  update(@Param("id") id: string, @Body() dto: UpdateDepartmentDto,@CurrentUser() user: any,)
-   {
+  update(@Param("id") id: string, @Body() dto: UpdateDepartmentDto, @CurrentUser() user: any,) {
     return this.departmentsService.update(id, dto, user);
   }
 
@@ -105,7 +104,7 @@ export class DepartmentsController {
 
   @Patch(":id/assign-nurses")
   @Permissions("ASSIGN_NURSES_DEPARTMENT")
-  assignNurses( @Param("id")id: string,@Body()dto: AssignNursesDto,@CurrentUser()user: any,
+  assignNurses(@Param("id") id: string, @Body() dto: AssignNursesDto, @CurrentUser() user: any,
   ) {
     return this.departmentsService.assignNurses(id, dto, user);
   }

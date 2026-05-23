@@ -15,9 +15,9 @@ import { CreateScheduleVersionDto } from "../dto/create-schedule-version.dto";
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPERVISOR")
+@Roles("ADMIN", "SUPERVISOR", "SUPER")
 export class ScheduleVersionsController {
-  constructor(private readonly service: ScheduleVersionsService) {}
+  constructor(private readonly service: ScheduleVersionsService) { }
 
   @Post()
   create(@Body() dto: CreateScheduleVersionDto) {

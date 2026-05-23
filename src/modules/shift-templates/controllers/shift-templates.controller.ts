@@ -27,9 +27,9 @@ import { UpdateShiftTemplateDto } from "../dto/update-shift-template.dto";
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPERVISOR")
+@Roles("ADMIN", "SUPER")
 export class ShiftTemplatesController {
-  constructor(private readonly service: ShiftTemplatesService) {}
+  constructor(private readonly service: ShiftTemplatesService) { }
 
   @Post()
   create(@Body() dto: CreateShiftTemplateDto) {
@@ -38,21 +38,21 @@ export class ShiftTemplatesController {
 
   @Get()
   findAll(@CurrentUser() user: any) {
-    return this.service.findAll(user.organizationId);
+    return this.service.findAll(user);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.service.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.findOne(id, user);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateShiftTemplateDto) {
-    return this.service.update(id, dto);
+  update(@Param("id") id: string, @Body() dto: UpdateShiftTemplateDto, @CurrentUser() user: any) {
+    return this.service.update(id, dto, user);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.service.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.remove(id, user);
   }
 }

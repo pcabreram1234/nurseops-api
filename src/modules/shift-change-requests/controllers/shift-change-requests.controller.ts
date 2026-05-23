@@ -40,7 +40,7 @@ export class ShiftChangeRequestsController {
     constructor(private readonly service: ShiftChangeRequestsService) { }
 
     @Post()
-    @Roles("ADMIN", "NURSE")
+    @Roles("ADMIN", "NURSE", "SUPERVISOR")
     create(@Body() dto: CreateShiftChangeRequestDto) {
         return this.service.create(dto);
     }
@@ -53,38 +53,35 @@ export class ShiftChangeRequestsController {
 
     @Get(":id")
     @Roles("ADMIN", "SUPERVISOR", "NURSE")
-    findOne(@Param("id") id: string) {
-        return this.service.findOne(id);
+    findOne(@Param("id") id: string, @CurrentUser() user: any) {
+        return this.service.findOne(id, user);
     }
 
     @Patch(":id")
     @Roles("ADMIN")
-    update(
-        @Param("id") id: string,
-        @Body() dto: UpdateShiftChangeRequestDto,
-        @CurrentUser() user: any,
+    update(@Param("id") id: string, @Body() dto: UpdateShiftChangeRequestDto, @CurrentUser() user: any,
     ) {
         return this.service.update(id, dto, user);
     }
 
     @Patch(":id/approve")
-    @Roles("ADMIN", "SUPERVISOR")
-    approve(@Param("id") id: string, approverId: string, @Body() dto: ApproveShiftChangeDto,
+    @Roles("ADMIN", "SUPERVISOR", "SUPER")
+    approve(@Param("id") id: string, approverId: string, @Body() dto: ApproveShiftChangeDto, @CurrentUser() user: any
     ) {
-        return this.service.approve(id, approverId, dto);
+        return this.service.approve(id, approverId, dto, user);
     }
 
     @Patch(":id/reject")
     @Roles("ADMIN", "SUPERVISOR")
-    reject(@Param("id") id: string, approverId: string, @Body() dto: RejectShiftChangeDto,
+    reject(@Param("id") id: string, approverId: string, @Body() dto: RejectShiftChangeDto, @CurrentUser() user: any
     ) {
-        return this.service.reject(id, approverId, dto);
+        return this.service.reject(id, approverId, dto, user);
     }
 
     @Patch(":id/cancel")
     @Roles("ADMIN", "SUPERVISOR", "NURSE")
-    cancel(@Param("id") id: string,
+    cancel(@Param("id") id: string, @CurrentUser() user: any
     ) {
-        return this.service.cancel(id);
+        return this.service.cancel(id, user);
     }
 }

@@ -31,8 +31,9 @@ import { NurseFilterDto } from "../dto/nurse-filter.dto";
   version: "1",
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
+
 export class NursesController {
-  constructor(private readonly nursesService: NursesService) {}
+  constructor(private readonly nursesService: NursesService) { }
 
   @Post()
   @Permissions("CREATE_NURSE")

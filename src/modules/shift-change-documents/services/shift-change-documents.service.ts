@@ -16,25 +16,23 @@ export class ShiftChangeDocumentsService {
         return this.prisma.shiftChangeDocument.findMany({
             where: {
                 organizationId: user.organizationId,
-
                 deletedAt: null,
             },
         });
     }
 
-    async findOne(
-        id: string,
-
-        user: any,
-    ) {
+    async findOne(id: string, user: any,) {
+        const isSuperAdmin = user.role === "SUPER"
         const document = await this.prisma.shiftChangeDocument.findFirst({
-            where: {
+            where: isSuperAdmin ? {
                 id,
-
-                organizationId: user.organizationId,
-
                 deletedAt: null,
-            },
+
+            } : {
+                organizationId: user.organizationId,
+                requesterId: user.id,
+                deletedAt: null,
+            }
         });
 
         if (!document) {
@@ -44,10 +42,10 @@ export class ShiftChangeDocumentsService {
         return document;
     }
 
-    async softDelete(id: string) {
+    async softDelete(id: string, user: any) {
+        const isSuperAdmin = user.role === "SUPER"
         return this.prisma.shiftChangeDocument.update({
-            where: { id },
-
+            where: isSuperAdmin ? { id } : { id: id, requester: user.id },
             data: {
                 deletedAt: new Date(),
             },

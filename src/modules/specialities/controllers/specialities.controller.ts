@@ -27,9 +27,9 @@ import { UpdateSpecialityDto } from "../dto/update-speciality.dto";
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPERVISOR")
+@Roles("ADMIN", "SUPER")
 export class SpecialitiesController {
-  constructor(private readonly service: SpecialitiesService) {}
+  constructor(private readonly service: SpecialitiesService) { }
 
   @Post()
   create(@Body() dto: CreateSpecialityDto) {
@@ -42,17 +42,17 @@ export class SpecialitiesController {
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.service.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.findOne(id, user);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateSpecialityDto) {
-    return this.service.update(id, dto);
+  update(@Param("id") id: string, @Body() dto: UpdateSpecialityDto, @CurrentUser() user: any) {
+    return this.service.update(id, dto, user);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.service.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.remove(id, user);
   }
 }

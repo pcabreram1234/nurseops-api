@@ -23,7 +23,7 @@ export class ShiftChangeRequestsService {
     private readonly shiftChangeAuditService: ShiftChangeAuditService,
     private readonly shiftChangeNotificationService: ShiftChangeNotificationService,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   async create(dto: any) {
     return this.prisma.shiftChangeRequest.create({
@@ -161,9 +161,10 @@ export class ShiftChangeRequestsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPE"
     const request = await this.prisma.shiftChangeRequest.findUnique({
-      where: { id },
+      where: isSuperAdmin ? { id } : { id, organization: user.organizationId },
     });
 
     if (!request) {
@@ -173,41 +174,26 @@ export class ShiftChangeRequestsService {
     return request;
   }
 
-  async approve(
-    id: string,
-
-    approverId: string,
-
-    dto: any,
-  ) {
+  async approve(id: string, approverId: string, dto: any, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
     return this.prisma.shiftChangeRequest.update({
-      where: { id },
-
+      where: isSuperAdmin ? { id } : { id, organizationId: user.organizationId },
       data: {
         status: "APPROVED_BY_SUPERVISOR",
-
         approverId,
-
         approvedAt: new Date(),
-
         supervisorNotes: dto.supervisorNotes,
       },
     });
   }
 
-  async reject(
-    id: string,
-
-    approverId: string,
-
-    dto: any,
+  async reject(id: string, approverId: string, dto: any, user: any
   ) {
+    const isSuperAdmin = user.role === "SUPER"
     return this.prisma.shiftChangeRequest.update({
-      where: { id },
-
+      where: isSuperAdmin ? { id } : { id, organizationId: user.organizationId },
       data: {
         status: "REJECTED",
-
         approverId,
 
         rejectedAt: new Date(),
@@ -217,10 +203,10 @@ export class ShiftChangeRequestsService {
     });
   }
 
-  async cancel(id: string) {
+  async cancel(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
     return this.prisma.shiftChangeRequest.update({
-      where: { id },
-
+      where: isSuperAdmin ? { id } : { id, organizationId: user.organizationId },
       data: {
         status: "CANCELLED",
 
@@ -230,11 +216,13 @@ export class ShiftChangeRequestsService {
   }
 
   async update(id: string, dto: any, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
     const request = await this.prisma.shiftChangeRequest.findFirst({
-      where: {
+      where: isSuperAdmin ? {
         id,
-        organizationId: user.organizationId,
-      },
+      } : {
+        id, organizationId: user.organizationId,
+      }
     });
 
     if (!request) {
@@ -274,7 +262,6 @@ export class ShiftChangeRequestsService {
 
     const riskAnalysis = await this.shiftChangeRiskService.calculateRisk({
       ...request,
-
       ...dto,
     });
 
@@ -286,7 +273,6 @@ export class ShiftChangeRequestsService {
 
     const aiRecommendation = await this.shiftChangeAIService.recommend({
       ...request,
-
       ...dto,
     });
 
@@ -300,7 +286,6 @@ export class ShiftChangeRequestsService {
       where: {
         id,
       },
-
       data: {
         ...dto,
         aiRiskScore: riskAnalysis.riskScore,

@@ -31,7 +31,7 @@ import { UpdateWorkRuleDto } from "../dto/update-work-rule.dto";
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ADMIN", "SUPER")
 export class WorkRulesController {
-  constructor(private readonly workRulesService: WorkRulesService) {}
+  constructor(private readonly workRulesService: WorkRulesService) { }
 
   @Post()
   create(@Body() dto: CreateWorkRuleDto) {
@@ -39,22 +39,22 @@ export class WorkRulesController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.workRulesService.findAll(user.organizationId);
+  findAll(@CurrentUser() user: any,) {
+    return this.workRulesService.findAll(user.organizationId, user);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.workRulesService.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.workRulesService.findOne(id, user);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateWorkRuleDto) {
-    return this.workRulesService.update(id, dto);
+  update(@Param("id") id: string, @Body() dto: UpdateWorkRuleDto, @CurrentUser() user: any) {
+    return this.workRulesService.update(id, dto, user);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.workRulesService.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.workRulesService.remove(id, user);
   }
 }

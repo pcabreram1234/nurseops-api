@@ -10,7 +10,7 @@ import { UpdateOrganizationDto } from "../dto/update-organization.dto";
 @Injectable()
 export class OrganizationsService {
   // Inyectamos el cliente de Prisma (que en Prisma 7 usa el PgAdapter internamente)
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /**
    * Crea una nueva organización y su configuración obligatoria en una sola transacción.
@@ -74,23 +74,41 @@ export class OrganizationsService {
   /**
    * Obtiene todas las organizaciones registradas con sus configuraciones.
    */
-  async findAll() {
+  async findAll(user: any) {
+    const isSuperAdmin = user.role === "SUPER";
+
     return this.prisma.organization.findMany({
+      where: isSuperAdmin ? {} : {
+        id: user.organizationId,
+      },
+
       include: {
         settings: true,
         _count: {
-          select: { branches: true, users: true }, // Te añade métricas útiles de conteo de sucursales y empleados
+          select: {
+            branches: true,
+
+            users: true,
+          },
         },
+      },
+
+      orderBy: {
+        createdAt: "desc",
       },
     });
   }
 
+
   /**
    * Busca una organización por su ID. Lanza 404 si no existe.
    */
-  async findOne(id: string) {
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER";
     const organization = await this.prisma.organization.findUnique({
-      where: { id },
+      where: isSuperAdmin ? { id: id } : {
+        id: user.organizationId,
+      },
       include: {
         settings: true,
         branches: true, // Útil para los Supervisores/Admins que consuman este endpoint
@@ -109,9 +127,9 @@ export class OrganizationsService {
   /**
    * Actualiza los datos de la organización.
    */
-  async update(id: string, updateOrganizationDto: UpdateOrganizationDto) {
+  async update(id: string, updateOrganizationDto: UpdateOrganizationDto, user: any) {
     // Verificar primero si existe
-    await this.findOne(id);
+    await this.findOne(id, user);
 
     // Si intentan actualizar el código, verificar que no choque con otro existente
     if (updateOrganizationDto.code) {
@@ -141,9 +159,9 @@ export class OrganizationsService {
    * Nota: Tu esquema tiene 'onDelete: Cascade' en cascada para settings y branches,
    * por lo que borrará todo lo asociado de forma limpia y automática.
    */
-  async remove(id: string) {
+  async remove(id: string, user: any) {
     // Verificar si existe primero
-    await this.findOne(id);
+    await this.findOne(id, user);
 
     await this.prisma.organization.delete({
       where: { id },

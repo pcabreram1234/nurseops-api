@@ -25,9 +25,9 @@ import { UpdateWorkRuleConditionDto } from "../dto/update-work-rule-condition.dt
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPERVISOR")
+@Roles("ADMIN", "SUPER")
 export class WorkRuleConditionsController {
-  constructor(private readonly service: WorkRuleConditionsService) {}
+  constructor(private readonly service: WorkRuleConditionsService) { }
 
   @Post()
   create(@Body() dto: CreateWorkRuleConditionDto) {

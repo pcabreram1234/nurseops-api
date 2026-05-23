@@ -32,13 +32,14 @@ import { WorkRuleActionFilterDto } from "../dto/work-rule-action-filter.dto";
   path: "work-rule-actions",
   version: "1",
 })
+@Roles("SUPER", "ADMIN",)
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class WorkRuleActionsController {
   constructor(
     private readonly workRuleActionsService: WorkRuleActionsService,
 
     private readonly actionExecutorService: ActionExecutorService,
-  ) {}
+  ) { }
 
   /*
   |--------------------------------------------------------------------------
@@ -47,7 +48,6 @@ export class WorkRuleActionsController {
   */
 
   @Post()
-  @Roles("SUPER_ADMIN", "ADMIN")
   async create(@Body() dto: CreateWorkRuleActionDto) {
     return this.workRuleActionsService.create(dto);
   }
@@ -59,7 +59,6 @@ export class WorkRuleActionsController {
   */
 
   @Get()
-  @Roles("SUPER_ADMIN", "ADMIN", "SUPERVISOR")
   async findAll(@Query() filters: WorkRuleActionFilterDto) {
     return this.workRuleActionsService.findAll(filters.workRuleId as string);
   }
@@ -71,7 +70,6 @@ export class WorkRuleActionsController {
   */
 
   @Get(":id")
-  @Roles("SUPER_ADMIN", "ADMIN", "SUPERVISOR")
   async findOne(@Param("id") id: string) {
     return this.workRuleActionsService.findOne(id);
   }
@@ -83,7 +81,6 @@ export class WorkRuleActionsController {
   */
 
   @Patch(":id")
-  @Roles("SUPER_ADMIN", "ADMIN")
   async update(@Param("id") id: string, @Body() dto: UpdateWorkRuleActionDto) {
     return this.workRuleActionsService.update(id, dto);
   }
@@ -95,7 +92,6 @@ export class WorkRuleActionsController {
   */
 
   @Delete(":id")
-  @Roles("SUPER_ADMIN")
   async remove(@Param("id") id: string) {
     return this.workRuleActionsService.remove(id);
   }
@@ -107,7 +103,6 @@ export class WorkRuleActionsController {
   */
 
   @Post(":id/execute")
-  @Roles("SUPER_ADMIN", "ADMIN", "SUPERVISOR")
   async execute(
     @Param("id") id: string,
     @Body() dto: ExecuteWorkRuleActionDto,

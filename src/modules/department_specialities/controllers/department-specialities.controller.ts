@@ -23,9 +23,9 @@ import { AssignSpecialityToDepartmentDto } from "../dto/assign-speciality-to-dep
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPERVISOR")
+@Roles("ADMIN", "SUPERVISOR", "SUPER")
 export class DepartmentSpecialitiesController {
-  constructor(private readonly service: DepartmentSpecialitiesService) {}
+  constructor(private readonly service: DepartmentSpecialitiesService) { }
 
   @Post()
   assign(@Body() dto: AssignSpecialityToDepartmentDto) {
@@ -38,7 +38,7 @@ export class DepartmentSpecialitiesController {
   }
 
   @Delete(":departmentId/:specialityId")
-  remove(@Param("departmentId")departmentId: string, @Param("specialityId")specialityId: string,
+  remove(@Param("departmentId") departmentId: string, @Param("specialityId") specialityId: string,
   ) {
     return this.service.remove(departmentId, specialityId);
   }

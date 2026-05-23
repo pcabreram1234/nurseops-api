@@ -15,21 +15,20 @@ import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
 import { NotificationFilterDto } from "../dto/notification-filter.dto";
+import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 @Controller({
   path: "notifications",
   version: "1",
 })
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(private readonly notificationsService: NotificationsService) { }
 
   @Get()
   findAll(
     @CurrentUser() user: any,
-    @Query()
-    filters: NotificationFilterDto,
-  ) {
+    @Query() filters: NotificationFilterDto,) {
     return this.notificationsService.findAll(user, filters);
   }
 
@@ -40,7 +39,7 @@ export class NotificationsController {
 
   @Patch(":id/read")
   markAsRead(@Param("id") id: string, @CurrentUser() user: any) {
-    return this.notificationsService.markAsRead(id);
+    return this.notificationsService.markAsRead(id, user);
   }
 
   @Patch("read-all")

@@ -27,9 +27,9 @@ import { UpdateEmergencyCoverageDto } from "../dto/update-emergency-coverage.dto
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPERVISOR")
+@Roles("ADMIN", "SUPERVISOR", "SUPER")
 export class EmergencyCoveragesController {
-  constructor(private readonly service: EmergencyCoveragesService) {}
+  constructor(private readonly service: EmergencyCoveragesService) { }
 
   @Post()
   create(@Body() dto: CreateEmergencyCoverageDto) {

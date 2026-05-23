@@ -348,7 +348,7 @@ model OptimizationRun {
   id         String   @id @default(uuid())
   scheduleId String
   schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  startedAt DateTime
+  startedAt  DateTime
   fineshedAt DateTime
   result     Json
 
@@ -907,8 +907,6 @@ model Notification {
 
 model NotificationType {
   id             String                    @id @default(uuid())
-  organizationId String
-  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   code           String                    @unique
   name           String
   description    String?
@@ -926,6 +924,8 @@ model NotificationType {
   createdAt      DateTime                  @default(now())
   updatedAt      DateTime                  @updatedAt
   deletedAt      DateTime?
+  organization   Organization?             @relation(fields: [organizationId], references: [id])
+  organizationId String?
 
   @@map("notification_types")
 }

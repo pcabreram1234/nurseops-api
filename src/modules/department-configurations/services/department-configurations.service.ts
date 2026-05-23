@@ -4,7 +4,7 @@ import { PrismaService } from "@infra/database/prisma.service";
 
 @Injectable()
 export class DepartmentConfigurationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any) {
     return this.prisma.departmentConfiguration.create({
@@ -23,25 +23,71 @@ export class DepartmentConfigurationsService {
       },
     });
   }
+  async findOne(id: string, user: any,) {
+    /*
+    |--------------------------------------------------------------------------
+    | SUPER ADMIN
+    |--------------------------------------------------------------------------
+    | Puede acceder a cualquier configuración
+    */
 
-  async findOne(id: string) {
-    const configuration = await this.prisma.departmentConfiguration.findUnique({
-      where: { id },
+    if (user.role === "SUPER") {
+      const configuration =
+        await this.prisma.departmentConfiguration.findUnique({
+          where: { id },
 
-      include: {
-        department: true,
-      },
-    });
+          include: {
+            department: true,
+          },
+        });
+
+      if (!configuration) {
+        throw new NotFoundException(
+          "Department configuration not found",
+        );
+      }
+
+      return configuration;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ORGANIZATION ISOLATION
+    |--------------------------------------------------------------------------
+    */
+
+    const configuration =
+      await this.prisma.departmentConfiguration.findFirst({
+        where: {
+          id,
+          department: {
+            organizationId:
+              user.organizationId,
+          },
+        },
+
+        include: {
+          department: true,
+        },
+      });
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOT FOUND
+    |--------------------------------------------------------------------------
+    */
 
     if (!configuration) {
-      throw new NotFoundException("Department configuration not found");
+      throw new NotFoundException(
+        "Department configuration not found",
+      );
     }
 
     return configuration;
   }
 
-  async update(id: string, dto: any) {
-    await this.findOne(id);
+  async update(id: string, dto: any, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.departmentConfiguration.update({
       where: { id },
@@ -50,8 +96,8 @@ export class DepartmentConfigurationsService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.departmentConfiguration.delete({
       where: { id },

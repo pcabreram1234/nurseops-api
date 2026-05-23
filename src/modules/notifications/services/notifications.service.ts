@@ -28,7 +28,7 @@ export class NotificationsService {
     private readonly smsService: SmsNotificationsService,
 
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   /*
   |--------------------------------------------------------------------------
@@ -94,10 +94,11 @@ export class NotificationsService {
   |--------------------------------------------------------------------------
   */
 
-  async markAsRead(id: string) {
+  async markAsRead(id: string, user: any) {
     return this.prisma.notification.update({
       where: {
-        id,
+        id: id,
+        userId: user.id
       },
 
       data: {

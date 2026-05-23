@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
+import { ConditionResultInterface } from "../interfaces/condition-result.interface";
+
 
 @Injectable()
 export class WorkRuleConditionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any) {
     return this.prisma.workRuleConditions.create({

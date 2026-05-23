@@ -28,9 +28,9 @@ import { UpdateDepartmentConfigurationDto } from "../dto/update-department-confi
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPERVISOR")
+@Roles("ADMIN", "SUPERVISOR", "SUPER")
 export class DepartmentConfigurationsController {
-  constructor(private readonly service: DepartmentConfigurationsService) {}
+  constructor(private readonly service: DepartmentConfigurationsService) { }
 
   @Post()
   create(@Body() dto: CreateDepartmentConfigurationDto) {
@@ -43,17 +43,17 @@ export class DepartmentConfigurationsController {
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.service.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.findOne(id, user);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateDepartmentConfigurationDto) {
-    return this.service.update(id, dto);
+  update(@Param("id") id: string, @Body() dto: UpdateDepartmentConfigurationDto, @CurrentUser() user: any) {
+    return this.service.update(id, dto, user);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.service.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.remove(id, user);
   }
 }

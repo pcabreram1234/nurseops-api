@@ -30,9 +30,9 @@ import { Roles } from "@modules/auth/decorators/roles.decorator";
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPER")
+@Roles("SUPER")
 export class RolesController {
-  constructor(private readonly rolesService: RolesService) {}
+  constructor(private readonly rolesService: RolesService) { }
 
   @Post()
   create(@Body() createRoleDto: CreateRoleDto, @Req() req: any) {

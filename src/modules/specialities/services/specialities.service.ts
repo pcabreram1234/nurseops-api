@@ -4,7 +4,7 @@ import { PrismaService } from "@infra/database/prisma.service";
 
 @Injectable()
 export class SpecialitiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any) {
     return this.prisma.speciality.create({
@@ -26,10 +26,10 @@ export class SpecialitiesService {
     });
   }
 
-  async findOne(id: string) {
-    const speciality = await this.prisma.speciality.findUnique({
-      where: { id },
-
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
+    const speciality = await this.prisma.speciality.findFirst({
+      where: isSuperAdmin ? { id } : { id: id, organization: user.organizationId },
       include: {
         nurses: true,
 
@@ -44,8 +44,8 @@ export class SpecialitiesService {
     return speciality;
   }
 
-  async update(id: string, dto: any) {
-    await this.findOne(id);
+  async update(id: string, dto: any, user: any) {
+    await this.findOne(id, user);
     return this.prisma.speciality.update({
       where: { id },
 
@@ -53,8 +53,8 @@ export class SpecialitiesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.speciality.delete({
       where: { id },

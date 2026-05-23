@@ -21,16 +21,18 @@ import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
 import { CreateNurseRestrictionDto } from "../dto/create-nurse-restriction.dto";
 import { UpdateNurseRestrictionDto } from "../dto/update-nurse-restriction.dto";
+import { Roles } from "@modules/auth/decorators/roles.decorator";
 
 @Controller({
   path: "nurse-restrictions",
   version: "1",
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
+@Roles("ADMIN", "SUPER")
 export class NurseRestrictionsController {
   constructor(
     private readonly nurseRestrictionsService: NurseRestrictionsService,
-  ) {}
+  ) { }
 
   @Post()
   @Permissions("CREATE_NURSE_RESTRICTION")

@@ -60,14 +60,21 @@ export class UsersService {
   |--------------------------------------------------------------------------
   */
 
-  async findAll(query: any) {
+  async findAll(query: any, user: any) {
     const page = Number(query.page || 1);
 
     const limit = Number(query.limit || 10);
 
     const skip = (page - 1) * limit;
 
+    const isSuperAdmin = user.role === "SUPER";
+
     const where: any = {};
+
+    if (!isSuperAdmin) {
+      where.organizationId =
+        user.organizationId;
+    }
 
     if (query.search) {
       where.OR = [
@@ -105,7 +112,6 @@ export class UsersService {
         skip,
 
         take: limit,
-
         include: {
           roles: true,
           organization: true,
@@ -142,23 +148,23 @@ export class UsersService {
   |--------------------------------------------------------------------------
   */
 
-  async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: {
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
+    const record = await this.prisma.user.findUnique({
+      where: isSuperAdmin ? {
         id,
-      },
-
+      } : { id: id, organizationId: user.organizationId },
       include: {
         roles: true,
         organization: true,
       },
     });
 
-    if (!user) {
+    if (!record) {
       throw new NotFoundException("User not found");
     }
 
-    return user;
+    return record;
   }
 
   /*
@@ -167,8 +173,8 @@ export class UsersService {
   |--------------------------------------------------------------------------
   */
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    await this.findOne(id);
+  async update(id: string, updateUserDto: UpdateUserDto, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.user.update({
       where: {
@@ -185,8 +191,8 @@ export class UsersService {
   |--------------------------------------------------------------------------
   */
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.user.update({
       where: {

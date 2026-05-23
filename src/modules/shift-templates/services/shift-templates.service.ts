@@ -4,7 +4,7 @@ import { PrismaService } from "@infra/database/prisma.service";
 
 @Injectable()
 export class ShiftTemplatesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any) {
     return this.prisma.shiftTemplate.create({
@@ -12,22 +12,22 @@ export class ShiftTemplatesService {
     });
   }
 
-  async findAll(organizationId: string) {
+  async findAll(user: any) {
+    const isSuperAdmin = user.role === "SUPER"
     return this.prisma.shiftTemplate.findMany({
-      where: {
-        organizationId,
-      },
+      where: isSuperAdmin ? {
 
+      } : { organizationId: user.organizationId },
       include: {
         department: true,
       },
     });
   }
 
-  async findOne(id: string) {
-    const template = await this.prisma.shiftTemplate.findUnique({
-      where: { id },
-
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
+    const template = await this.prisma.shiftTemplate.findFirst({
+      where: isSuperAdmin ? { id } : { organizationId: user.organizationId, id: id },
       include: {
         department: true,
       },
@@ -40,18 +40,17 @@ export class ShiftTemplatesService {
     return template;
   }
 
-  async update(id: string, dto: any) {
-    await this.findOne(id);
-
+  async update(id: string, dto: any, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
+    await this.findOne(id, user);
     return this.prisma.shiftTemplate.update({
       where: { id },
-
       data: dto,
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.shiftTemplate.delete({
       where: { id },

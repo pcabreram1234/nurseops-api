@@ -8,7 +8,7 @@ import { UpdateWorkRuleDto } from "../dto/update-work-rule.dto";
 
 @Injectable()
 export class WorkRulesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateWorkRuleDto) {
     return this.prisma.workRule.create({
@@ -16,17 +16,19 @@ export class WorkRulesService {
     });
   }
 
-  async findAll(organizationId: string) {
+  async findAll(organizationId: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
     return this.prisma.workRule.findMany({
-      where: {
+      where: isSuperAdmin ? {} : {
         organizationId,
       },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
     const rule = await this.prisma.workRule.findUnique({
-      where: { id },
+      where: isSuperAdmin ? { id } : { id, organizationId: user.organizationId },
     });
 
     if (!rule) {
@@ -36,8 +38,8 @@ export class WorkRulesService {
     return rule;
   }
 
-  async update(id: string, dto: UpdateWorkRuleDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateWorkRuleDto, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.workRule.update({
       where: { id },
@@ -46,8 +48,8 @@ export class WorkRulesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, user: any) {
+    await this.findOne(id, user);
     return this.prisma.workRule.delete({
       where: { id },
     });

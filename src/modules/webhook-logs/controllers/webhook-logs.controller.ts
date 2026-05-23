@@ -7,8 +7,10 @@ import { ReplayWebhookDto } from '../dto/replay-webhook.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import { Permissions } from '@modules/auth/decorators/permissions.decorator';
+import { Roles } from '@modules/auth/decorators/roles.decorator';
 
 @Controller({ path: 'webhook-logs', version: '1' })
+@Roles("SUPER")
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class WebhookLogsController {
     constructor(

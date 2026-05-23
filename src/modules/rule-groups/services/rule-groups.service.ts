@@ -4,7 +4,7 @@ import { PrismaService } from "@infra/database/prisma.service";
 
 @Injectable()
 export class RuleGroupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any) {
     return this.prisma.ruleGroup.create({
@@ -28,10 +28,10 @@ export class RuleGroupsService {
     });
   }
 
-  async findOne(id: string) {
-    const group = await this.prisma.ruleGroup.findUnique({
-      where: { id },
-
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER"
+    const group = await this.prisma.ruleGroup.findFirst({
+      where: isSuperAdmin ? { id: id } : { organizationId: user.organizationId },
       include: {
         assignments: {
           include: {
@@ -48,8 +48,8 @@ export class RuleGroupsService {
     return group;
   }
 
-  async update(id: string, dto: any) {
-    await this.findOne(id);
+  async update(id: string, dto: any, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.ruleGroup.update({
       where: { id },
@@ -58,8 +58,8 @@ export class RuleGroupsService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, user: any) {
+    await this.findOne(id, user);
 
     return this.prisma.ruleGroup.delete({
       where: { id },

@@ -8,6 +8,10 @@ import {
 } from "class-validator";
 
 export class CreateNotificationTypeDto {
+
+    @IsString()
+    organizationId!: string;
+
     @IsString()
     code!: string;
 

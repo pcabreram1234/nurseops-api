@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post, Get,Param,Delete, UseGuards } from "@nestjs/common";
+import { Body, Controller, Patch, Post, Get, Param, Delete, UseGuards } from "@nestjs/common";
 
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 
@@ -15,54 +15,49 @@ import { UpdateOrganizationDto } from "../dto/update-organization.dto";
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
+import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
 @Controller({
   path: "organizations",
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Roles("SUPER", "ADMIN", "SUPERVISOR")
 export class OrganizationsController {
-  constructor(private readonly organizationsService: OrganizationsService) {}
+  constructor(private readonly organizationsService: OrganizationsService) { }
 
   @Post()
   @Roles("SUPER")
   @Permissions("CREATE-ORGANIZATION")
-  create(
-    @Body()
-    createOrganizationDto: CreateOrganizationDto,
-  ) {
+  create(@Body() createOrganizationDto: CreateOrganizationDto,) {
     return this.organizationsService.create(createOrganizationDto);
   }
 
   @Get()
-  @Roles("SUPER","ADMIN")
   @Permissions("READ_ORGANIZATION")
-  findAll() {
-    return this.organizationsService.findAll();
+  findAll(@CurrentUser() user: any) {
+    return this.organizationsService.findAll(user);
   }
 
   @Get(":id")
-  @Roles("SUPER", "ADMIN","SUPERVISOR")
+  @Roles("SUPER", "ADMIN", "SUPERVISOR")
   @Permissions("READ_ORGANIZATION")
-  findOne(@Param("id") id: string) {
-    return this.organizationsService.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.organizationsService.findOne(id, user);
   }
 
   @Patch(":id")
-  @Roles("SUPER","ADMIN")
   @Permissions("UPDATE-ORGANIZATION")
   update(
     @Param("id") id: string,
-
     @Body()
-    updateOrganizationDto: UpdateOrganizationDto,
+    updateOrganizationDto: UpdateOrganizationDto, @CurrentUser() user: any
   ) {
-    return this.organizationsService.update(id, updateOrganizationDto);
+    return this.organizationsService.update(id, updateOrganizationDto, user);
   }
 
   @Delete(":id")
-  @Roles("SUPER")
-  remove(@Param("id") id: string) {
-    return this.organizationsService.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.organizationsService.remove(id, user);
   }
 }

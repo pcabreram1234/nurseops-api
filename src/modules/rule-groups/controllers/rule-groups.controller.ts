@@ -29,7 +29,7 @@ import { UpdateRuleGroupDto } from "../dto/update-rule-group.dto";
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ADMIN", "SUPER")
 export class RuleGroupsController {
-  constructor(private readonly service: RuleGroupsService) {}
+  constructor(private readonly service: RuleGroupsService) { }
 
   @Post()
   create(@Body() dto: CreateRuleGroupDto) {
@@ -42,17 +42,17 @@ export class RuleGroupsController {
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.service.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.findOne(id, user);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateRuleGroupDto) {
-    return this.service.update(id, dto);
+  update(@Param("id") id: string, @Body() dto: UpdateRuleGroupDto, @CurrentUser() user: any) {
+    return this.service.update(id, dto, user);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.service.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.remove(id, user);
   }
 }
