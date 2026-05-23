@@ -36,9 +36,9 @@ async function main() {
       birthday_free_day_enabled: true,
       max_monthly_hours: 160,
       require_shift_approval: true,
-      auto_balance_nigths: true,
-      allow_cross_departament: false,
-      allor_overtime: true,
+      auto_balance_nights: true,
+      allow_cross_department: false,
+      allow_overtime: true,
     },
   });
 
@@ -53,7 +53,8 @@ async function main() {
       country: "República Dominicana",
       zipCode: "10101",
       phone: "+1-809-555-0101",
-    } as any,
+      email: "clinica@hotmail.com"
+    }
   });
 
   // 4. Crear un Departamento vinculado a la Sucursal
@@ -89,7 +90,7 @@ async function main() {
 
   // 6. Crear Usuarios (Supervisor y Enfermero)
   // Nota: En producción las contraseñas deben estar encriptadas con bcrypt
-  const supervisorUser = await prisma.user.create({
+  const superUser = await prisma.user.create({
     data: {
       email: "pcabreram1234@gmail.com",
       password: "$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C", //8998414
@@ -117,7 +118,7 @@ async function main() {
       status: "ACTIVE",
       refreshToken: "",
       lastLoginAt: new Date(),
-      auditLogId: randomUUID()
+      auditLogId: randomUUID(),
     },
   });
   console.log("✅ Usuarios de prueba creados.");
@@ -157,13 +158,8 @@ async function main() {
   // Preferencias del enfermero
   await prisma.nursePreferences.create({
     data: {
-      nurseId: nurseUser.id,
-      preferredShift: "MORNING",
-      avoid_shifts: "NIGHT",
-      maxNigthsPerMonth: 4,
-      maxDaysPerMonth: 20,
-      preferredDaysOff: 8,
-      organizationId: organization.id
+      nurseId: nurseProfile.id,
+      organizationId: organization.id,
     },
   });
 

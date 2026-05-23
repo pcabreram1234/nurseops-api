@@ -30,6 +30,9 @@ enum SystemConfigurationKeys {
   ENABLE_BIRTHDAY_DAY_OFF
   AUTO_APPROVE_SHIFT_CHANGES
   MAX_CONSECUTIVE_NIGHTS
+  FATIGUE_ALERT_THRESHOLD
+  EMERGENCY_COVERAGE_BONUS
+  OVERTIME_LIMIT
 }
 
 model FeatureFlag {
@@ -46,13 +49,16 @@ enum FeaturTypes {
   EMERGENCY__AI
   DARK_MODE
   MULTI_BRANCH_SUPPORT
+  PAYROLL_INTEGRATION
+  ADVANCED_METRICS
+  BIOMETRIC_SYNC
 }
 
 model Organization {
   id                       String                    @id @default(uuid())
   name                     String
   createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
+  updatedAt                DateTime                  @default(now()) @updatedAt
   code                     String
   timezone                 String
   country                  String
@@ -154,7 +160,7 @@ model OrganizationSetting {
    */
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   /**
    * |--------------------------------------------------------------------------
@@ -188,7 +194,7 @@ model Department {
   emergencyPriority        Int?                      @default(1)
   isActive                 Boolean                   @default(true)
   createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
+  updatedAt                DateTime                  @default(now()) @updatedAt
   users                    User[]
   shifts                   Shift[]
   shiftTemplates           ShiftTemplate[]
@@ -250,7 +256,7 @@ model DepartmentConfiguration {
   allow_externeal_support Boolean
   allow_double_shift      Boolean
   createdAt               DateTime     @default(now())
-  updatedAt               DateTime     @updatedAt
+  updatedAt               DateTime     @default(now()) @updatedAt
 
   @@map("department_configurations")
 }
@@ -304,7 +310,7 @@ model Schedule {
   hasConflicts      Boolean           @default(false)
   totalConflicts    Int               @default(0)
   createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  updatedAt         DateTime          @default(now()) @updatedAt
   organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   department        Department        @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   publishedBy       User?             @relation(fields: [publishedById], references: [id])
@@ -370,7 +376,7 @@ model ScheduleEntry {
   optimizationScore   Decimal?
   date                DateTime
   createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  updatedAt           DateTime            @default(now()) @updatedAt
   organizationId      String
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   nurseId             String
@@ -432,7 +438,7 @@ model Absence {
   requiresCoverage Boolean       @default(true)
   emergencyLevel   Int?
   createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  updatedAt        DateTime      @default(now()) @updatedAt
   reporter         User          @relation(fields: [reporterById], references: [id], onDelete: Cascade)
   approvedBy       User?         @relation("absence_approver", fields: [approvedById], references: [id])
 
@@ -469,7 +475,7 @@ model NurseAvailability {
   availableForOvertime  Boolean                     @default(false)
   notes                 String?
   createdAt             DateTime                    @default(now())
-  updatedAt             DateTime                    @updatedAt
+  updatedAt             DateTime                    @default(now()) @updatedAt
 
   @@map("nurse_availability")
 }
@@ -507,7 +513,7 @@ model WorkLoadMetrics {
   workload_score  Decimal
   burnout_risk    Decimal
   createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  updatedAt       DateTime     @default(now()) @updatedAt
 
   @@map("workload_metrics")
 }
@@ -528,7 +534,7 @@ model Vacation {
   approvedAt      DateTime?
   rejectionReason String?
   createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  updatedAt       DateTime       @default(now()) @updatedAt
 
   @@map("vacations")
 }
@@ -564,7 +570,7 @@ model NurseProfile {
   notes                 String?
   health_restrictions   String
   createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
+  updatedAt             DateTime            @default(now()) @updatedAt
 
   @@map("nurse_profiles")
 }
@@ -585,7 +591,7 @@ model NurseRestriction {
   createdById       String?
   createdBy         User?                 @relation(fields: [createdById], references: [id])
   createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
+  updatedAt         DateTime              @default(now()) @updatedAt
 }
 
 model NurseRestrictionType {
@@ -600,7 +606,7 @@ model NurseRestrictionType {
   isSystem               Boolean
   isActive               Boolean
   createdAt              DateTime                     @default(now())
-  updatedAt              DateTime                     @updatedAt
+  updatedAt              DateTime                     @default(now()) @updatedAt
   restrictions           NurseRestriction[]
   nurseRestrictionTypeId String
 
@@ -781,7 +787,7 @@ model Speciality {
   nurses                 Nurse[]
   isActive               Boolean                @default(true)
   createdAt              DateTime               @default(now())
-  updatedAt              DateTime               @updatedAt
+  updatedAt              DateTime               @default(now()) @updatedAt
 
   @@map("specialities")
 }
@@ -814,13 +820,13 @@ model Branch {
   zipCode        String
   phone          String
   email          String
-  latitude       Decimal
-  longitude      Decimal
+  latitude       Decimal?     @default(0.0)
+  longitude      Decimal?     @default(0.0)
   timezone       String?      @default("UTC")
   isMainBranch   Boolean      @default(false)
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  updatedAt      DateTime     @default(now()) @updatedAt
 
   @@map("branches")
 }
@@ -857,7 +863,7 @@ model Integration {
   isActive       Boolean      @default(true)
   webhookLogs    WebhookLog[]
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  updatedAt      DateTime     @default(now()) @updatedAt
 
   @@map("integrations")
 }
@@ -922,7 +928,7 @@ model NotificationType {
   allowSMS       Boolean                   @default(false)
   metadata       Json?
   createdAt      DateTime                  @default(now())
-  updatedAt      DateTime                  @updatedAt
+  updatedAt      DateTime                  @default(now()) @updatedAt
   deletedAt      DateTime?
   organization   Organization?             @relation(fields: [organizationId], references: [id])
   organizationId String?
@@ -948,7 +954,7 @@ model NotificationTemplates {
   previewPayload    Json
   isActive          Boolean
   createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
+  updatedAt         DateTime                @default(now()) @updatedAt
   deletedAt         DateTime?
   notificationTypes NotificationType[]
 
@@ -1174,9 +1180,9 @@ model NursePreferences {
   preferredDaysOff   Int            @default(10)
   prefersWeekendsOff Boolean        @default(false)
   allowOvertime      Boolean        @default(true)
-  notes              String?
+  notes              String?        @default("")
   createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  updatedAt          DateTime       @default(now()) @updatedAt
 
   @@map("nurse_preferences")
 }
@@ -1214,7 +1220,7 @@ model Shift {
   minimumStaffRequired   Int                  @default(1)
   isActive               Boolean              @default(true)
   createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
+  updatedAt              DateTime             @default(now()) @updatedAt
   changeRequestsAsSource ShiftChangeRequest[] @relation("SourceShift")
   changeRequestsAsTarget ShiftChangeRequest[] @relation("TargetShift")
   scheduleEntries        ScheduleEntry[]
@@ -1256,7 +1262,7 @@ model EmergencyCoverages {
   organizationId      String
   organization        Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
+  updatedAt           DateTime                @default(now()) @updatedAt
   createdById         String?
 
   @@map("emergency_coverages")
@@ -1303,7 +1309,7 @@ model ShiftTemplate {
   autoAssignable Boolean      @default(true)
   priority       Int          @default(1)
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  updatedAt      DateTime     @default(now()) @updatedAt
 
   @@map("shift_templates")
 }
@@ -1344,7 +1350,7 @@ model ShiftChangeRequest {
 
   reason               String?
   createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
+  updatedAt            DateTime               @default(now()) @updatedAt
   shiftChangeApprovals ShiftChangeApprovals[]
   shiftChangeDocuments ShiftChangeDocument[]
 
@@ -1370,7 +1376,7 @@ model ShiftChangeApprovals {
   rejectedAt           DateTime?
   expiresAt            DateTime?
   createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  updatedAt            DateTime             @default(now()) @updatedAt
 
   @@map("shift_change_approvals")
 }
@@ -1398,7 +1404,7 @@ model ShiftChangeDocument {
   aiAnalysis           Json?
   metadata             Json?
   createdAt            DateTime                @default(now())
-  updatedAt            DateTime                @updatedAt
+  updatedAt            DateTime                @default(now()) @updatedAt
   deletedAt            DateTime?
 
   @@map("shift_change_documents")
@@ -1506,7 +1512,7 @@ model RuleGroup {
   description    String
   isActive       Boolean
   createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  updatedAt      DateTime             @default(now()) @updatedAt
 
   @@map("rule_groups")
 }
@@ -1540,7 +1546,7 @@ model Leave {
   emergencyCoverageRequired Boolean      @default(false)
   affectsSchedule           Boolean      @default(true)
   createdAt                 DateTime     @default(now())
-  updatedAt                 DateTime     @updatedAt
+  updatedAt                 DateTime     @default(now()) @updatedAt
 
   @@map("leaves")
 }
@@ -1553,6 +1559,7 @@ enum LeaveStatus {
 }
 
 enum LeaveType {
+  BEREAVEMENT
   MEDICAL
   SICK_LEAVE
   INJURY
@@ -1569,6 +1576,8 @@ enum LeaveType {
   STUDY
   RELIGIOUS
   UNPAID
+  SICK
+  UNION
 }
 
 model ActivityLog {

@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "SystemConfigurationKeys" AS ENUM ('MAX_MONTHLY_HOURS', 'MIN_REST_HOURS', 'ALLOW_DOUBLE_SHIFT', 'DEFAULT_SHIFT_DURATION', 'ENABLE_BIRTHDAY_DAY_OFF', 'AUTO_APPROVE_SHIFT_CHANGES', 'MAX_CONSECUTIVE_NIGHTS');
+CREATE TYPE "SystemConfigurationKeys" AS ENUM ('MAX_MONTHLY_HOURS', 'MIN_REST_HOURS', 'ALLOW_DOUBLE_SHIFT', 'DEFAULT_SHIFT_DURATION', 'ENABLE_BIRTHDAY_DAY_OFF', 'AUTO_APPROVE_SHIFT_CHANGES', 'MAX_CONSECUTIVE_NIGHTS', 'FATIGUE_ALERT_THRESHOLD', 'EMERGENCY_COVERAGE_BONUS', 'OVERTIME_LIMIT');
 
 -- CreateEnum
 CREATE TYPE "FeaturTypes" AS ENUM ('AUTO_SCHEDULING', 'SHIFT_SWAP_AUTOMATION', 'AI_FATIGUE_ANALYSIS', 'WHATSAPP_NOTIFICATIONS', 'EMERGENCY__AI', 'DARK_MODE', 'MULTI_BRANCH_SUPPORT');
@@ -14,7 +14,7 @@ CREATE TYPE "DepartmentCriticalLevel" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICA
 CREATE TYPE "OperationalAlertStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'RESOLVED', 'IGNORED', 'ESCALATED');
 
 -- CreateEnum
-CREATE TYPE "OperationalAlertyTypes" AS ENUM ('STAFF_SHORTAGE', 'OVERTIME_RISK', 'FATIGUE_RISK', 'RULE_VIOLATION', 'NO_NIGHT_COVERAGE', 'MULTIPLE_ABSENCES', 'OVERLOADED_NURSE', 'UNBALANCED_DISTRIBUTION', 'EMERGENCY_COVERAGE_REQUIRED');
+CREATE TYPE "OperationalAlertyTypes" AS ENUM ('STAFF_SHORTAGE', 'OVERTIME_RISK', 'FATIGUE_RISK', 'RULE_VIOLATION', 'NO_NIGHT_COVERAGE', 'MULTIPLE_ABSENCES', 'OVERLOADED_NURSE', 'UNBALANCED_DISTRIBUTION', 'EMERGENCY_COVERAGE_REQUIRED', 'EMERGENCY_COVERAGE_FAILED', 'BURNOUT_CRITICAL', 'STAFFING_SHORTAGE');
 
 -- CreateEnum
 CREATE TYPE "ScheduleStatus" AS ENUM ('DRAFT', 'GENERATING', 'GENERATED', 'UNDER_REVIEW', 'APPROVED', 'PUBLISHED', 'ARCHIVED', 'CANCELLED');
@@ -98,7 +98,7 @@ CREATE TYPE "LeaveStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED
 CREATE TYPE "LeaveType" AS ENUM ('MEDICAL', 'SICK_LEAVE', 'INJURY', 'SURGERY_RECOVERY', 'MATERNITY', 'PATERNITY', 'FAMILY_EMERGENCY', 'BEREAVMENT', 'ADMNISTRATIVE', 'SUSPENSION', 'TRAINING', 'CONFERENCE', 'PERSONAL', 'STUDY', 'RELIGIOUS', 'UNPAID');
 
 -- CreateEnum
-CREATE TYPE "ActivityLogType" AS ENUM ('LOGIN', 'LOGOUT', 'VIEW_SCHEDULE', 'EXPORT_REPORT', 'CREATE_SHIFT', 'SEARCH_USER', 'OPEN_NOTIFICATION');
+CREATE TYPE "ActivityLogType" AS ENUM ('LOGIN', 'LOGOUT', 'VIEW_SCHEDULE', 'EXPORT_REPORT', 'CREATE_SHIFT', 'SEARCH_USER', 'OPEN_NOTIFICATION', 'SHIFT_APPROVED', 'RULE_VIOLATED');
 
 -- CreateTable
 CREATE TABLE "SystemConfiguration" (
@@ -259,7 +259,7 @@ CREATE TABLE "schedule_versions" (
 CREATE TABLE "optimization_runs" (
     "id" TEXT NOT NULL,
     "scheduleId" TEXT NOT NULL,
-    "startedAtd" TIMESTAMP(3) NOT NULL,
+    "startedAt" TIMESTAMP(3) NOT NULL,
     "fineshedAt" TIMESTAMP(3) NOT NULL,
     "result" JSONB NOT NULL,
 
@@ -481,8 +481,8 @@ CREATE TABLE "branches" (
     "zipCode" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "latitude" DECIMAL(65,30) NOT NULL,
-    "longitude" DECIMAL(65,30) NOT NULL,
+    "latitude" DECIMAL(65,30) DEFAULT 0.0,
+    "longitude" DECIMAL(65,30) DEFAULT 0.0,
     "timezone" TEXT DEFAULT 'UTC',
     "isMainBranch" BOOLEAN NOT NULL DEFAULT false,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -545,7 +545,6 @@ CREATE TABLE "notifications" (
 -- CreateTable
 CREATE TABLE "notification_types" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -562,6 +561,7 @@ CREATE TABLE "notification_types" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "organizationId" TEXT,
 
     CONSTRAINT "notification_types_pkey" PRIMARY KEY ("id")
 );
@@ -682,7 +682,7 @@ CREATE TABLE "nurse_preferences" (
     "preferredDaysOff" INTEGER NOT NULL DEFAULT 10,
     "prefersWeekendsOff" BOOLEAN NOT NULL DEFAULT false,
     "allowOvertime" BOOLEAN NOT NULL DEFAULT true,
-    "notes" TEXT,
+    "notes" TEXT DEFAULT '',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -1132,10 +1132,10 @@ ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN K
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "notification_types" ADD CONSTRAINT "notification_types_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "notification_types" ADD CONSTRAINT "notification_types_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "notification_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "notification_types" ADD CONSTRAINT "notification_types_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "notification_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "notification_types" ADD CONSTRAINT "notification_types_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "notification_templates" ADD CONSTRAINT "notification_templates_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
