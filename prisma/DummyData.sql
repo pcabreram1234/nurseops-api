@@ -271,6 +271,7 @@ INSERT INTO "leaves" ("id", "organiztionId", "userId", "type", "startDate", "end
 -- ==============================================================================
 
 INSERT INTO "permissions" ("id", "name", "description") VALUES
+-- Permisos Originales
 ('perm-01', 'CREATE_SCHEDULE', 'Permite generar horarios'),
 ('perm-02', 'EDIT_SCHEDULE', 'Permite modificar turnos'),
 ('perm-03', 'APPROVE_VACATION', 'Aprobar vacaciones'),
@@ -280,7 +281,148 @@ INSERT INTO "permissions" ("id", "name", "description") VALUES
 ('perm-07', 'OVERRIDE_RULES', 'Saltarse advertencias del sistema'),
 ('perm-08', 'APPROVE_SWAPS', 'Aprobar cambios de turno'),
 ('perm-09', 'VIEW_ALL_DEPARTMENTS', 'Visibilidad global'),
-('perm-10', 'EXPORT_DATA', 'Exportar a Excel/PDF');
+('perm-10', 'EXPORT_DATA', 'Exportar a Excel/PDF'),
+
+-- Auditoría
+('perm-11', 'WRITE_AUDIT_LOGS', 'Registrar eventos en la bitácora de auditoría del sistema'),
+('perm-12', 'READ_AUDIT_LOGS', 'Consultar y leer registros de auditoría'),
+
+-- Gestión de Usuarios y Accesos
+('perm-13', 'CREATE_USER', 'Registrar nuevos usuarios en el sistema'),
+('perm-14', 'CHANGE_PASSWORD', 'Modificar o resetear contraseñas de usuarios'),
+
+-- Gestión de Sucursales (Branches)
+('perm-15', 'CREATE_BRANCH', 'Crear nuevas sucursales o sedes'),
+('perm-16', 'VIEW_BRANCHES', 'Ver el listado completo de sucursales'),
+('perm-17', 'VIEW_BRANCH', 'Ver los detalles de una sucursal específica'),
+('perm-18', 'UPDATE_BRANCH', 'Modificar la información de una sucursal'),
+('perm-19', 'DELETE_BRANCH', 'Eliminar o desactivar una sucursal'),
+
+-- Gestión de Departamentos
+('perm-20', 'CREATE_DEPARTMENT', 'Registrar nuevos departamentos o áreas'),
+('perm-21', 'VIEW_DEPARTMENTS', 'Ver el listado completo de departamentos'),
+('perm-22', 'VIEW_DEPARTMENT', 'Ver los detalles de un departamento específico'),
+('perm-23', 'UPDATE_DEPARTMENT', 'Modificar la configuración de un departamento'),
+('perm-24', 'DELETE_DEPARTMENT', 'Eliminar o archivar un departamento'),
+('perm-25', 'ASSIGN_NURSES_DEPARTMENT', 'Asignar personal de enfermería a departamentos'),
+
+-- Candidatos a Emergencias
+('perm-26', 'CREATE_EMERGENCY_CANDIDATE', 'Registrar personal disponible para coberturas de emergencia'),
+('perm-27', 'VIEW_EMERGENCY_CANDIDATES', 'Ver lista de candidatos para turnos de emergencia'),
+('perm-28', 'UPDATE_EMERGENCY_CANDIDATE', 'Actualizar estatus de candidatos de emergencia'),
+
+-- Configuración del Sistema (Feature Flags y Módulos)
+('perm-29', 'MANAGE_FEATURE_FLAGS', 'Activar o desactivar características globales del sistema'),
+('perm-30', 'VIEW_FEATURE_FLAGS', 'Ver el estado de las características del sistema (Feature Flags)'),
+('perm-31', 'MANAGE_SYSTEM_MODULES', 'Administrar la disponibilidad de los módulos del sistema'),
+('perm-32', 'VIEW_SYSTEM_MODULES', 'Ver el estado y configuración de los módulos del sistema'),
+
+-- Gestión de Ausencias (Leaves)
+('perm-33', 'CREATE_LEAVE', 'Registrar permisos médicos, licencias o ausencias'),
+('perm-34', 'VIEW_LEAVES', 'Ver historial y solicitudes de ausencias'),
+('perm-35', 'UPDATE_LEAVE', 'Modificar, aprobar o rechazar solicitudes de ausencia'),
+
+-- Plantillas de Notificación
+('perm-36', 'CREATE_NOTIFICATION_TEMPLATE', 'Crear nuevas plantillas para correos/SMS/Push'),
+('perm-37', 'FIND_ALL_NOTIFICATIONS_TEMPLATES', 'Ver el listado de plantillas de notificación'),
+('perm-38', 'FIND_ONE_NOTIFICATION_TEMPLATE', 'Ver configuración de una plantilla de notificación'),
+('perm-39', 'UPDATE_NOTIFICATION_TEMPLATE', 'Modificar texto o variables de una plantilla de notificación'),
+('perm-40', 'DELETE_NOTIFICATION_TEMPLATE', 'Eliminar plantillas de notificación'),
+
+-- Disponibilidad de Enfermería
+('perm-41', 'CREATE_NURSE_AVAILABILITY', 'Registrar bloqueos o disponibilidad del personal'),
+('perm-42', 'VIEW_NURSE_AVAILABILITY', 'Consultar disponibilidad general de enfermeras'),
+('perm-43', 'UPDATE_NURSE_AVAILABILITY', 'Ajustar la disponibilidad o preferencias de turnos'),
+
+-- Perfiles Clínicos
+('perm-44', 'CREATE_NURSE_PROFILE', 'Crear expediente y perfil técnico de enfermería'),
+('perm-45', 'VIEW_NURSE_PROFILES', 'Ver listado de perfiles técnicos'),
+('perm-46', 'VIEW_NURSE_PROFILE', 'Ver expediente completo de una enfermera'),
+('perm-47', 'UPDATE_NURSE_PROFILE', 'Modificar certificaciones, notas o datos del perfil'),
+
+-- Restricciones Laborales
+('perm-48', 'CREATE_NURSE_RESTRICTION', 'Aplicar una regla o restricción temporal/permanente a un recurso'),
+('perm-49', 'VIEW_NURSE_RESTRICTIONS', 'Ver las restricciones laborales activas'),
+('perm-50', 'UPDATE_NURSE_RESTRICTION', 'Modificar vigencia o tipo de restricción laboral'),
+('perm-51', 'DELETE_NURSE_RESTRICTION', 'Levantar o eliminar una restricción laboral'),
+
+-- Gestión Principal de Enfermería (Nurses)
+('perm-52', 'CREATE_NURSE', 'Dar de alta a un nuevo empleado de enfermería'),
+('perm-53', 'VIEW_NURSES', 'Consultar el padrón general de enfermeras'),
+('perm-54', 'VIEW_NURSE', 'Ver datos básicos laborales de la enfermera'),
+('perm-55', 'UPDATE_NURSE', 'Actualizar estatus, contrato o tipo de recurso'),
+('perm-56', 'DELETE_NURSE', 'Dar de baja a un empleado de enfermería'),
+
+-- Alertas Operativas
+('perm-57', 'VIEW_OPERATIONAL_ALERTS', 'Ver alertas de cobertura, fatiga o faltas de personal'),
+('perm-58', 'RESOLVE_OPERATIONAL_ALERTS', 'Reconocer o marcar alertas operativas como resueltas'),
+
+-- Motor de Optimización
+('perm-59', 'EXECUTE_SCHEDULE_OPTIMIZATION', 'Lanzar el motor algorítmico para generar o mejorar horarios'),
+('perm-60', 'VIEW_OPTIMIZATION_METRICS', 'Ver rendimiento y puntajes del motor de distribución'),
+('perm-61', 'CREATE_OPTIMIZATION_SCORE', 'Definir nuevas reglas de peso para el algoritmo'),
+('perm-62', 'VIEW_OPTIMIZATION_SCORES', 'Consultar las reglas y pesos de asignación algorítmica'),
+('perm-63', 'UPDATE_OPTIMIZATION_SCORE', 'Calibrar los pesos e importancia de las reglas de turnos'),
+
+-- Organización
+('perm-64', 'CREATE_ORGANIZATION_SETTINGS', 'Inicializar configuración global de la organización'),
+('perm-65', 'VIEW_ORGANIZATION_SETTINGS', 'Ver reglas de negocio globales (horas máximas, etc.)'),
+('perm-66', 'UPDATE_ORGANIZATION_SETTINGS', 'Modificar parámetros globales de la institución'),
+('perm-67', 'CREATE-ORGANIZATION', 'Registrar una nueva entidad/hospital cliente'),
+('perm-68', 'READ_ORGANIZATION', 'Ver información fiscal y general del hospital'),
+('perm-69', 'UPDATE-ORGANIZATION', 'Actualizar datos de la razón social del hospital'),
+
+-- Entradas Individuales de Turno (Celdas)
+('perm-70', 'CREATE_SCHEDULE_ENTRY', 'Asignar un turno a un empleado específico manualmente'),
+('perm-71', 'VIEW_SCHEDULE_ENTRIES', 'Ver la matriz de asignaciones de turnos'),
+('perm-72', 'UPDATE_SCHEDULE_ENTRY', 'Mover, reasignar o modificar horas de un turno asignado'),
+
+-- Ciclo de Vida del Horario (Schedules)
+('perm-73', 'PUBLISH_SCHEDULE', 'Liberar el horario borrador para vista de los empleados'),
+('perm-74', 'CREATE_SCHEDULE', 'Inicializar un nuevo bloque mensual o semanal de horario'),
+('perm-75', 'VIEW_SCHEDULES', 'Ver el listado histórico de programaciones'),
+('perm-76', 'VIEW_SCHEDULE', 'Abrir la vista completa de una programación específica'),
+('perm-77', 'UPDATE_SCHEDULE', 'Modificar periodo, estatus o metadata del bloque de horario'),
+('perm-78', 'DELETE_SCHEDULE', 'Descartar o eliminar un horario completo'),
+('perm-79', 'GENERATE_SCHEDULE', 'Disparar el autollenado de celdas según plantillas'),
+
+-- Solicitudes de Cambio de Turno (Shift Swaps)
+('perm-80', 'REQUEST_SHIFT_CHG', 'Pedir un cambio de guardia a un compañero'),
+('perm-81', 'VIEW_SHIFT_CHG', 'Ver el panel de solicitudes de intercambio de turnos'),
+('perm-82', 'APPROVE_SHIFT_CHG', 'Autorizar o denegar intercambios entre enfermeras'),
+
+-- Documentación Legal de Cambios
+('perm-83', 'CREATE_SHIFT_CHANGE_DOCUMENT', 'Generar formato formal/PDF para el intercambio de turnos'),
+('perm-84', 'VIEW_ALL_SHIFT_CHANGE_DOCUMENT', 'Ver archivo de formatos de cambio de turnos'),
+('perm-85', 'VIEW_SHIFT_CHANGE_DOCUMENT', 'Ver un acta específica de cambio de guardia'),
+('perm-86', 'UPDATE_SHIFT_CHANGE_DOCUMENT', 'Modificar firmas o detalles del acta de cambio'),
+('perm-87', 'VERIFY_SHIFT_CHANGE_DOCUMENT', 'Aplicar firma o validación legal al intercambio'),
+('perm-88', 'DELETE_SHIFT_CHANGE_DOCUMENT', 'Anular el acta formal de cambio de turno'),
+
+-- Catálogo de Turnos Base (Shifts)
+('perm-89', 'CREATE_SHIFT', 'Crear una nueva plantilla de turno (ej. Mañana 8h, Noche 12h)'),
+('perm-90', 'VIEW_SHIFTS', 'Ver el catálogo maestro de tipos de turnos'),
+('perm-91', 'VIEW_SHIFT', 'Ver detalles de horas y reglas de un turno específico'),
+('perm-92', 'UPDATE_SHIFT', 'Modificar duración, horas o color de un turno base'),
+('perm-93', 'DELETE_SHIFT', 'Desactivar o eliminar un turno del catálogo maestro'),
+
+-- Ciclo de Vida de Vacaciones
+('perm-94', 'CREATE_VACATION', 'Registrar una solicitud de bloque vacacional'),
+('perm-95', 'VIEW_VACATIONS', 'Ver todas las solicitudes de vacaciones del personal'),
+('perm-96', 'VIEW_VACATION', 'Detalle y fechas de una solicitud vacacional específica'),
+('perm-97', 'UPDATE_VACATION', 'Editar periodo de vacaciones solicitadas o estado'),
+('perm-98', 'DELETE_VACATION', 'Cancelar o eliminar bloque de vacaciones programadas'),
+
+-- Webhooks y Log de Eventos Externos
+('perm-99', 'WRITE_WEBHOOK_LOGS', 'Registrar eventos de salida hacia integraciones externas'),
+('perm-100', 'READ_WEBHOOK_LOGS', 'Leer historial de peticiones de webhooks enviados/recibidos'),
+('perm-101', 'MANAGE_WEBHOOKS', 'Configurar URLs y secret keys de sistemas externos'),
+
+-- Métricas Analíticas y Carga de Trabajo
+('perm-102', 'CREATE_WORKLOAD_METRICS', 'Registrar puntos estadísticos de saturación de pacientes'),
+('perm-103', 'VIEW_WORKLOAD_METRICS', 'Ver los índices de fatiga y saturación del personal'),
+('perm-104', 'VIEW_CLINICAL_ANALYTICS', 'Acceder a dashboards ejecutivos de cobertura clínica'),
+('perm-105', 'UPDATE_WORKLOAD_METRICS', 'Calibrar umbrales o corregir datos de carga laboral');
 
 INSERT INTO "role_permissions" ("roleId", "permisionId") VALUES
 ('role-01', 'perm-01'), ('role-01', 'perm-02'), ('role-01', 'perm-03'), ('role-01', 'perm-04'), ('role-01', 'perm-05'),

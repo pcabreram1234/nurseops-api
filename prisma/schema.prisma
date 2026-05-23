@@ -205,6 +205,7 @@ model Department {
   operationalAlerts        OperationalAlert[]
   nurses                   Nurse[]
   emergencyCoverages       EmergencyCoverages[]
+  optimizationRuns         OptimizationRun[]
 
   @@map("departments")
 }
@@ -238,7 +239,7 @@ model DepartmentSpeciality {
   speciality    Speciality @relation(fields: [specialityId], references: [id], onDelete: Cascade)
   required      Boolean    @default(true)
   priority      Int        @default(1)
-  minimum_staff Int?
+  minimum_staff Int        @default(1)
   createdAt     DateTime   @default(now())
 
   @@id([departmentId, specialityId])
@@ -351,12 +352,18 @@ enum ScheduleStatus {
 }
 
 model OptimizationRun {
-  id         String   @id @default(uuid())
-  scheduleId String
-  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  startedAt  DateTime
-  fineshedAt DateTime
-  result     Json
+  id                  String     @id @default(uuid())
+  scheduleId          String
+  schedule            Schedule   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  startedAt           DateTime
+  fineshedAt          DateTime
+  departmentId        String
+  department          Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  executionTimeMs     Decimal
+  totalSlotsProcessed Int
+  slotsCovered        Int
+  coveragePercentage  Decimal
+  result              Json
 
   @@map("optimization_runs")
 }
@@ -391,6 +398,7 @@ enum ScheduleEntryStatus {
   PENDING
   CANCELLED
   REPLACED
+  OPEN
 }
 
 model Nurse {
@@ -1294,22 +1302,25 @@ model EmergencyCandidates {
 }
 
 model ShiftTemplate {
-  id             String       @id @default(uuid())
+  id             String         @id @default(uuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   departmentId   String
-  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  name           String // E.g., "Turno Matutino Estándar"
+  department     Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  name           PreferredShift
+  minimum_staff  Int            @default(1)
+  durationHours  Int
+  isNightShift   Boolean
   description    String
   configuration  Json
   startTime      String // Almacenado como "07:00"
   endTime        String // Almacenado como "15:00"
   color          String?
-  isActive       Boolean      @default(true)
-  autoAssignable Boolean      @default(true)
-  priority       Int          @default(1)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now()) @updatedAt
+  isActive       Boolean        @default(true)
+  autoAssignable Boolean        @default(true)
+  priority       Int            @default(1)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
 
   @@map("shift_templates")
 }

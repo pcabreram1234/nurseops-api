@@ -22,15 +22,18 @@ import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 import { CreateAbsenceDto } from "../dto/create-absence.dto";
 import { UpdateAbsenceDto } from "../dto/update-absence.dto";
 import { AbsenceFilterDto } from "../dto/absence-filter.dto";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
 
+@ApiTags("Abscences")
 @Controller({
   path: "absences",
   version: "1",
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AbsencesController {
-  constructor(private readonly absencesService: AbsencesService) {}
+  constructor(private readonly absencesService: AbsencesService) { }
 
+  @ApiOperation({ summary: "Crear Ausencias", })
   @Post()
   @Permissions("CREATE_ABSENCE")
   create(@Body() dto: CreateAbsenceDto, @CurrentUser() user: any) {
