@@ -299,6 +299,7 @@ enum OperationalAlertyTypes {
   EMERGENCY_COVERAGE_FAILED
   BURNOUT_CRITICAL
   STAFFING_SHORTAGE
+  SYSTEM_WARNING
 }
 
 model Schedule {

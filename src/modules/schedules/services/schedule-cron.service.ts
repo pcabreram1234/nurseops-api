@@ -3,6 +3,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '@infra/database/prisma.service';
 import { runScheduleEngine } from '../engines/run-schedule-engine'; // Ajusta la ruta correcta
 import { addMonths, startOfMonth } from 'date-fns';
+import { OperationalAlertyTypes } from '@prisma/client';
+import { ActivitySeverity } from '@modules/activity-logs/enums/activity-severity.enum';
 
 @Injectable()
 export class ScheduleCronService {
@@ -25,6 +27,7 @@ export class ScheduleCronService {
         this.logger.log('🤖 Despertando Job: Iniciando generación automatizada de horarios...');
 
         this.isRunning = true; // Bloqueamos el inicio de otros
+
 
         try {
             // 1. Determinar la fecha objetivo (Por defecto, el motor calcula para el PRÓXIMO mes)
@@ -53,9 +56,39 @@ export class ScheduleCronService {
 
             // 3. Iterar por cada departamento y correr el motor
             for (const dept of departments) {
+
                 this.logger.log(`⚙️  Procesando departamento: ${dept.name} (${dept.id})`);
-                this.logger.log(dept)
-                this.logger.log(dept.shiftTemplates)
+
+                const targetMonth = targetDate.getMonth() + 1;
+                const targetYear = targetDate.getFullYear();
+
+                // ==========================================
+                // 🛡️ CANDADO: Verificar si ya existe un horario
+                // ==========================================
+                const existingSchedule = await this.prisma.schedule.findFirst({
+                    where: {
+                        departmentId: dept.id,
+                        month: targetMonth,
+                        year: targetYear
+                    }
+                });
+
+                if (existingSchedule) {
+                    this.logger.warn(`⚠️ Saltando ${dept.name}: Ya existe un horario para ${targetMonth}/${targetYear}.`);
+
+                    // Guardar alerta en la base de datos
+                    await this.prisma.operationalAlert.create({
+                        data: {
+                            departmentId: dept.id,
+                            message: `El Job Automático intentó regenerar el horario para ${targetMonth}/${targetYear}, pero fue bloqueado para proteger la versión existente.`,
+                            alertType: OperationalAlertyTypes.SYSTEM_WARNING, // Ajusta este string al Enum que uses en tu base de datos
+                            severity: ActivitySeverity.MEDIUM
+                        }
+                    });
+                    this.isRunning = true;
+
+                    continue; // ⬅️ IMPORTANTE: Salta a la siguiente iteración del bucle sin lanzar el motor
+                }
 
                 // --- FILTRADO DE SEGURIDAD AÑADIDO ---
                 // Aseguramos que solo pasamos plantillas que realmente pertenecen al depto que estamos procesando
