@@ -10,7 +10,8 @@ import { EngineMetrics } from '../interfaces/schedule-engine-metrics';
 export function runAssignmentLoop(
     slots: ScheduleSlot[],
     context: ScheduleContext,
-    shiftTemplates: ShiftTemplate[] // Asumiendo que ahora incluye durationHours, isNight, etc.
+    shiftTemplates: ShiftTemplate[],
+    departmentId: string // Asumiendo que ahora incluye durationHours, isNight, etc.
 ): { slots: ScheduleSlot[], metrics: EngineMetrics } {
 
     // 1. Inicializar el Tracker para todas las enfermeras
@@ -29,7 +30,7 @@ export function runAssignmentLoop(
     for (const slot of slots) {
         if (slot.assignedNurseId) continue; // Ya fue llenada (seguridad)
 
-        const shiftInfo = shiftTemplates.find(s => s.id === slot.shiftId);
+        const shiftInfo = shiftTemplates.find(s => s.id === slot.shiftTemplateId);
         if (!shiftInfo) continue;
 
         let bestCandidateId: string | null = null;
@@ -37,6 +38,9 @@ export function runAssignmentLoop(
 
         // 3. Evaluar a cada enfermera del universo
         for (const nurse of context.nurses) {
+            if (nurse.departmentId !== departmentId && !nurse.isCrossDepartmental) {
+                continue; // Esta enfermera no puede entrar aquí
+            }
             const state = nurseStates.get(nurse.id)!;
 
             // ==========================================

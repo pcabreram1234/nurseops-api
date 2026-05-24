@@ -41,6 +41,7 @@ import { NotificationTypesModule } from "@modules/notification-types/notificatio
 import { NotificationTemplatesModule } from "@modules/notification-templates/notification-templates.module";
 import { ModulesModule } from "@modules/modules/modules.module";
 import { ActivityLogsModule } from "@modules/activity-logs/activity-logs.module";
+import { ScheduleCronService } from "@modules/schedules/services/schedule-cron.service";
 
 @Module({
   imports: [
@@ -89,6 +90,6 @@ import { ActivityLogsModule } from "@modules/activity-logs/activity-logs.module"
     ModulesModule,
     ActivityLogsModule
   ],
-  providers: [AuditInterceptor, AuditActionMapperService, AuditRouteFilterService, AuditSanitizerService]
+  providers: [AuditInterceptor, AuditActionMapperService, AuditRouteFilterService, AuditSanitizerService, ScheduleCronService]
 })
 export class AppModule { }

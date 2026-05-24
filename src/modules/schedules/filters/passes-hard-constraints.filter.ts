@@ -1,50 +1,64 @@
 import { ScheduleSlot } from "../interfaces/schedule-slot-interface";
 import { ScheduleContext } from "../interfaces/shedule-context-interface";
 import { isWithinInterval, differenceInHours, isWeekend } from "date-fns";
+import { NurseStateTracker } from "@modules/nurses/interfaces/nurse-state-tracker-interface";
 
 export function passesHardConstraints(
     nurse: any, slot: ScheduleSlot, shiftInfo: any, state: NurseStateTracker, context: ScheduleContext
 ): boolean {
 
-    // 1. Especialidad Obligatoria
-    if (slot.requiredSpecialityId) {
-        const hasSpeciality = nurse.specialities.some((s: any) => s.id === slot.requiredSpecialityId);
-        if (!hasSpeciality) return false;
-    }
-
-    // 2. Disponibilidad (Vacaciones y Permisos)
-    // Asumimos que blocks está mapeado para búsqueda rápida o iteramos
-    const onVacation = context.blocks.vacations.some(v =>
-        v.nurseId === nurse.id && isWithinInterval(slot.date, { start: v.startDate, end: v.endDate })
-    );
-    if (onVacation) return false;
-
-    // 3Verificar ausencias médicas o permisos aprobados
-    const onLeave = context.blocks.leaves.some(l =>
-        l.nurseId === nurse.id && isWithinInterval(slot.date, { start: l.startDate, end: l.endDate })
-    );
-    if (onLeave) return false;
-
-    // 4. Límites Físicos (Horas Máximas)
-    const orgSettings = context.settings.organization;
-    if (state.assignedHours + shiftInfo.durationHours > orgSettings.max_monthly_hours) {
+    if (nurse.departmentId !== context.settings.department.id
+        && !nurse.isCrossDepartmental) {
         return false;
     }
 
+    // 2. Especialidad (Mejorado para logs y robustez)
+    if (slot.requiredSpecialityId) {
+        if (nurse.speciality?.id !== slot.requiredSpecialityId) {
+            console.log(`[Filter] Rejected ${nurse.id}: Speciality mismatch.`);
+            return false;
+        }
+    }
+
+
+    // 3. Disponibilidad (Vacaciones y Permisos)
+    // Usamos .some() para verificar si la enfermera está bloqueada
+    const isBlocked = context.blocks.vacations.some(v => v.nurseId === nurse.id && isWithinInterval(slot.date, { start: v.start_Date, end: v.end_Date })) ||
+        context.blocks.leaves.some(l => l.nurseId === nurse.id && isWithinInterval(slot.date, { start: l.startDate, end: l.endDate }));
+
+    if (isBlocked) return false;
+
+
+    // 4. Límites Físicos (Horas)
+    // Asegura que shiftInfo tenga durationHours, si no, usa un default para evitar errores
+    const duration = shiftInfo?.durationHours || 8;
+    if (state.assignedHours + duration > context.settings.organization.max_monthly_hours) {
+        console.log(`[Filter] Rejected ${nurse.id}: Max monthly hours reached.`);
+        return false;
+    }
+
+
+
     // 5. Descanso Obligatorio (Fatigue Settings)
     if (state.lastShiftEndTime) {
-        // NOTA: slot.date debería combinarse con la hora de inicio del turno real
-        const shiftStartTime = new Date(slot.date); // Simplificación
+        const shiftStartTime = new Date(slot.date);
         const hoursRested = differenceInHours(shiftStartTime, state.lastShiftEndTime);
-        if (hoursRested < orgSettings.minimum_rest_hours) {
+        if (hoursRested < context.settings.organization.minimum_rest_hours) {
             return false;
         }
     }
 
     // 6. Restricciones Personales Activas
-    const restrictions = nurse.restrictions.map((r: any) => r.type);
-    if (shiftInfo.isNightShift && restrictions.includes('NO_NIGHT_SHIFTS')) return false;
-    if (isWeekend(slot.date) && restrictions.includes('NO_WEEKENDS')) return false;
+    // (Corregido: El array se llama nurseRestrictions en Prisma)
+    // Nota: Revisa si guardas el tipo como string directo o si es un ID hacia NurseRestrictionType
+    if (nurse.nurseRestrictions && nurse.nurseRestrictions.length > 0) {
+
+        // Mapeamos los nombres de las restricciones (Ajusta 'r.type' por el campo real donde guardas el Enum, ej: r.restrictionType?.name)
+        const restrictionCodes = nurse.nurseRestrictions.map((r: any) => r.type);
+
+        if (shiftInfo?.isNightShift && restrictionCodes.includes('NO_NIGHT_SHIFTS')) return false;
+        if (isWeekend(slot.date) && restrictionCodes.includes('NO_WEEKENDS')) return false;
+    }
 
     return true; // ✅ Sobrevivió al Filtro A
 }

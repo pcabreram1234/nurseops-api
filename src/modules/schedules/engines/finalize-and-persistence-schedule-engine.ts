@@ -4,6 +4,7 @@ import { ScheduleEntryStatus } from '@prisma/client';
 import { EngineMetrics } from '../interfaces/schedule-engine-metrics';
 import { triggerDraftReadyNotification } from '../emitter/schedule_draft_emitter';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { OperationalAlertyTypes } from '@prisma/client';
 
 export async function finalizeAndPersistSchedule(
     prisma: PrismaService,
@@ -32,7 +33,7 @@ export async function finalizeAndPersistSchedule(
         : [];
 
 
-    console.log(`[Engine] Finishint. Execution time: ${generationTimeMs}ms. Coverage: ${coveragePercentage.toFixed(2)}%`);
+    console.log(`[Engine] Finishing. Execution time: ${generationTimeMs}ms. Coverage: ${coveragePercentage.toFixed(2)}%`);
 
     try {
         // Transacción Maestra: Todo se guarda o nada se guarda
@@ -63,25 +64,30 @@ export async function finalizeAndPersistSchedule(
             const entriesToInsert = slots.map(slot => ({
                 scheduleId: newSchedule.id,
                 shiftId: slot.shiftId,
+                shiftTemplateId: slot.shiftTemplateId,
                 date: slot.date,
                 nurseId: slot.assignedNurseId as string,
-                requiredSpecialityId: slot.requiredSpecialityId,
                 status: slot.assignedNurseId ? ScheduleEntryStatus.ASSIGNED : ScheduleEntryStatus.OPEN,
                 assignedById: triggeredById,
                 organizationId: organizationId
             }));
 
+            console.log("IDs de turnos a insertar:", entriesToInsert.map(e => e.shiftId));
+
             await tx.scheduleEntry.createMany({
                 data: entriesToInsert,
                 skipDuplicates: true
             });
-
-            // (Opcional - Fase 5) Guardar alertas vinculadas a este nuevo calendario
-            if (conflictReport.hasConflicts) {
+            // FASE 5. GUARDAR ALERTAS
+            if (conflictReport.hasConflicts && conflictReport.alerts) {
                 const alertsToInsert = conflictReport.alerts.map((alert: any) => ({
-                    ...alert,
-                    scheduleId: newSchedule.id
+                    departmentId: departmentId,
+                    message: alert.message,
+                    severity: alert.severity || "HIGH",
+                    // Aquí estaba el error: alert.type debe asignarse a alertType
+                    alertType: OperationalAlertyTypes.STAFF_SHORTAGE
                 }));
+
                 await tx.operationalAlert.createMany({
                     data: alertsToInsert
                 });
@@ -98,8 +104,8 @@ export async function finalizeAndPersistSchedule(
                     totalSlotsProcessed: totalSlots,
                     slotsCovered: coveredSlots,
                     coveragePercentage: coveragePercentage,
-                    startedAt: engineStartTime.toString(),
-                    fineshedAt: Date.now().toString(),
+                    startedAt: new Date(engineStartTime),
+                    fineshedAt: new Date(Date.now()),
                     result: {
                         "status": conflictReport.hasConflicts ? "SUCCESS_WITH_WARNINGS" : "SUCCESS",
                         "fairness_score": engineMetrics?.fairnessScore ?? 100, // Por defecto 100 si no se calcula

@@ -23,45 +23,45 @@ export class OptimizationRunsService {
     ) { }
 
     async executeAndRecordRun(dto: ExecuteOptimizationDto) {
-        const startedAt = new Date();
+        // const startedAt = new Date();
 
-        // 1. Respaldar estado previo preventivo
-        this.snapshotService.createPreOptimizationSnapshot(dto.scheduleId);
+        // // 1. Respaldar estado previo preventivo
+        // this.snapshotService.createPreOptimizationSnapshot(dto.scheduleId);
 
-        // 2. Despachar evento transaccional de inicio
-        this.eventEmitter.emit(
-            OPTIMIZATION_EVENTS.STARTED,
-            new OptimizationStartedEvent('dynamic-temp-id', dto.scheduleId, dto.strategy),
-        );
+        // // 2. Despachar evento transaccional de inicio
+        // this.eventEmitter.emit(
+        //     OPTIMIZATION_EVENTS.STARTED,
+        //     new OptimizationStartedEvent('dynamic-temp-id', dto.scheduleId, dto.strategy),
+        // );
 
-        // 3. Ejecutar procesamiento matemático pesado
-        const calculation = await this.engine.runCombinatorialSolver({
-            scheduleId: dto.scheduleId,
-            strategy: dto.strategy,
-            maxIterations: dto.maxIterations,
-            allowOvertime: dto.allowOvertime,
-        });
+        // // 3. Ejecutar procesamiento matemático pesado
+        // const calculation = await this.engine.runCombinatorialSolver({
+        //     scheduleId: dto.scheduleId,
+        //     strategy: dto.strategy,
+        //     maxIterations: dto.maxIterations,
+        //     allowOvertime: dto.allowOvertime,
+        // });
 
-        // 4. Validar calidad de la solución antes de persistirla
-        this.scoreValidator.validateResultScore(calculation.finalScore);
+        // // 4. Validar calidad de la solución antes de persistirla
+        // this.scoreValidator.validateResultScore(calculation.finalScore);
 
-        const fineshedAt = new Date();
+        // const fineshedAt = new Date();
 
-        // 5. Mapear y persistir en la base de datos respetando 'startedAtd', 'fineshedAt' y 'result' como Json
-        const run = await this.prisma.optimizationRun.create({
-            data: {
-                scheduleId: dto.scheduleId,
-                startedAt,
-                fineshedAt,
-                result: calculation as any,
-            },
-        });
+        // // 5. Mapear y persistir en la base de datos respetando 'startedAtd', 'fineshedAt' y 'result' como Json
+        // const run = await this.prisma.optimizationRun.create({
+        //     data: {
+        //         scheduleId: dto.scheduleId,
+        //         startedAt,
+        //         fineshedAt,
+        //         result: calculation as any,
+        //     },
+        // });
 
-        // 6. Registrar telemetría de rendimiento y despachar evento finalizador
-        this.performanceTelemetry.logPerformanceTelemetry(run.id, calculation.processingTimeMs, dto.maxIterations);
-        this.eventEmitter.emit(OPTIMIZATION_EVENTS.FINISHED, new OptimizationFinishedEvent(run.id, dto.scheduleId, calculation));
+        // // 6. Registrar telemetría de rendimiento y despachar evento finalizador
+        // this.performanceTelemetry.logPerformanceTelemetry(run.id, calculation.processingTimeMs, dto.maxIterations);
+        // this.eventEmitter.emit(OPTIMIZATION_EVENTS.FINISHED, new OptimizationFinishedEvent(run.id, dto.scheduleId, calculation));
 
-        return run;
+        // return run;
     }
 
     async findAll(filters: OptimizationFilterDto) {

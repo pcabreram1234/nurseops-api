@@ -2,7 +2,7 @@
 export interface ScheduleContext {
     settings: {
         organization: any; // Tipar según Prisma (ej. OrganizationSettings)
-        department: any;   // Tipar según Prisma
+        department?: any;   // Tipar según Prisma
     };
     nurses: any[];
     blocks: {

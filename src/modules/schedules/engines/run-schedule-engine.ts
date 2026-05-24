@@ -24,11 +24,13 @@ export async function runScheduleEngine(
         // Fase 1: Cargar el Mundo en RAM
         const context = await buildScheduleContext(organizationId, departmentId, targetDate, prisma);
 
+
         // Fase 2: Dibujar el Tablero Vacío
         const emptySlots = buildDemandGrid(targetDate, shiftTemplates, specialities);
 
         // Fase 3 y 4: Asignación y Actualización en Memoria
-        const assignedSlots = runAssignmentLoop(emptySlots, context, shiftTemplates);
+        const assignedSlots = runAssignmentLoop(emptySlots, context, shiftTemplates, departmentId);
+
 
         // Fase 5: Manejo de Excepciones y Conflictos
         const conflictReport = generateConflictReport(assignedSlots.slots, shiftTemplates, emptySlots[0].id, departmentId);

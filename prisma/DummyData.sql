@@ -27,6 +27,32 @@ INSERT INTO "FeatureFlag" ("id", "feature_name", "isActive") VALUES
 ('ff-10', 'BIOMETRIC_SYNC', false);
 
 -- ==============================================================================
+-- 1. CREACION DE ORGANIZACION
+-- ==============================================================================
+INSERT INTO "organizations" ("id", "name", "code", "timezone", "country", "status") 
+VALUES ('e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'Hospital General Central', 'HOSP-GEN-01', 'America/Santo_Domingo', 'DO', 'A');
+
+INSERT INTO "organization_settings" (
+"id",
+    "organizationId",
+    "birthday_free_day_enabled",
+    "require_shift_approval",
+    "auto_balance_nights",
+    "allow_cross_department",
+    "allow_overtime",
+    "max_monthly_hours",
+    "max_weekly_hours",
+    "overtime_limit",
+    "max_nights",
+    "max_consecutive_nights",
+    "minimum_rest_hours",
+    "max_consecutive_days",
+    "auto_assign_emergency",
+    "auto_approve_swaps"
+) 
+VALUES (gen_random_uuid(),'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', false, false, false, true, true,160, 44, 20, 10, 3, 12, 6, false,  false);
+
+-- ==============================================================================
 -- 2. ESTRUCTURA ORGANIZACIONAL
 -- ==============================================================================
 
@@ -95,6 +121,8 @@ INSERT INTO "department_specialties" ("departmentId", "specialityId", "required"
 ('dept-10', 'spec-10', true, 1, 1);
 
 INSERT INTO "roles" ("id", "name", "organizationId") VALUES
+('SUPER', 'SUPER USUARIO', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
+('CRON','USUARIO PARA EJECUCIONES DE JOBS','e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
 ('role-01', 'SUPERVISOR_GENERAL', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
 ('role-02', 'NURSE_SENIOR', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
 ('role-03', 'NURSE_JUNIOR', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
@@ -110,17 +138,19 @@ INSERT INTO "roles" ("id", "name", "organizationId") VALUES
 -- 4. USUARIOS, ENFERMERAS Y PERFILES
 -- ==============================================================================
 
-INSERT INTO "users" ("id", "email", "password", "firstName", "lastName", "organizationId", "departmentId", "rolesId", "status", "auditLogId") VALUES
-('user-01', 'maria.perez@hgc.com', 'hashed123', 'Maria', 'Perez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE', 'audit-01'),
-('user-02', 'juan.gomez@hgc.com', 'hashed123', 'Juan', 'Gomez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE', 'audit-02'),
-('user-03', 'ana.lopez@hgc.com', 'hashed123', 'Ana', 'Lopez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE', 'audit-03'),
-('user-04', 'carlos.ruiz@hgc.com', 'hashed123', 'Carlos', 'Ruiz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04', 'role-06', 'ACTIVE', 'audit-04'),
-('user-05', 'luisa.fernandez@hgc.com', 'hashed123', 'Luisa', 'Fernandez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05', 'role-03', 'ACTIVE', 'audit-05'),
-('user-06', 'pedro.martinez@hgc.com', 'hashed123', 'Pedro', 'Martinez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'role-08', 'ACTIVE', 'audit-06'),
-('user-07', 'laura.diaz@hgc.com', 'hashed123', 'Laura', 'Diaz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07', 'role-02', 'ACTIVE', 'audit-07'),
-('user-08', 'jorge.torres@hgc.com', 'hashed123', 'Jorge', 'Torres', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08', 'role-03', 'ACTIVE', 'audit-08'),
-('user-09', 'carmen.vargas@hgc.com', 'hashed123', 'Carmen', 'Vargas', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09', 'role-07', 'ACTIVE', 'audit-09'),
-('user-10', 'miguel.castro@hgc.com', 'hashed123', 'Miguel', 'Castro', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10', 'role-02', 'ACTIVE', 'audit-10');
+INSERT INTO "users" ("id", "email", "password", "firstName", "lastName", "organizationId", "departmentId" ,"rolesId", "status") VALUES
+('user-00', 'pcabreram1234@gmail.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Phillip', 'Cabrera', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'SUPER', 'ACTIVE' ),
+('00000000-0000-0000-0000-000000000000','cronbot@sistema.local', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C','SYSTEM', 'CRON_BOT', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01','CRON', 'ACTIVE'),
+('user-01', 'maria.perez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Maria', 'Perez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-02', 'juan.gomez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Juan', 'Gomez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+('user-03', 'ana.lopez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Ana', 'Lopez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
+('user-04', 'carlos.ruiz@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Carlos', 'Ruiz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04', 'role-06', 'ACTIVE'),
+('user-05', 'luisa.fernandez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Luisa', 'Fernandez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05', 'role-03', 'ACTIVE'),
+('user-06', 'pedro.martinez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Pedro', 'Martinez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'role-08', 'ACTIVE'),
+('user-07', 'laura.diaz@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Laura', 'Diaz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07', 'role-02', 'ACTIVE'),
+('user-08', 'jorge.torres@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Jorge', 'Torres', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08', 'role-03', 'ACTIVE'),
+('user-09', 'carmen.vargas@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Carmen', 'Vargas', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09', 'role-07', 'ACTIVE'),
+('user-10', 'miguel.castro@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Miguel', 'Castro', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10', 'role-02', 'ACTIVE');
 
 INSERT INTO "nurses" ("id", "userId", "departmentId", "organizationId", "contract_type", "hire_date", "status", "specialityId") VALUES
 ('nurse-01', 'user-01', 'dept-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2020-01-15', 'ACTIVE', 'spec-01'),
@@ -202,17 +232,17 @@ INSERT INTO "shifts" ("id", "organizationId", "name", "code", "type", "startTime
 ('sh-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'Refuerzo Noche', 'RN-01', 'NIGHT', '2026-06-01 20:00:00', '2026-06-02 04:00:00', '1970-01-01 08:00:00', 'dept-05'),
 ('sh-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'Jornada Completa', 'JC-01', 'MORNING', '2026-06-01 08:00:00', '2026-06-01 17:00:00', '1970-01-01 09:00:00', 'dept-09');
 
-INSERT INTO "shift_templates" ("id", "organizationId", "departmentId", "name", "description", "configuration", "startTime", "endTime") VALUES
-('tmpl-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'Patrón UCI 8h', '3 turnos de 8 horas', '{"required_staff": 3}', '07:00', '15:00'),
-('tmpl-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'Patrón ER 12h', '2 turnos de 12 horas', '{"required_staff": 4}', '07:00', '19:00'),
-('tmpl-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'Patrón Pediatría', 'Lunes a Viernes', '{"required_staff": 2}', '08:00', '16:00'),
-('tmpl-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04', 'Plantilla Quirófano', 'Alta demanda matutina', '{"required_staff": 5}', '06:00', '14:00'),
-('tmpl-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05', 'Cardio Regular', 'Turno estándar', '{"required_staff": 2}', '07:00', '15:00'),
-('tmpl-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'Maternidad 24/7', 'Cobertura completa', '{"required_staff": 3}', '23:00', '07:00'),
-('tmpl-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07', 'Oncología Día', 'Solo diurno', '{"required_staff": 2}', '08:00', '17:00'),
-('tmpl-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08', 'Trauma Refuerzo', 'Refuerzo fines semana', '{"required_staff": 4}', '19:00', '07:00'),
-('tmpl-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09', 'Medicina Interna Base', 'Cobertura pabellón', '{"required_staff": 3}', '07:00', '15:00'),
-('tmpl-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10', 'Radiología Corto', 'Medio tiempo', '{"required_staff": 1}', '08:00', '12:00');
+INSERT INTO "shift_templates" ("id", "organizationId", "departmentId", "name", "description", "configuration","minimum_staff", "startTime", "endTime","durationHours","isNightShift","shiftId") VALUES
+('tmpl-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01','MORNING', 'Patrón UCI 8h', ('{}'), 3, '07:00', '15:00',12,false,'sh-01'),
+('tmpl-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02','AFTERNOON', 'Patrón ER 12h', ('{}'), 4, '07:00', '19:00',8,false,'sh-02'),
+('tmpl-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03','NIGHT', 'Patrón Pediatría', ('{}'), 2, '08:00', '16:00',4,true,'sh-03'),
+('tmpl-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04','MORNING', 'Plantilla Quirófano', ('{}'), 5, '06:00', '14:00',12,false,'sh-04'),
+('tmpl-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05','AFTERNOON', 'Cardio Regular', ('{}'), 2, '07:00', '15:00',8,false,'sh-05'),
+('tmpl-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'NIGHT','Maternidad 24/7', ('{}'), 3, '23:00', '07:00',10,true,'sh-06'),
+('tmpl-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07','MORNING', 'Oncología Día', ('{}'), 2, '08:00', '17:00',12,false,'sh-07'),
+('tmpl-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08','AFTERNOON', 'Trauma Refuerzo', ('{}'), 4, '19:00', '07:00',16,false,'sh-08'),
+('tmpl-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09','NIGHT', 'Medicina Interna Base', ('{}'), 3, '07:00', '15:00',8,true,'sh-09'),
+('tmpl-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10','MORNING', 'Radiología Corto', ('{}'), 1, '08:00', '12:00',12,false,'sh-10');
 
 -- ==============================================================================
 -- 7. EVENTOS DE TIEMPO (Ausencias, Vacaciones, Disponibilidad, Permisos)
@@ -242,29 +272,29 @@ INSERT INTO "nurse_availability" ("id", "organizationId", "nurseId", "date", "st
 ('av-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-09', '2026-06-09 00:00:00', 'AVAILABLE'),
 ('av-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-10', '2026-06-10 00:00:00', 'PARTIAL');
 
-INSERT INTO "vacations" ("id", "organizationId", "nurseId", "start_Date", "end_Date", "status", "reason", "notes") VALUES
-('vac-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-01', '2026-07-01 00:00:00', '2026-07-15 00:00:00', 'APPROVED', 'Vacaciones anuales', 'Aprobado por HR'),
-('vac-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-02', '2026-08-10 00:00:00', '2026-08-25 00:00:00', 'PENDING_APPROVAL', 'Descanso', ''),
-('vac-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-03', '2026-09-01 00:00:00', '2026-09-14 00:00:00', 'APPROVED', 'Viaje familiar', ''),
-('vac-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-04', '2026-10-05 00:00:00', '2026-10-20 00:00:00', 'APPROVED', 'Vacaciones anuales', ''),
-('vac-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-05', '2026-11-15 00:00:00', '2026-11-30 00:00:00', 'REJECTED', 'Choque con temporada alta', 'Reprogramar'),
-('vac-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-06', '2026-12-01 00:00:00', '2026-12-15 00:00:00', 'APPROVED', 'Vacaciones anuales', ''),
-('vac-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-07', '2027-01-10 00:00:00', '2027-01-25 00:00:00', 'DRAFT', 'Descanso', ''),
-('vac-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-08', '2027-02-05 00:00:00', '2027-02-20 00:00:00', 'PENDING_APPROVAL', 'Vacaciones anuales', ''),
-('vac-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-09', '2027-03-15 00:00:00', '2027-03-30 00:00:00', 'APPROVED', 'Viaje', ''),
-('vac-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-10', '2027-04-01 00:00:00', '2027-04-15 00:00:00', 'APPROVED', 'Vacaciones anuales', '');
+INSERT INTO "vacations" ("id", "organizationId", "nurseId", "start_Date", "end_Date", "status", "reason", "notes","departmentId") VALUES
+('vac-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-01', '2026-07-01 00:00:00', '2026-07-15 00:00:00', 'APPROVED', 'Vacaciones anuales', 'Aprobado por HR','dept-01'),
+('vac-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-02', '2026-08-10 00:00:00', '2026-08-25 00:00:00', 'PENDING_APPROVAL', 'Descanso', '','dept-02'),
+('vac-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-03', '2026-09-01 00:00:00', '2026-09-14 00:00:00', 'APPROVED', 'Viaje familiar', '','dept-03'),
+('vac-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-04', '2026-10-05 00:00:00', '2026-10-20 00:00:00', 'APPROVED', 'Vacaciones anuales', '','dept-04'),
+('vac-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-05', '2026-11-15 00:00:00', '2026-11-30 00:00:00', 'REJECTED', 'Choque con temporada alta', 'Reprogramar','dept-05'),
+('vac-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-06', '2026-12-01 00:00:00', '2026-12-15 00:00:00', 'APPROVED', 'Vacaciones anuales', '','dept-06'),
+('vac-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-07', '2027-01-10 00:00:00', '2027-01-25 00:00:00', 'DRAFT', 'Descanso', '','dept-07'),
+('vac-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-08', '2027-02-05 00:00:00', '2027-02-20 00:00:00', 'PENDING_APPROVAL', 'Vacaciones anuales', '','dept-08'),
+('vac-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-09', '2027-03-15 00:00:00', '2027-03-30 00:00:00', 'APPROVED', 'Viaje', '','dept-09'),
+('vac-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'nurse-10', '2027-04-01 00:00:00', '2027-04-15 00:00:00', 'APPROVED', 'Vacaciones anuales', '','dept-10');
 
-INSERT INTO "leaves" ("id", "organiztionId", "userId", "type", "startDate", "endDate", "reason", "status") VALUES
-('lv-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-01', 'MATERNITY', '2026-05-01 00:00:00', '2026-08-01 00:00:00', 'Licencia pre-natal', 'APPROVED'),
-('lv-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-02', 'STUDY', '2026-06-01 00:00:00', '2026-06-05 00:00:00', 'Congreso médico', 'APPROVED'),
-('lv-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-03', 'BEREAVEMENT', '2026-06-10 00:00:00', '2026-06-13 00:00:00', 'Fallecimiento familiar', 'APPROVED'),
-('lv-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-04', 'UNPAID', '2026-07-01 00:00:00', '2026-07-30 00:00:00', 'Asuntos personales', 'PENDING'),
-('lv-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-05', 'PATERNITY', '2026-08-15 00:00:00', '2026-08-22 00:00:00', 'Nacimiento hijo', 'APPROVED'),
-('lv-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-06', 'SICK', '2026-06-05 00:00:00', '2026-06-25 00:00:00', 'Cirugía menor', 'APPROVED'),
-('lv-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-07', 'UNION', '2026-06-15 00:00:00', '2026-06-16 00:00:00', 'Reunión sindical', 'APPROVED'),
-('lv-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-08', 'STUDY', '2026-09-01 00:00:00', '2026-12-01 00:00:00', 'Diplomado especialización', 'PENDING'),
-('lv-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-09', 'UNPAID', '2026-10-01 00:00:00', '2026-10-15 00:00:00', 'Viaje personal', 'REJECTED'),
-('lv-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-10', 'BEREAVEMENT', '2026-05-20 00:00:00', '2026-05-23 00:00:00', 'Fallecimiento', 'APPROVED');
+INSERT INTO "leaves" ("id", "organiztionId", "userId", "type", "startDate", "endDate", "reason", "status","departmentId") VALUES
+('lv-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-01', 'MATERNITY', '2026-05-01 00:00:00', '2026-08-01 00:00:00', 'Licencia pre-natal', 'APPROVED','dept-01'),
+('lv-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-02', 'STUDY', '2026-06-01 00:00:00', '2026-06-05 00:00:00', 'Congreso médico', 'APPROVED','dept-02'),
+('lv-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-03', 'BEREAVEMENT', '2026-06-10 00:00:00', '2026-06-13 00:00:00', 'Fallecimiento familiar', 'APPROVED','dept-03'),
+('lv-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-04', 'UNPAID', '2026-07-01 00:00:00', '2026-07-30 00:00:00', 'Asuntos personales', 'PENDING','dept-04'),
+('lv-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-05', 'PATERNITY', '2026-08-15 00:00:00', '2026-08-22 00:00:00', 'Nacimiento hijo', 'APPROVED','dept-05'),
+('lv-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-06', 'SICK', '2026-06-05 00:00:00', '2026-06-25 00:00:00', 'Cirugía menor', 'APPROVED','dept-06'),
+('lv-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-07', 'UNION', '2026-06-15 00:00:00', '2026-06-16 00:00:00', 'Reunión sindical', 'APPROVED','dept-07'),
+('lv-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-08', 'STUDY', '2026-09-01 00:00:00', '2026-12-01 00:00:00', 'Diplomado especialización', 'PENDING','dept-08'),
+('lv-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-09', 'UNPAID', '2026-10-01 00:00:00', '2026-10-15 00:00:00', 'Viaje personal', 'REJECTED','dept-09'),
+('lv-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'user-10', 'BEREAVEMENT', '2026-05-20 00:00:00', '2026-05-23 00:00:00', 'Fallecimiento', 'APPROVED','dept-10');
 
 -- ==============================================================================
 -- 8. REGLAS DE NEGOCIO Y MOTOR LOGICO
@@ -379,7 +409,6 @@ INSERT INTO "permissions" ("id", "name", "description") VALUES
 
 -- Ciclo de Vida del Horario (Schedules)
 ('perm-73', 'PUBLISH_SCHEDULE', 'Liberar el horario borrador para vista de los empleados'),
-('perm-74', 'CREATE_SCHEDULE', 'Inicializar un nuevo bloque mensual o semanal de horario'),
 ('perm-75', 'VIEW_SCHEDULES', 'Ver el listado histórico de programaciones'),
 ('perm-76', 'VIEW_SCHEDULE', 'Abrir la vista completa de una programación específica'),
 ('perm-77', 'UPDATE_SCHEDULE', 'Modificar periodo, estatus o metadata del bloque de horario'),

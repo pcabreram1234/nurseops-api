@@ -113,7 +113,7 @@ model OrganizationSetting {
   birthday_free_day_enabled Boolean @default(false)
   require_shift_approval    Boolean @default(false)
   auto_balance_nights       Boolean @default(true)
-  allow_cross_department    Boolean @default(false)
+  // allow_cross_department    Boolean @default(false)
   allow_overtime            Boolean @default(true)
 
   /**
@@ -206,6 +206,8 @@ model Department {
   nurses                   Nurse[]
   emergencyCoverages       EmergencyCoverages[]
   optimizationRuns         OptimizationRun[]
+  leaves                   Leave[]
+  vacations                Vacation[]
 
   @@map("departments")
 }
@@ -265,10 +267,13 @@ model DepartmentConfiguration {
 model OperationalAlert {
   id           String                 @id @default(uuid())
   departmentId String
+  message      String
   department   Department             @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   alertType    OperationalAlertyTypes
   severity     PriorityTypes
   status       OperationalAlertStatus @default(IN_PROGRESS)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @default(now()) @updatedAt
 
   @@map("operational_alerts")
 }
@@ -370,6 +375,8 @@ model OptimizationRun {
 
 model ScheduleEntry {
   id                  String              @id @default(uuid())
+  shiftTemplateId     String
+  shiftTemplate       ShiftTemplate       @relation(fields: [shiftTemplateId], references: [id])
   scheduleId          String
   schedule            Schedule            @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   shiftId             String
@@ -386,8 +393,8 @@ model ScheduleEntry {
   updatedAt           DateTime            @default(now()) @updatedAt
   organizationId      String
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  nurseId             String
-  nurse               Nurse               @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  nurseId             String?
+  nurse               Nurse?              @relation(fields: [nurseId], references: [id], onDelete: Cascade)
 
   @@map("schedule_entries")
 }
@@ -425,6 +432,7 @@ model Nurse {
   nursePreferences    NursePreferences?
   scheduleEntries     ScheduleEntry[]
   nurseProfiles       NurseProfile[]
+  isCrossDepartmental Boolean               @default(true)
 
   @@map("nurses")
 }
@@ -528,6 +536,8 @@ model WorkLoadMetrics {
 
 model Vacation {
   id              String         @id @default(uuid())
+  departmentId    String
+  department      Department     @relation(fields: [departmentId], references: [id])
   organizationId  String
   organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   nurseId         String
@@ -1041,15 +1051,15 @@ enum PriorityTypes {
 // ==========================================
 
 model User {
-  id             String       @id @default(uuid())
-  email          String       @unique
+  id             String        @id @default(uuid())
+  email          String        @unique
   password       String
   firstName      String
   lastName       String
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   departmentId   String?
-  department     Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  department     Department?   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   // Solicitudes de Cambio (Como solicitante o receptor)
   sentChangeRequests     ShiftChangeRequest[] @relation("RequesterNurse")
@@ -1074,7 +1084,7 @@ model User {
   requestedApprovals   ShiftChangeApprovals[] @relation("ApprovalRequester")
   processedApprovals   ShiftChangeApprovals[] @relation("ApprovalApprover")
   shiftChangeDocuments ShiftChangeDocument[]  @relation("UserDocuments")
-  auditLogId           String
+  auditLogId           String?
   scheduleEntries      ScheduleEntry[]
   nurseRestrictions    NurseRestriction[]
   vacations            Vacation[]
@@ -1233,6 +1243,7 @@ model Shift {
   changeRequestsAsTarget ShiftChangeRequest[] @relation("TargetShift")
   scheduleEntries        ScheduleEntry[]
   emergencyCoverages     EmergencyCoverages[]
+  shiftTemplates         ShiftTemplate[]
 
   @@map("shifts")
 }
@@ -1302,25 +1313,28 @@ model EmergencyCandidates {
 }
 
 model ShiftTemplate {
-  id             String         @id @default(uuid())
-  organizationId String
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  departmentId   String
-  department     Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  name           PreferredShift
-  minimum_staff  Int            @default(1)
-  durationHours  Int
-  isNightShift   Boolean
-  description    String
-  configuration  Json
-  startTime      String // Almacenado como "07:00"
-  endTime        String // Almacenado como "15:00"
-  color          String?
-  isActive       Boolean        @default(true)
-  autoAssignable Boolean        @default(true)
-  priority       Int            @default(1)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @default(now()) @updatedAt
+  id              String          @id @default(uuid())
+  organizationId  String
+  shiftId         String
+  shift           Shift           @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId    String
+  department      Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  name            PreferredShift
+  minimum_staff   Int             @default(1)
+  durationHours   Int
+  isNightShift    Boolean
+  description     String
+  configuration   Json
+  startTime       String // Almacenado como "07:00"
+  endTime         String // Almacenado como "15:00"
+  color           String?
+  isActive        Boolean         @default(true)
+  autoAssignable  Boolean         @default(true)
+  priority        Int             @default(1)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @default(now()) @updatedAt
+  scheduleEntries ScheduleEntry[]
 
   @@map("shift_templates")
 }
@@ -1544,6 +1558,8 @@ model Leave {
   id                        String       @id @default(uuid())
   organiztionId             String
   organization              Organization @relation(fields: [organiztionId], references: [id], onDelete: Cascade)
+  departmentId              String
+  department                Department   @relation(fields: [departmentId], references: [id])
   userId                    String
   user                      User         @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
   type                      LeaveType

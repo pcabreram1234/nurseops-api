@@ -15,7 +15,7 @@ export function generateConflictReport(
     for (const slot of slots) {
         if (!slot.assignedNurseId) {
             totalConflicts++;
-            const shiftInfo = shiftTemplates.find(s => s.id === slot.shiftId);
+            const shiftInfo = shiftTemplates.find(s => s.id === slot.shiftTemplateId);
 
             // Determinar el tipo de alerta operativa
             let alertType: AlertPayload['type'] = 'STAFF_SHORTAGE';

@@ -22,6 +22,7 @@ export class AlertDetectionService {
         this.logger.log(`[DETECTOR]: New anomaly detected at the plant. Evaluating the record...`);
 
         const severity = this.priorityService.determinePriority(type, ctx);
+        const msg = `Operational alert of type ${type} detected with severity ${severity}.`;
 
         const alert = await this.prisma.operationalAlert.create({
             data: {
@@ -29,10 +30,10 @@ export class AlertDetectionService {
                 alertType: type,
                 severity,
                 status: 'IN_PROGRESS',
+                message: msg
             },
         });
 
-        const msg = `Operational alert of type ${type} detected with severity ${severity}.`;
         await this.routingService.routeAlertToDepartmentSupervisor(alert.id, departmentId, msg);
 
         this.eventEmitter.emit(ALERT_EVENTS.CREATED, new OperationalAlertCreatedEvent(alert.id, departmentId, type, severity));

@@ -32,7 +32,8 @@ export function buildDemandGrid(
                     slots.push({
                         id: randomUUID(),
                         date: date,
-                        shiftId: shift.id,
+                        shiftId: shift.shiftId,
+                        shiftTemplateId: shift.id,
                         requiredSpecialityId: req.specialityId,
                         assignedNurseId: null, // Listo para ser llenado por el algoritmo
                     });
@@ -48,7 +49,8 @@ export function buildDemandGrid(
                 slots.push({
                     id: randomUUID(),
                     date: date,
-                    shiftId: shift.id,
+                    shiftId: shift.shiftId,
+                    shiftTemplateId: shift.id,
                     requiredSpecialityId: null, // Cualquier enfermera del departamento puede cubrirlo
                     assignedNurseId: null,
                 });

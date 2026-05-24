@@ -15,6 +15,7 @@ export async function buildScheduleContext(
 
     console.log(`[Engine] Loading context for: ${startOfCurrentMonth.toISOString()} to ${endOfCurrentMonth.toISOString()}`);
 
+
     // 2. Disparar TODAS las consultas a la vez en paralelo
     const [
         orgSettings,
@@ -31,6 +32,7 @@ export async function buildScheduleContext(
             where: { organizationId },
         }),
 
+
         // -> Configuraciones del Departamento
         prisma.department.findUnique({
             where: { id: departmentId, organizationId: organizationId },
@@ -43,13 +45,16 @@ export async function buildScheduleContext(
         // -> 2. Universo de Enfermeras Activas con sus relaciones vitales
         prisma.nurse.findMany({
             where: {
-                departmentId,
                 organizationId: organizationId,
-                status: 'ACTIVE' // Asegurar que solo traemos personal activo
-            },
+                OR: [
+                    { departmentId: departmentId }, // Las propias del depto
+                    { isCrossDepartmental: true }   // Las que pueden moverse
+                ], status: 'ACTIVE'
+            } // Asegurar que solo traemos personal activo},
+            ,
             include: {
                 nurseProfiles: true,
-                specialities: true,
+                speciality: true,
                 nurseRestrictions: {
                     where: {
                         // Solo traer restricciones que crucen o estén vigentes este mes
@@ -65,8 +70,13 @@ export async function buildScheduleContext(
         // -> 3. Bloqueos temporales: Vacaciones (Cruces de fechas)
         prisma.vacation.findMany({
             where: {
-                departmentId,
                 organizationId: organizationId,
+                nurse: {
+                    OR: [
+                        { departmentId: departmentId },
+                        { isCrossDepartmental: true }
+                    ]
+                },
                 status: { in: ['APPROVED', 'IN_PROGRESS'] },
                 // Lógica de solapamiento: Inicia antes del fin de mes, y termina después del inicio de mes
                 start_Date: { lte: endOfCurrentMonth },
@@ -88,7 +98,13 @@ export async function buildScheduleContext(
         // -> Disponibilidad y preferencias puntuales del mes
         prisma.nurseAvailability.findMany({
             where: {
-                nurse: { departmentId, organizationId: organizationId },
+                organizationId: organizationId,
+                nurse: {
+                    OR: [
+                        { departmentId: departmentId },
+                        { isCrossDepartmental: true }
+                    ]
+                },
                 date: {
                     gte: startOfCurrentMonth,
                     lte: endOfCurrentMonth
