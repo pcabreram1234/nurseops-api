@@ -529,3 +529,125 @@ INSERT INTO "rule_group_assignments" ("id", "workRuleId", "ruleGroupId") VALUES
 ('rga-08', 'wr-08', 'rg-05'),
 ('rga-09', 'wr-09', 'rg-06'),
 ('rga-10', 'wr-10', 'rg-01');
+
+INSERT INTO work_rules (id, "organizationId", code, name, type, description, value, "isActive") VALUES
+-- 1. REGLAS DE HORARIOS Y TURNOS
+('wr-R001', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R001', 'No permitir turno noche seguido de mañana', 'HARD', 'Una enfermera no puede hacer amanecida y trabajar la mañana siguiente', 'true', true),
+('wr-R002', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R002', 'Validar horas máximas mensuales', 'HARD', 'El sistema no debe exceder el límite configurado', '160', true),
+('wr-R003', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R003', 'Validar mínimo de días libres mensuales', 'HARD', 'Garantizar cantidad mínima de descansos', '4', true),
+('wr-R004', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R004', 'Validar descanso mínimo entre turnos', 'HARD', 'Debe existir cierta cantidad de horas entre turnos', '12', true),
+('wr-R005', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R005', 'Balancear turnos nocturnos', 'SOFT', 'Distribuir noches equitativamente', 'true', true),
+('wr-R006', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R006', 'Balancear fines de semana', 'SOFT', 'Evitar sobrecargar mismos empleados', 'true', true),
+('wr-R007', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R007', 'No exceder cantidad máxima de noches', 'HARD', 'Limitar noches consecutivas o mensuales', '3', true),
+('wr-R008', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R008', 'Permitir horarios especiales por departamento', 'CONFIGURABLE', 'Cada área puede manejar reglas diferentes', 'true', true),
+('wr-R009', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R009', 'Validar cantidad mínima de personal por turno', 'HARD', 'Nunca dejar turno descubierto', '1', true),
+('wr-R010', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R010', 'Permitir plantillas de horarios reutilizables', 'CONFIGURABLE', 'Crear modelos predefinidos', 'true', true),
+('wr-R011', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R011', 'Definir duración distinta por tipo de turno', 'CONFIGURABLE', 'Día = 7h, Noche = 10h', 'true', true),
+('wr-R012', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R012', 'Permitir horarios rotativos', 'CONFIGURABLE', 'Rotación automática configurable', 'true', true),
+('wr-R013', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R013', 'Permitir horarios fijos', 'CONFIGURABLE', 'Personal fijo en ciertos turnos', 'true', true),
+('wr-R014', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R014', 'Validar compatibilidad entre turnos consecutivos', 'HARD', 'Evitar combinaciones inválidas', 'true', true),
+('wr-R015', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R015', 'Evitar exceso de días consecutivos trabajados', 'HARD', 'Limitar jornadas consecutivas', '5', true),
+('wr-R016', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R016', 'Validar cobertura mínima por especialidad', 'HARD', 'Garantizar personal capacitado por área', 'true', true),
+
+-- 2. REGLAS HUMANAS Y CULTURALES
+('wr-R017', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R017', 'Día de cumpleaños libre', 'SOFT', 'Asignar libre automático', 'true', true),
+('wr-R018', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R018', 'Permitir preferencias personales', 'SOFT', 'Preferencias de horarios', 'true', true),
+('wr-R019', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R019', 'Dar libre por estudios', 'SOFT', 'Basado en documentación aprobada', 'true', true),
+('wr-R020', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R020', 'Balancear carga laboral', 'SOFT', 'Distribuir trabajo equitativamente', 'true', true),
+('wr-R021', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R021', 'Evitar favoritismo', 'SOFT', 'Mostrar métricas transparentes', 'true', true),
+('wr-R022', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R022', 'Considerar antigüedad', 'CONFIGURABLE', 'Reglas especiales por experiencia', 'true', true),
+('wr-R023', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R023', 'Considerar restricciones médicas', 'HARD', 'Evitar asignaciones incompatibles', 'true', true),
+('wr-R024', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R024', 'Permitir bloqueo manual de fechas', 'CONFIGURABLE', 'Días no disponibles', 'true', true),
+
+-- 3. REGLAS DE VACACIONES Y AUSENCIAS
+('wr-R025', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R025', 'Excluir personal de vacaciones', 'HARD', 'No asignar durante vacaciones', 'true', true),
+('wr-R026', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R026', 'Excluir personal con licencia', 'HARD', 'No asignar durante permisos', 'true', true),
+('wr-R027', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R027', 'Validar solapamiento de vacaciones', 'HARD', 'Evitar demasiadas ausencias simultáneas', 'true', true),
+('wr-R028', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R028', 'Recalcular listas automáticamente ante ausencias', 'EVENT', 'Ajustar horarios afectados', 'true', true),
+('wr-R029', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R029', 'Generar alertas por falta de cobertura', 'EVENT', 'Detectar vacíos operacionales', 'true', true),
+('wr-R030', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R030', 'Permitir reemplazos temporales', 'CONFIGURABLE', 'Cobertura provisional', 'true', true),
+
+-- 4. REGLAS DE CAMBIO DE TURNOS
+('wr-R031', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R031', 'Requerir aprobación de supervisora', 'HARD', 'Cambios no automáticos', 'true', true),
+('wr-R032', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R032', 'Registrar justificación del cambio', 'HARD', 'Mantener trazabilidad', 'true', true),
+('wr-R033', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R033', 'Generar evidencia digital del cambio', 'HARD', 'Historial auditable', 'true', true),
+('wr-R034', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R034', 'Validar impacto operacional del cambio', 'HARD', 'No afectar cobertura', 'true', true),
+('wr-R035', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R035', 'Notificar automáticamente a involucrados', 'EVENT', 'Alertas inmediatas', 'true', true),
+('wr-R036', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R036', 'Permitir rechazo de solicitudes', 'CONFIGURABLE', 'Flujo de aprobación', 'true', true),
+('wr-R037', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R037', 'Mantener historial completo de cambios', 'HARD', 'Auditoría interna', 'true', true),
+
+-- 5. REGLAS DE COBERTURA URGENTE
+('wr-R038', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R038', 'Detectar ausencia inesperada', 'EVENT', 'Activar flujo urgente', 'true', true),
+('wr-R039', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R039', 'Buscar personal disponible automáticamente', 'EVENT', 'Sugerir candidatos', 'true', true),
+('wr-R040', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R040', 'Permitir personal de otros departamentos', 'CONFIGURABLE', 'Redistribución interna', 'true', true),
+('wr-R041', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R041', 'Validar que departamento origen no quede vacío', 'HARD', 'Mantener equilibrio', 'true', true),
+('wr-R042', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R042', 'Priorizar personal con menos carga', 'SOFT', 'Balancear trabajo', 'true', true),
+('wr-R043', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R043', 'Notificar solicitudes urgentes', 'EVENT', 'Cobertura rápida', 'true', true),
+('wr-R044', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R044', 'Permitir aceptación desde celular', 'CONFIGURABLE', 'Respuesta inmediata', 'true', true),
+
+-- 6. REGLAS DE HORAS Y CÁLCULOS
+('wr-R045', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R045', 'Calcular horas automáticamente', 'HARD', 'Basado en tipo de turno', 'true', true),
+('wr-R046', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R046', 'Diferenciar horas día/noche', 'HARD', 'Día 7h / Noche 10h', 'true', true),
+('wr-R047', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R047', 'Mostrar horas acumuladas mensuales', 'CONFIGURABLE', 'Seguimiento individual', 'true', true),
+('wr-R048', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R048', 'Detectar exceso de horas', 'HARD', 'Alertas automáticas', 'true', true),
+('wr-R049', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R049', 'Detectar déficit de horas', 'SOFT', 'Balance mensual', 'true', true),
+('wr-R050', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R050', 'Calcular horas extras', 'CONFIGURABLE', 'Gestión administrativa', 'true', true),
+
+-- 7. REGLAS DE SEGURIDAD Y AUDITORÍA
+('wr-R051', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R051', 'Registrar todas las modificaciones', 'HARD', 'Auditoría completa', 'true', true),
+('wr-R052', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R052', 'Registrar quién aprobó cambios', 'HARD', 'Trazabilidad', 'true', true),
+('wr-R053', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R053', 'Mantener historial de listas mensuales', 'HARD', 'Consulta futura', 'true', true),
+('wr-R054', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R054', 'Control de permisos por rol', 'HARD', 'Seguridad operacional', 'true', true),
+('wr-R055', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R055', 'Bloquear edición de listas publicadas', 'CONFIGURABLE', 'Evitar cambios indebidos', 'true', true),
+
+-- 8. REGLAS DE CONFIGURACIÓN ORGANIZACIONAL
+('wr-R056', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R056', 'Configuración por hospital', 'CONFIGURABLE', 'Reglas independientes', 'true', true),
+('wr-R057', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R057', 'Configuración por departamento', 'CONFIGURABLE', 'Personalización por área', 'true', true),
+('wr-R058', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R058', 'Configuración de tipos de turno', 'CONFIGURABLE', 'Ajuste flexible', 'true', true),
+('wr-R059', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R059', 'Configuración de límites laborales', 'CONFIGURABLE', 'Adaptación legal', 'true', true),
+('wr-R060', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R060', 'Activar/desactivar reglas específicas', 'CONFIGURABLE', 'Flexibilidad total', 'true', true),
+
+-- 9. REGLAS FUTURAS DE IA Y OPTIMIZACIÓN
+('wr-R061', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R061', 'Sugerir horarios óptimos automáticamente', 'SOFT', 'IA de optimización', 'true', true),
+('wr-R062', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R062', 'Detectar patrones de sobrecarga', 'SOFT', 'Prevención de fatiga', 'true', true),
+('wr-R063', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R063', 'Predecir ausencias frecuentes', 'SOFT', 'Analítica predictiva', 'true', true),
+('wr-R064', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R064', 'Recomendar mejor reemplazo', 'SOFT', 'Matching inteligente', 'true', true),
+('wr-R065', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R065', 'Detectar posibles conflictos futuros', 'SOFT', 'Prevención operacional', 'true', true),
+
+-- 10. REGLAS OPERACIONALES AVANZADAS
+('wr-R066', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R066', 'Validar disponibilidad antes de asignar', 'HARD', 'Evitar conflictos', 'true', true),
+('wr-R067', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R067', 'Permitir múltiples sedes', 'CONFIGURABLE', 'Multi-hospital', 'true', true),
+('wr-R068', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R068', 'Permitir múltiples contratos por empleado', 'CONFIGURABLE', 'Personal multi-área', 'true', true),
+('wr-R069', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R069', 'Detectar conflictos entre múltiples empleos', 'SOFT', 'Compatibilidad externa', 'true', true),
+('wr-R070', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R070', 'Permitir bloqueos administrativos', 'CONFIGURABLE', 'Eventos especiales', 'true', true),
+('wr-R071', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R071', 'Permitir suspensión temporal de empleados', 'CONFIGURABLE', 'Gestión interna', 'true', true),
+('wr-R072', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R072', 'Validar personal mínimo por género/especialidad', 'CONFIGURABLE', 'Reglas específicas', 'true', true),
+('wr-R073', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R073', 'Permitir asignaciones manuales prioritarias', 'CONFIGURABLE', 'Control supervisor', 'true', true),
+('wr-R074', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R074', 'Permitir publicación programada de listas', 'CONFIGURABLE', 'Automatización', 'true', true),
+('wr-R075', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R075', 'Generar reportes operacionales automáticos', 'CONFIGURABLE', 'Gestión administrativa', 'true', true);
+
+INSERT INTO work_rule_conditions (id, "workRuleId", condition_type, operator, value, logical_group, priority, enabled, "createdAt")
+SELECT  'wrc-' || SUBSTRING(code FROM 2), id, 'EVALUATE_' || type, 'EQUALS', 'true', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP FROM work_rules WHERE "organizationId" = 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca';
+
+INSERT INTO work_rule_actions (id, "workRuleId", action_type, action_value, priority, enabled, stop_execution, async_execution, metadata, "createdAt")
+SELECT 'wra-' || SUBSTRING(code FROM 2), id,
+     CASE 
+        WHEN type = 'HARD' THEN 'REJECT_NURSE'
+        WHEN type = 'SOFT' THEN 'ADJUST_SCORE'
+        WHEN type = 'EVENT' THEN 'TRIGGER_EVENT'
+        WHEN type = 'CONFIGURABLE' THEN 'APPLY_SETTING'
+    END,
+    CASE 
+        WHEN type = 'HARD' THEN 'Violación de restricción estricta'
+        WHEN type = 'SOFT' THEN '-15' -- Penalidad por defecto
+        WHEN type = 'EVENT' THEN 'DISPATCH_ALERT'
+        WHEN type = 'CONFIGURABLE' THEN 'SET_VAR'
+    END,
+    1,
+    true,
+    CASE WHEN type = 'HARD' THEN true ELSE false END, -- stop_execution
+    CASE WHEN type = 'EVENT' THEN true ELSE false END, -- async_execution
+    CAST('{"ruleCode": "' || code || '"}' AS json),
+    CURRENT_TIMESTAMP
+FROM work_rules
+WHERE "organizationId" = 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca';
