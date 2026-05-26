@@ -418,8 +418,8 @@ model Nurse {
   contract_type       ContracTypeList       @default(PERMANENT)
   hire_date           DateTime
   status              NurseStatusType       @default(ACTIVE)
-  specialityId        String
-  speciality          Speciality            @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+  specialityId        String?
+  speciality          Speciality?           @relation(fields: [specialityId], references: [id], onDelete: Cascade)
   absences            Absence[]
   nurseAvailabilities NurseAvailability[]
   workLoadMetrics     WorkLoadMetrics[]
@@ -433,7 +433,7 @@ model Nurse {
   nursePreferences    NursePreferences?
   scheduleEntries     ScheduleEntry[]
   nurseProfiles       NurseProfile[]
-  isCrossDepartmental Boolean               @default(true)
+  isCrossDepartmental Boolean               @default(false)
 
   @@map("nurses")
 }
@@ -1228,7 +1228,7 @@ model Shift {
   type                   ShiftType
   startTime              DateTime
   endTime                DateTime
-  durationHours          DateTime
+  durationHours          Int
   color                  String?
   department             Department?          @relation(fields: [departmentId], references: [id])
   departmentId           String?
@@ -1244,7 +1244,8 @@ model Shift {
   changeRequestsAsTarget ShiftChangeRequest[] @relation("TargetShift")
   scheduleEntries        ScheduleEntry[]
   emergencyCoverages     EmergencyCoverages[]
-  shiftTemplates         ShiftTemplate[]
+  shiftTemplates         ShiftTemplate?       @relation(fields: [shiftTemplateId], references: [id])
+  shiftTemplateId        String?
 
   @@map("shifts")
 }
@@ -1316,8 +1317,6 @@ model EmergencyCandidates {
 model ShiftTemplate {
   id              String          @id @default(uuid())
   organizationId  String
-  shiftId         String
-  shift           Shift           @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   departmentId    String
   department      Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
@@ -1336,6 +1335,7 @@ model ShiftTemplate {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now()) @updatedAt
   scheduleEntries ScheduleEntry[]
+  shifts          Shift[]
 
   @@map("shift_templates")
 }

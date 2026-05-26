@@ -173,7 +173,7 @@ async function main() {
       type: "MORNING",
       startTime: new Date("2026-06-01T07:00:00Z"),
       endTime: new Date("2026-06-01T15:00:00Z"),
-      durationHours: new Date("1970-01-01T08:00:00Z"), // Objeto DateTime como pide tu modelo
+      durationHours: 10, // Objeto DateTime como pide tu modelo
       color: "#3498db",
     },
   });

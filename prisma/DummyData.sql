@@ -138,9 +138,13 @@ INSERT INTO "roles" ("id", "name", "organizationId") VALUES
 -- 4. USUARIOS, ENFERMERAS Y PERFILES
 -- ==============================================================================
 
+-- ====================================================================
+-- 1. TABLA: users (Unificada y Expandida)
+-- ====================================================================
 INSERT INTO "users" ("id", "email", "password", "firstName", "lastName", "organizationId", "departmentId" ,"rolesId", "status") VALUES
 ('user-00', 'pcabreram1234@gmail.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Phillip', 'Cabrera', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'SUPER', 'ACTIVE' ),
 ('00000000-0000-0000-0000-000000000000','cronbot@sistema.local', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C','SYSTEM', 'CRON_BOT', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01','CRON', 'ACTIVE'),
+-- Personal Base Original
 ('user-01', 'maria.perez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Maria', 'Perez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
 ('user-02', 'juan.gomez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Juan', 'Gomez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
 ('user-03', 'ana.lopez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Ana', 'Lopez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
@@ -150,8 +154,31 @@ INSERT INTO "users" ("id", "email", "password", "firstName", "lastName", "organi
 ('user-07', 'laura.diaz@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Laura', 'Diaz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07', 'role-02', 'ACTIVE'),
 ('user-08', 'jorge.torres@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Jorge', 'Torres', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08', 'role-03', 'ACTIVE'),
 ('user-09', 'carmen.vargas@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Carmen', 'Vargas', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09', 'role-07', 'ACTIVE'),
-('user-10', 'miguel.castro@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Miguel', 'Castro', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10', 'role-02', 'ACTIVE');
+('user-10', 'miguel.castro@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Miguel', 'Castro', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10', 'role-02', 'ACTIVE'),
 
+-- 🚀 NUEVAS ENFERMERAS PARA DEPT-01 (Refuerzo para pruebas del Engine)
+-- Total en dept-01 con estas: 5 enfermeras
+('user-11', 'elena.blanco@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Elena', 'Blanco', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-12', 'ramon.santos@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Ramon', 'Santos', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-13', 'lucia.mendez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Lucia', 'Mendez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-14', 'marcos.reyes@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Marcos', 'Reyes', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+
+-- 🚀 NUEVAS ENFERMERAS PARA DEPT-02 
+-- Total en dept-02 con estas: 4 enfermeras
+('user-15', 'sofia.ortiz@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Sofia', 'Ortiz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+('user-16', 'gabriel.nunez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Gabriel', 'Nunez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+('user-17', 'patricia.sosa@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Patricia', 'Sosa', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+
+-- 🚀 NUEVAS ENFERMERAS PARA DEPT-03
+-- Total en dept-03 con estas: 4 enfermeras
+('user-18', 'andres.brito@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Andres', 'Brito', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
+('user-19', 'claudia.gil@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Claudia', 'Gil', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
+('user-20', 'manuel.rosa@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Manuel', 'Rosa', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE');
+
+
+-- ====================================================================
+-- 2. TABLA: nurses (Unificada y Expandida)
+-- ====================================================================
 INSERT INTO "nurses" ("id", "userId", "departmentId", "organizationId", "contract_type", "hire_date", "status", "specialityId") VALUES
 ('nurse-01', 'user-01', 'dept-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2020-01-15', 'ACTIVE', 'spec-01'),
 ('nurse-02', 'user-02', 'dept-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2021-03-10', 'ACTIVE', 'spec-02'),
@@ -162,8 +189,28 @@ INSERT INTO "nurses" ("id", "userId", "departmentId", "organizationId", "contrac
 ('nurse-07', 'user-07', 'dept-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2017-04-12', 'ACTIVE', 'spec-07'),
 ('nurse-08', 'user-08', 'dept-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PER_DIEM', '2023-01-20', 'ACTIVE', 'spec-08'),
 ('nurse-09', 'user-09', 'dept-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2015-09-30', 'ACTIVE', 'spec-09'),
-('nurse-10', 'user-10', 'dept-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2020-12-01', 'ACTIVE', 'spec-10');
+('nurse-10', 'user-10', 'dept-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2020-12-01', 'ACTIVE', 'spec-10'),
 
+-- Personal adscrito a dept-01 (Diferentes tipos de contrato y especialidades para estresar las reglas)
+('nurse-11', 'user-11', 'dept-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2021-05-14', 'ACTIVE', 'spec-01'),
+('nurse-12', 'user-12', 'dept-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PART_TIME', '2022-09-01', 'ACTIVE', 'spec-01'),
+('nurse-13', 'user-13', 'dept-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'TEMPORAL', '2023-11-15', 'ACTIVE', 'spec-02'),
+('nurse-14', 'user-14', 'dept-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2020-07-19', 'ACTIVE', 'spec-03'),
+
+-- Personal adscrito a dept-02
+('nurse-15', 'user-15', 'dept-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2019-02-11', 'ACTIVE', 'spec-02'),
+('nurse-16', 'user-16', 'dept-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PART_TIME', '2022-06-22', 'ACTIVE', 'spec-01'),
+('nurse-17', 'user-17', 'dept-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PER_DIEM', '2024-01-10', 'ACTIVE', 'spec-02'),
+
+-- Personal adscrito a dept-03
+('nurse-18', 'user-18', 'dept-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2018-04-05', 'ACTIVE', 'spec-03'),
+('nurse-19', 'user-19', 'dept-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'TEMPORAL', '2023-05-20', 'ACTIVE', 'spec-01'),
+('nurse-20', 'user-20', 'dept-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'PERMANENT', '2021-10-01', 'ACTIVE', 'spec-04');
+
+
+-- ====================================================================
+-- 3. TABLA: nurse_profiles (Unificada y Expandida)
+-- ====================================================================
 INSERT INTO "nurse_profiles" ("id", "nurseId", "organizationId", "birthDate", "emergencyContact", "emergencyContactPhone", "educationLevel", "yearsOfExperience", "health_restrictions") VALUES
 ('prof-01', 'nurse-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1985-04-12', 'Jose Perez', '809-111-2222', 'BACHELOR_DEGREE', 10, 'Ninguna'),
 ('prof-02', 'nurse-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1992-07-23', 'Marta Gomez', '809-222-3333', 'TECHNICIAN', 4, 'Alergia al látex'),
@@ -174,8 +221,28 @@ INSERT INTO "nurse_profiles" ("id", "nurseId", "organizationId", "birthDate", "e
 ('prof-07', 'nurse-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1983-06-25', 'Diego Diaz', '809-777-8888', 'SPECIALIZATION', 12, 'Migrañas ocasionales'),
 ('prof-08', 'nurse-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1990-03-18', 'Rosa Torres', '809-888-9999', 'TECHNICIAN', 5, 'Ninguna'),
 ('prof-09', 'nurse-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1975-08-08', 'Hugo Vargas', '809-999-0000', 'MASTER_DEGREE', 20, 'Problemas de rodilla'),
-('prof-10', 'nurse-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1987-01-20', 'Clara Castro', '809-000-1111', 'BACHELOR_DEGREE', 9, 'Ninguna');
+('prof-10', 'nurse-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1987-01-20', 'Clara Castro', '809-000-1111', 'BACHELOR_DEGREE', 9, 'Ninguna'),
 
+-- Perfiles de soporte para dept-01
+('prof-11', 'nurse-11', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1994-11-23', 'Pedro Blanco', '809-555-0111', 'BACHELOR_DEGREE', 5, 'Ninguna'),
+('prof-12', 'nurse-12', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1991-02-14', 'Juana Santos', '809-555-0122', 'TECHNICIAN', 4, 'Ninguna'),
+('prof-13', 'nurse-13', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1996-08-05', 'Miguel Mendez', '809-555-0133', 'BACHELOR_DEGREE', 2, 'Ninguna'),
+('prof-14', 'nurse-14', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1989-05-19', 'Ana Reyes', '809-555-0144', 'SPECIALIZATION', 6, 'Dolor lumbar leve'),
+
+-- Perfiles de soporte para dept-02
+('prof-15', 'nurse-15', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1986-01-30', 'Carlos Ortiz', '809-555-0155', 'MASTER_DEGREE', 7, 'Ninguna'),
+('prof-16', 'nurse-16', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1993-07-04', 'Laura Nunez', '809-555-0166', 'BACHELOR_DEGREE', 3, 'Ninguna'),
+('prof-17', 'nurse-17', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1997-12-25', 'Felix Sosa', '809-555-0177', 'ASSISTANT', 1, 'Ninguna'),
+
+-- Perfiles de soporte para dept-03
+('prof-18', 'nurse-18', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1982-03-12', 'Marta Brito', '809-555-0184', 'SPECIALIZATION', 11, 'Ninguna'),
+('prof-19', 'nurse-19', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1995-06-15', 'Julio Gil', '809-555-0199', 'TECHNICIAN', 3, 'Ninguna'),
+('prof-20', 'nurse-20', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', '1990-10-22', 'Sofia Rosa', '809-555-0200', 'BACHELOR_DEGREE', 5, 'Ninguna');
+
+
+-- ====================================================================
+-- 4. TABLA: nurse_preferences (Unificada y Expandida)
+-- ====================================================================
 INSERT INTO "nurse_preferences" ("id", "nurseId", "organizationId", "preferredShift", "avoid_shifts", "maxNigthsPerMonth", "maxDaysPerMonth", "preferredDaysOff", "prefersWeekendsOff", "allowOvertime") VALUES
 ('pref-01', 'nurse-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'MORNING', 'NIGHT', 2, 20, 8, true, false),
 ('pref-02', 'nurse-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'AFTERNOON', 'MORNING', 6, 22, 6, false, true),
@@ -186,7 +253,23 @@ INSERT INTO "nurse_preferences" ("id", "nurseId", "organizationId", "preferredSh
 ('pref-07', 'nurse-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'MORNING', 'NIGHT', 2, 20, 8, true, false),
 ('pref-08', 'nurse-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'AFTERNOON', 'MORNING', 8, 20, 8, false, true),
 ('pref-09', 'nurse-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'MORNING', 'NIGHT', 0, 15, 12, true, false),
-('pref-10', 'nurse-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'NIGHT', 'AFTERNOON', 10, 18, 10, false, true);
+('pref-10', 'nurse-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'NIGHT', 'AFTERNOON', 10, 18, 10, false, true),
+
+-- Preferencias cruzadas para dept-01 (Ideal para testear la asignación balanceada del bucle)
+('pref-11', 'nurse-11', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'NIGHT', 'AFTERNOON', 8, 20, 8, false, true),
+('pref-12', 'nurse-12', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'MORNING', 'NIGHT', 2, 16, 12, true, false),
+('pref-13', 'nurse-13', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'AFTERNOON', 'MORNING', 4, 22, 6, false, true),
+('pref-14', 'nurse-14', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'MORNING', 'AFTERNOON', 0, 20, 8, true, false),
+
+-- Preferencias para dept-02
+('pref-15', 'nurse-15', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'MORNING', 'NIGHT', 2, 22, 8, true, true),
+('pref-16', 'nurse-16', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'AFTERNOON', 'NIGHT', 4, 18, 10, false, true),
+('pref-17', 'nurse-17', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'NIGHT', 'MORNING', 12, 15, 12, false, true),
+
+-- Preferencias para dept-03
+('pref-18', 'nurse-18', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'AFTERNOON', 'MORNING', 6, 20, 8, true, false),
+('pref-19', 'nurse-19', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'MORNING', 'NIGHT', 0, 20, 8, false, true),
+('pref-20', 'nurse-20', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'NIGHT', 'AFTERNOON', 10, 18, 10, true, true);
 
 -- ==============================================================================
 -- 5. RESTRICCIONES Y REGLAS
@@ -232,17 +315,17 @@ INSERT INTO "shifts" ("id", "organizationId", "name", "code", "type", "startTime
 ('sh-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'Refuerzo Noche', 'RN-01', 'NIGHT', '2026-06-01 20:00:00', '2026-06-02 04:00:00', '1970-01-01 08:00:00', 'dept-05'),
 ('sh-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'Jornada Completa', 'JC-01', 'MORNING', '2026-06-01 08:00:00', '2026-06-01 17:00:00', '1970-01-01 09:00:00', 'dept-09');
 
-INSERT INTO "shift_templates" ("id", "organizationId", "departmentId", "name", "description", "configuration","minimum_staff", "startTime", "endTime","durationHours","isNightShift","shiftId") VALUES
-('tmpl-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01','MORNING', 'Patrón UCI 8h', ('{}'), 3, '07:00', '15:00',12,false,'sh-01'),
-('tmpl-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02','AFTERNOON', 'Patrón ER 12h', ('{}'), 4, '07:00', '19:00',8,false,'sh-02'),
-('tmpl-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03','NIGHT', 'Patrón Pediatría', ('{}'), 2, '08:00', '16:00',4,true,'sh-03'),
-('tmpl-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04','MORNING', 'Plantilla Quirófano', ('{}'), 5, '06:00', '14:00',12,false,'sh-04'),
-('tmpl-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05','AFTERNOON', 'Cardio Regular', ('{}'), 2, '07:00', '15:00',8,false,'sh-05'),
-('tmpl-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'NIGHT','Maternidad 24/7', ('{}'), 3, '23:00', '07:00',10,true,'sh-06'),
-('tmpl-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07','MORNING', 'Oncología Día', ('{}'), 2, '08:00', '17:00',12,false,'sh-07'),
-('tmpl-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08','AFTERNOON', 'Trauma Refuerzo', ('{}'), 4, '19:00', '07:00',16,false,'sh-08'),
-('tmpl-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09','NIGHT', 'Medicina Interna Base', ('{}'), 3, '07:00', '15:00',8,true,'sh-09'),
-('tmpl-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10','MORNING', 'Radiología Corto', ('{}'), 1, '08:00', '12:00',12,false,'sh-10');
+INSERT INTO "shift_templates" ("id", "organizationId", "departmentId", "name", "description", "configuration","minimum_staff", "startTime", "endTime","durationHours","isNightShift") VALUES
+('tmpl-01', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01','MORNING', 'Patrón UCI 8h', ('{}'), 3, '07:00', '15:00',12,false),
+('tmpl-02', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02','AFTERNOON', 'Patrón ER 12h', ('{}'), 4, '07:00', '19:00',8,false,),
+('tmpl-03', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03','NIGHT', 'Patrón Pediatría', ('{}'), 2, '08:00', '16:00',4,true),
+('tmpl-04', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04','MORNING', 'Plantilla Quirófano', ('{}'), 5, '06:00', '14:00',12,false),
+('tmpl-05', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05','AFTERNOON', 'Cardio Regular', ('{}'), 2, '07:00', '15:00',8,false),
+('tmpl-06', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'NIGHT','Maternidad 24/7', ('{}'), 3, '23:00', '07:00',10,true),
+('tmpl-07', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07','MORNING', 'Oncología Día', ('{}'), 2, '08:00', '17:00',12,false),
+('tmpl-08', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08','AFTERNOON', 'Trauma Refuerzo', ('{}'), 4, '19:00', '07:00',16,false),
+('tmpl-09', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09','NIGHT', 'Medicina Interna Base', ('{}'), 3, '07:00', '15:00',8,true),
+('tmpl-10', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10','MORNING', 'Radiología Corto', ('{}'), 1, '08:00', '12:00',12,false);
 
 -- ==============================================================================
 -- 7. EVENTOS DE TIEMPO (Ausencias, Vacaciones, Disponibilidad, Permisos)
@@ -530,8 +613,9 @@ INSERT INTO "rule_group_assignments" ("id", "workRuleId", "ruleGroupId") VALUES
 ('rga-09', 'wr-09', 'rg-06'),
 ('rga-10', 'wr-10', 'rg-01');
 
+
+-- 1. INSERT DE REGLAS (Mantenemos tu estructura intacta)
 INSERT INTO work_rules (id, "organizationId", code, name, type, description, value, "isActive") VALUES
--- 1. REGLAS DE HORARIOS Y TURNOS
 ('wr-R001', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R001', 'No permitir turno noche seguido de mañana', 'HARD', 'Una enfermera no puede hacer amanecida y trabajar la mañana siguiente', 'true', true),
 ('wr-R002', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R002', 'Validar horas máximas mensuales', 'HARD', 'El sistema no debe exceder el límite configurado', '160', true),
 ('wr-R003', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R003', 'Validar mínimo de días libres mensuales', 'HARD', 'Garantizar cantidad mínima de descansos', '4', true),
@@ -548,8 +632,6 @@ INSERT INTO work_rules (id, "organizationId", code, name, type, description, val
 ('wr-R014', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R014', 'Validar compatibilidad entre turnos consecutivos', 'HARD', 'Evitar combinaciones inválidas', 'true', true),
 ('wr-R015', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R015', 'Evitar exceso de días consecutivos trabajados', 'HARD', 'Limitar jornadas consecutivas', '5', true),
 ('wr-R016', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R016', 'Validar cobertura mínima por especialidad', 'HARD', 'Garantizar personal capacitado por área', 'true', true),
-
--- 2. REGLAS HUMANAS Y CULTURALES
 ('wr-R017', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R017', 'Día de cumpleaños libre', 'SOFT', 'Asignar libre automático', 'true', true),
 ('wr-R018', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R018', 'Permitir preferencias personales', 'SOFT', 'Preferencias de horarios', 'true', true),
 ('wr-R019', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R019', 'Dar libre por estudios', 'SOFT', 'Basado en documentación aprobada', 'true', true),
@@ -558,16 +640,12 @@ INSERT INTO work_rules (id, "organizationId", code, name, type, description, val
 ('wr-R022', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R022', 'Considerar antigüedad', 'CONFIGURABLE', 'Reglas especiales por experiencia', 'true', true),
 ('wr-R023', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R023', 'Considerar restricciones médicas', 'HARD', 'Evitar asignaciones incompatibles', 'true', true),
 ('wr-R024', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R024', 'Permitir bloqueo manual de fechas', 'CONFIGURABLE', 'Días no disponibles', 'true', true),
-
--- 3. REGLAS DE VACACIONES Y AUSENCIAS
 ('wr-R025', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R025', 'Excluir personal de vacaciones', 'HARD', 'No asignar durante vacaciones', 'true', true),
 ('wr-R026', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R026', 'Excluir personal con licencia', 'HARD', 'No asignar durante permisos', 'true', true),
 ('wr-R027', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R027', 'Validar solapamiento de vacaciones', 'HARD', 'Evitar demasiadas ausencias simultáneas', 'true', true),
 ('wr-R028', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R028', 'Recalcular listas automáticamente ante ausencias', 'EVENT', 'Ajustar horarios afectados', 'true', true),
 ('wr-R029', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R029', 'Generar alertas por falta de cobertura', 'EVENT', 'Detectar vacíos operacionales', 'true', true),
 ('wr-R030', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R030', 'Permitir reemplazos temporales', 'CONFIGURABLE', 'Cobertura provisional', 'true', true),
-
--- 4. REGLAS DE CAMBIO DE TURNOS
 ('wr-R031', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R031', 'Requerir aprobación de supervisora', 'HARD', 'Cambios no automáticos', 'true', true),
 ('wr-R032', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R032', 'Registrar justificación del cambio', 'HARD', 'Mantener trazabilidad', 'true', true),
 ('wr-R033', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R033', 'Generar evidencia digital del cambio', 'HARD', 'Historial auditable', 'true', true),
@@ -575,8 +653,6 @@ INSERT INTO work_rules (id, "organizationId", code, name, type, description, val
 ('wr-R035', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R035', 'Notificar automáticamente a involucrados', 'EVENT', 'Alertas inmediatas', 'true', true),
 ('wr-R036', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R036', 'Permitir rechazo de solicitudes', 'CONFIGURABLE', 'Flujo de aprobación', 'true', true),
 ('wr-R037', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R037', 'Mantener historial completo de cambios', 'HARD', 'Auditoría interna', 'true', true),
-
--- 5. REGLAS DE COBERTURA URGENTE
 ('wr-R038', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R038', 'Detectar ausencia inesperada', 'EVENT', 'Activar flujo urgente', 'true', true),
 ('wr-R039', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R039', 'Buscar personal disponible automáticamente', 'EVENT', 'Sugerir candidatos', 'true', true),
 ('wr-R040', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R040', 'Permitir personal de otros departamentos', 'CONFIGURABLE', 'Redistribución interna', 'true', true),
@@ -584,37 +660,27 @@ INSERT INTO work_rules (id, "organizationId", code, name, type, description, val
 ('wr-R042', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R042', 'Priorizar personal con menos carga', 'SOFT', 'Balancear trabajo', 'true', true),
 ('wr-R043', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R043', 'Notificar solicitudes urgentes', 'EVENT', 'Cobertura rápida', 'true', true),
 ('wr-R044', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R044', 'Permitir aceptación desde celular', 'CONFIGURABLE', 'Respuesta inmediata', 'true', true),
-
--- 6. REGLAS DE HORAS Y CÁLCULOS
 ('wr-R045', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R045', 'Calcular horas automáticamente', 'HARD', 'Basado en tipo de turno', 'true', true),
 ('wr-R046', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R046', 'Diferenciar horas día/noche', 'HARD', 'Día 7h / Noche 10h', 'true', true),
 ('wr-R047', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R047', 'Mostrar horas acumuladas mensuales', 'CONFIGURABLE', 'Seguimiento individual', 'true', true),
 ('wr-R048', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R048', 'Detectar exceso de horas', 'HARD', 'Alertas automáticas', 'true', true),
 ('wr-R049', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R049', 'Detectar déficit de horas', 'SOFT', 'Balance mensual', 'true', true),
 ('wr-R050', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R050', 'Calcular horas extras', 'CONFIGURABLE', 'Gestión administrativa', 'true', true),
-
--- 7. REGLAS DE SEGURIDAD Y AUDITORÍA
 ('wr-R051', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R051', 'Registrar todas las modificaciones', 'HARD', 'Auditoría completa', 'true', true),
 ('wr-R052', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R052', 'Registrar quién aprobó cambios', 'HARD', 'Trazabilidad', 'true', true),
 ('wr-R053', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R053', 'Mantener historial de listas mensuales', 'HARD', 'Consulta futura', 'true', true),
 ('wr-R054', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R054', 'Control de permisos por rol', 'HARD', 'Seguridad operacional', 'true', true),
 ('wr-R055', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R055', 'Bloquear edición de listas publicadas', 'CONFIGURABLE', 'Evitar cambios indebidos', 'true', true),
-
--- 8. REGLAS DE CONFIGURACIÓN ORGANIZACIONAL
 ('wr-R056', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R056', 'Configuración por hospital', 'CONFIGURABLE', 'Reglas independientes', 'true', true),
 ('wr-R057', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R057', 'Configuración por departamento', 'CONFIGURABLE', 'Personalización por área', 'true', true),
 ('wr-R058', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R058', 'Configuración de tipos de turno', 'CONFIGURABLE', 'Ajuste flexible', 'true', true),
 ('wr-R059', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R059', 'Configuración de límites laborales', 'CONFIGURABLE', 'Adaptación legal', 'true', true),
 ('wr-R060', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R060', 'Activar/desactivar reglas específicas', 'CONFIGURABLE', 'Flexibilidad total', 'true', true),
-
--- 9. REGLAS FUTURAS DE IA Y OPTIMIZACIÓN
 ('wr-R061', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R061', 'Sugerir horarios óptimos automáticamente', 'SOFT', 'IA de optimización', 'true', true),
 ('wr-R062', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R062', 'Detectar patrones de sobrecarga', 'SOFT', 'Prevención de fatiga', 'true', true),
 ('wr-R063', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R063', 'Predecir ausencias frecuentes', 'SOFT', 'Analítica predictiva', 'true', true),
 ('wr-R064', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R064', 'Recomendar mejor reemplazo', 'SOFT', 'Matching inteligente', 'true', true),
 ('wr-R065', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R065', 'Detectar posibles conflictos futuros', 'SOFT', 'Prevención operacional', 'true', true),
-
--- 10. REGLAS OPERACIONALES AVANZADAS
 ('wr-R066', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R066', 'Validar disponibilidad antes de asignar', 'HARD', 'Evitar conflictos', 'true', true),
 ('wr-R067', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R067', 'Permitir múltiples sedes', 'CONFIGURABLE', 'Multi-hospital', 'true', true),
 ('wr-R068', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R068', 'Permitir múltiples contratos por empleado', 'CONFIGURABLE', 'Personal multi-área', 'true', true),
@@ -626,8 +692,57 @@ INSERT INTO work_rules (id, "organizationId", code, name, type, description, val
 ('wr-R074', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R074', 'Permitir publicación programada de listas', 'CONFIGURABLE', 'Automatización', 'true', true),
 ('wr-R075', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'R075', 'Generar reportes operacionales automáticos', 'CONFIGURABLE', 'Gestión administrativa', 'true', true);
 
+
+-- 2. RECONSTRUCCIÓN DE CONDICIONES (Mapeo explícito y semántico para evitar bloqueos automáticos)
+-- Borramos cualquier residuo previo de condiciones para esta organización
+DELETE FROM work_rule_conditions WHERE id LIKE 'wrc-%';
+
+INSERT INTO work_rule_conditions (id, "workRuleId", condition_type, operator, value, logical_group, priority, enabled, "createdAt") VALUES
+-- R001: Regla temporal crítica de transiciones de turno
+('wrc-R001', 'wr-R001', 'ILLEGAL_SHIFT_TRANSITION', 'EQUALS', 'true', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP),
+
+-- R002: Lógica invertida solucionada (Se dispara e infracciona si es MAYOR a 160)
+('wrc-R002', 'wr-R002', 'TOTAL_HOURS', 'GREATER_THAN', '160', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP),
+
+-- R003: Infracciona si los días libres asignados en el tracker son MENORES a 4
+('wrc-R003', 'wr-R003', 'MIN_DAYS_OFF', 'LESS_THAN', '4', 'GROUP_MAIN', 1, false, CURRENT_TIMESTAMP), -- Se apaga por ahora ya que se mide al final del mes, no slot a slot.
+
+-- R004: Infracciona si las horas de descanso calculadas desde el último turno son MENORES a 12
+('wrc-R004', 'wr-R004', 'REST_HOURS', 'LESS_THAN', '12', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP),
+
+-- R007: Infracciona si las noches consecutivas son MAYORES a 3
+('wrc-R007', 'wr-R007', 'CONSECUTIVE_NIGHTS', 'GREATER_THAN', '3', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP),
+
+-- R015: Infracciona si los días seguidos trabajados superan los 5
+('wrc-R015', 'wr-R015', 'CONSECUTIVE_DAYS', 'GREATER_THAN', '5', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP),
+
+-- R025 y R026: Validaciones físicas de ausencias externas procesadas en RAM
+('wrc-R025', 'wr-R025', 'IS_ON_VACATION', 'EQUALS', 'true', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP),
+('wrc-R026', 'wr-R026', 'IS_ON_LEAVE', 'EQUALS', 'true', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP),
+('wrc-wrc-R066', 'wr-R066', 'IS_UNAVAILABLE', 'EQUALS', 'true', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP);
+
+
+-- 3. ENCAPSULACIÓN DE REGLAS ADMINISTRATIVAS / FUTURAS / EVENTOS
+-- Para que no queden huerfanas ni lancen errores, las insertamos apuntando a una variable genérica que devuelve 'false'.
+-- Así, la condición nunca da "True" en el motor automático, previniendo los rechazos masivos de personal.
 INSERT INTO work_rule_conditions (id, "workRuleId", condition_type, operator, value, logical_group, priority, enabled, "createdAt")
-SELECT  'wrc-' || SUBSTRING(code FROM 2), id, 'EVALUATE_' || type, 'EQUALS', 'true', 'GROUP_MAIN', 1, true, CURRENT_TIMESTAMP FROM work_rules WHERE "organizationId" = 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca';
+SELECT 
+    'wrc-' || SUBSTRING(code FROM 2), 
+    id, 
+    'ADMIN_INTERACTION_REQUIRED', -- Una variable que tu extractor siempre retornará como 'false' en asignación automática
+    'EQUALS', 
+    'true', 
+    'GROUP_MAIN', 
+    1, 
+    false, -- 🚨 Importante: Las dejamos desactivadas para el motor cronológico por defecto
+    CURRENT_TIMESTAMP 
+FROM work_rules 
+WHERE "organizationId" = 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'
+  AND code NOT IN ('R001', 'R002', 'R003', 'R004', 'R007', 'R015', 'R025', 'R026', 'R066');
+
+
+-- 4. INSERT DE ACCIONES (Tu generador dinámico original, funciona perfecto)
+DELETE FROM work_rule_actions WHERE id LIKE 'wra-%';
 
 INSERT INTO work_rule_actions (id, "workRuleId", action_type, action_value, priority, enabled, stop_execution, async_execution, metadata, "createdAt")
 SELECT 'wra-' || SUBSTRING(code FROM 2), id,
@@ -639,14 +754,14 @@ SELECT 'wra-' || SUBSTRING(code FROM 2), id,
     END,
     CASE 
         WHEN type = 'HARD' THEN 'Violación de restricción estricta'
-        WHEN type = 'SOFT' THEN '-15' -- Penalidad por defecto
+        WHEN type = 'SOFT' THEN '-15'
         WHEN type = 'EVENT' THEN 'DISPATCH_ALERT'
         WHEN type = 'CONFIGURABLE' THEN 'SET_VAR'
     END,
     1,
     true,
-    CASE WHEN type = 'HARD' THEN true ELSE false END, -- stop_execution
-    CASE WHEN type = 'EVENT' THEN true ELSE false END, -- async_execution
+    CASE WHEN type = 'HARD' THEN true ELSE false END,
+    CASE WHEN type = 'EVENT' THEN true ELSE false END,
     CAST('{"ruleCode": "' || code || '"}' AS json),
     CURRENT_TIMESTAMP
 FROM work_rules

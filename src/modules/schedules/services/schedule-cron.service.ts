@@ -21,10 +21,10 @@ export class ScheduleCronService {
     @Cron(CronExpression.EVERY_10_SECONDS)
     async handleMonthlyScheduleGeneration() {
         if (this.isRunning) {
-            this.logger.warn('⚠️ El Job ya está en ejecución. Saltando esta iteración.');
+            this.logger.warn('⚠️ The job is already running. Skipping this iteration.');
             return;
         }
-        this.logger.log('🤖 Despertando Job: Iniciando generación automatizada de horarios...');
+        this.logger.log('🤖 Waking Up Job: Initiating automated schedule generation...');
 
         this.isRunning = true; // Bloqueamos el inicio de otros
 
@@ -39,17 +39,16 @@ export class ScheduleCronService {
             const departments = await this.prisma.department.findMany({
                 where: { isActive: true }, // Asume que tienes un flag de activo
                 include: {
-                    shiftTemplates: true,
-                    departmentSpecialities: true,
+                    shiftTemplates: { where: { isActive: true } },
                 }
             });
 
             if (departments.length === 0) {
-                this.logger.log('No hay departamentos activos para procesar en este momento.');
+                this.logger.log('There are no active departments to process at this time..');
                 return;
             }
 
-            console.log("El total de departamentos son: " + departments.length)
+            console.log("The total number of departments are: " + departments.length)
 
             // ID del bot del sistema para auditoría
             const systemBotId = process.env.SYSTEM_BOT_USER_ID || 'SYSTEM_CRON_BOT';
@@ -57,7 +56,7 @@ export class ScheduleCronService {
             // 3. Iterar por cada departamento y correr el motor
             for (const dept of departments) {
 
-                this.logger.log(`⚙️  Procesando departamento: ${dept.name} (${dept.id})`);
+                this.logger.log(`⚙️  Processing department: ${dept.name} (${dept.id})`);
 
                 const targetMonth = targetDate.getMonth() + 1;
                 const targetYear = targetDate.getFullYear();
@@ -74,13 +73,13 @@ export class ScheduleCronService {
                 });
 
                 if (existingSchedule) {
-                    this.logger.warn(`⚠️ Saltando ${dept.name}: Ya existe un horario para ${targetMonth}/${targetYear}.`);
+                    this.logger.warn(`⚠️ Skipping ${dept.name}: A schedule already exists for ${targetMonth}/${targetYear}.`);
 
                     // Guardar alerta en la base de datos
                     await this.prisma.operationalAlert.create({
                         data: {
                             departmentId: dept.id,
-                            message: `El Job Automático intentó regenerar el horario para ${targetMonth}/${targetYear}, pero fue bloqueado para proteger la versión existente.`,
+                            message: `The Automatic Job attempted to regenerate the schedule for ${targetMonth}/${targetYear}, but it was blocked to protect the existing version.`,
                             alertType: OperationalAlertyTypes.SYSTEM_WARNING, // Ajusta este string al Enum que uses en tu base de datos
                             severity: ActivitySeverity.MEDIUM
                         }
@@ -96,14 +95,10 @@ export class ScheduleCronService {
                     (template) => template.departmentId === dept.id
                 );
 
-                const departmentSpecialities = dept.departmentSpecialities.filter(
-                    (spec) => spec.departmentId === dept.id
-                );
-                // -------------------------------------
 
                 // Validaciones de seguridad (opcional pero recomendado)
                 if (dept.shiftTemplates.length === 0) {
-                    this.logger.warn(`⚠️  Saltando ${dept.name}: No tiene plantillas de turno configuradas.`);
+                    this.logger.warn(`⚠️  Skipping ${dept.name}: It does not have shift templates configured.`);
                     continue;
                 }
 
@@ -115,22 +110,21 @@ export class ScheduleCronService {
                     dept.id,
                     targetDate,
                     departmentShiftTemplates,
-                    departmentSpecialities,
                     systemBotId
                 );
 
 
                 if (result.success) {
-                    this.logger.log(`✅ Éxito para ${dept.name}. Schedule DRAFT ID: ${result.scheduleId}`);
+                    this.logger.log(`✅ Success to ${dept.name}. Schedule DRAFT ID: ${result.scheduleId}`);
                 } else {
-                    this.logger.error(`❌ Fallo crítico en ${dept.name}. Motivo:`, result.error);
+                    this.logger.error(`❌ Critical failure in ${dept.name}. Reason:`, result.error);
                 }
             }
 
-            this.logger.log('🏁 Job finalizado. Todos los departamentos fueron procesados.');
+            this.logger.log('🏁 Job completed. All departments have been processed..');
 
         } catch (error) {
-            this.logger.error('💥 Error no controlado durante la ejecución del Job Cron:', error);
+            this.logger.error('💥 Unhandled error during Cron Job execution:', error);
         }
     }
 }

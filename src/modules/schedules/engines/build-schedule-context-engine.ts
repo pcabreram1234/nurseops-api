@@ -1,6 +1,7 @@
 import { startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { ScheduleContext } from '../interfaces/shedule-context-interface';
 import { PrismaService } from '@infra/database/prisma.service';
+import { subDays } from 'date-fns';
 
 export async function buildScheduleContext(
     organizationId: string, departmentId: string, targetDate: Date, // Ej: new Date('2026-06-01')
@@ -13,19 +14,33 @@ export async function buildScheduleContext(
     const startOfPrevMonth = startOfMonth(subMonths(targetDate, 1));
     const endOfPrevMonth = endOfMonth(subMonths(targetDate, 1));
 
+    const sixDaysAgo = subDays(startOfCurrentMonth, 6);
+
     console.log(`[Engine] Loading context for: ${startOfCurrentMonth.toISOString()} to ${endOfCurrentMonth.toISOString()}`);
 
 
     // 2. Disparar TODAS las consultas a la vez en paralelo
     const [
+        activeRules,
         orgSettings,
         department,
         nurses,
         vacations,
         leaves,
         availabilities,
-        prevMetrics
+        prevMetrics,
+        historicalSlots // 👈 NUEVA PIEZA DEL CONTEXTO
     ] = await Promise.all([
+
+        prisma.workRule.findMany({
+            where: {
+                organizationId: organizationId,
+                isActive: true,
+                workRuleActions: { some: { enabled: true } },
+                workRuleConditions: { some: { enabled: true } }
+            },
+            include: { workRuleConditions: true, workRuleActions: true }
+        }),
 
         // -> 1. Configuraciones Globales
         prisma.organizationSetting.findUnique({
@@ -121,6 +136,27 @@ export async function buildScheduleContext(
                 month: startOfPrevMonth.getMonth() + 1,
                 year: startOfPrevMonth.getFullYear()
             }
+        }),
+
+        // Nueva consulta: Traer el cierre del mes anterior ordenado cronológicamente
+        prisma.scheduleEntry.findMany({
+            where: {
+                // Slots que pertenecen al departamento
+                shiftTemplate: { departmentId: departmentId },
+                // Rango de tiempo: los últimos 6 días del mes anterior
+                date: {
+                    gte: sixDaysAgo,
+                    lt: startOfCurrentMonth
+                },
+                // Solo nos interesan los slots que sí tuvieron una enfermera asignada
+                nurseId: { not: null }
+            },
+            include: {
+                shiftTemplate: true // Necesario para saber si fue nocturno y sus horas
+            },
+            orderBy: {
+                date: 'asc' // 🚨 CRÍTICO: Deben venir en orden cronológico
+            }
         })
     ]);
 
@@ -133,7 +169,13 @@ export async function buildScheduleContext(
     return {
         settings: {
             organization: orgSettings,
-            department: department
+            department: department,
+            configurableRules: activeRules.filter(r => r.type === 'CONFIGURABLE') // Fase 1 procesada
+        },
+        engineRules: {
+            hard: activeRules.filter(r => r.type === 'HARD'),
+            soft: activeRules.filter(r => r.type === 'SOFT'),
+            event: activeRules.filter(r => r.type === 'EVENT')
         },
         nurses,
         blocks: {
@@ -141,6 +183,7 @@ export async function buildScheduleContext(
             leaves,
             availabilities
         },
-        previousMetrics: prevMetrics
+        previousMetrics: prevMetrics,
+        historicalSlots
     };
 }

@@ -16,11 +16,11 @@ export class ExpireApprovalsJob {
     const now = new Date();
     const result = await this.prisma.shiftChangeApprovals.updateMany({
       where: {
-        status: ApprovalStatus.PENDING,
+        decision: ApprovalStatus.PENDING,
         expiresAt: { lt: now },
       },
       data: {
-        status: ApprovalStatus.EXPIRED,
+        decision: ApprovalStatus.EXPIRED,
       },
     });
 

@@ -3,7 +3,10 @@ export interface NurseStateTracker {
     assignedHours: number;
     assignedNights: number;
     consecutiveDaysWorked: number;
+    consecutiveNightsWorked: number;
+    weekendsWorked: number;
     lastShiftEndTime: Date | null;
     lastWorkedDate: Date | null;
+    wasLastShiftNight: boolean
 
 }
