@@ -1,5 +1,4 @@
 import {
-  IsUUID,
   IsOptional,
   IsBoolean,
   IsDateString,
@@ -7,10 +6,10 @@ import {
 } from "class-validator";
 
 export class CreateNurseRestrictionDto {
-  @IsUUID()
+  @IsString()
   nurseId!: string;
 
-  @IsUUID()
+  @IsString()
   restrictionTypeId!: string;
 
   @IsOptional()
@@ -28,4 +27,10 @@ export class CreateNurseRestrictionDto {
   @IsOptional()
   @IsBoolean()
   isTemporary?: boolean;
+
+  @IsString()
+  organizationId!: string
+
+  @IsBoolean()
+  isActive!: boolean
 }

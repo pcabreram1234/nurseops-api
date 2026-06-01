@@ -1,60 +1,36 @@
+
 import {
-  IsOptional,
   IsString,
-  IsEnum,
-  IsInt,
   IsDateString,
-  IsArray,
+  IsBoolean,
+  IsOptional
 } from "class-validator";
 
-import { NurseStatusType } from "@prisma/client";
+import { NurseStatusType, ContracTypeList } from "@prisma/client";
 
 export class UpdateNurseDto {
-  @IsOptional()
   @IsString()
-  firstName?: string;
+  userId!: string;
 
-  @IsOptional()
   @IsString()
-  lastName?: string;
+  departmentId!: string;
 
   @IsOptional()
   @IsString()
-  employeeCode?: string;
+  specialityId!: string;
 
-  @IsOptional()
   @IsString()
-  phone?: string;
+  organizationId!: string;
 
-  @IsOptional()
   @IsString()
-  gender?: string;
+  contract_type!: ContracTypeList;
 
-  @IsOptional()
-  @IsEnum(NurseStatusType)
-  status?: NurseStatusType;
+  @IsString()
+  status!: NurseStatusType;
 
-  @IsOptional()
   @IsDateString()
-  hireDate?: string;
+  hire_date!: string;
 
-  @IsOptional()
-  @IsString()
-  seniorityLevel?: string;
-
-  @IsOptional()
-  @IsString()
-  contractType?: string;
-
-  @IsOptional()
-  @IsInt()
-  maxWeeklyHours?: number;
-
-  @IsOptional()
-  @IsArray()
-  preferredShifts?: string[];
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsBoolean()
+  isCrossDepartmental!: boolean
 }

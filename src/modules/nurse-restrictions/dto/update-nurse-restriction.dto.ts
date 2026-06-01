@@ -20,4 +20,8 @@ export class UpdateNurseRestrictionDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsString()
+  restrictionTypeId!: string;
+
 }

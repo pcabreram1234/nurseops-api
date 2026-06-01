@@ -19,7 +19,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
 
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   /*
   |--------------------------------------------------------------------------
@@ -170,12 +170,11 @@ export class AuthService {
   async generateTokens(user: any) {
     const payload = {
       sub: user.id,
-
+      name: user.name,
       email: user.email,
-
-      role: user.roles?.name,
-
+      role: user.role,
       organizationId: user.organizationId,
+      permissions: user.permissions
     };
 
     const accessToken = await this.generateAccessToken(payload);

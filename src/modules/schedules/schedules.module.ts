@@ -11,12 +11,14 @@ import { SchedulePublicationService } from "./services/schedule-publication.serv
 import { ScheduleValidationService } from "./services/schedule-validation.service";
 import { ScheduleVersionService } from "./services/schedule-version.service";
 
+import { ValidationController } from "./controllers/schedule-validation.controller";
+
 @Module({
   imports: [PrismaModule, BullModule.registerQueue({
     name: "notifications",
   }),],
 
-  controllers: [SchedulesController, SchedulesPublicationController],
+  controllers: [SchedulesController, SchedulesPublicationController, ValidationController],
 
   providers: [SchedulesService, SchedulePublicationService, ScheduleValidationService, ScheduleVersionService],
 

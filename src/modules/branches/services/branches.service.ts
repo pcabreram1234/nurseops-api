@@ -4,7 +4,7 @@ import { PrismaService } from "@infra/database/prisma.service";
 
 @Injectable()
 export class BranchesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any) {
     return this.prisma.branch.create({
@@ -41,6 +41,7 @@ export class BranchesService {
       },
       include: {
         departments: true,
+        organization: true
       },
       orderBy: {
         createdAt: "desc",

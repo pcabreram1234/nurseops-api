@@ -4,7 +4,7 @@ import { PrismaService } from "@infra/database/prisma.service";
 
 @Injectable()
 export class NurseRestrictionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any, user: any) {
     return this.prisma.nurseRestriction.create({
@@ -75,5 +75,34 @@ export class NurseRestrictionsService {
         id,
       },
     });
+  }
+
+  // LÓGICA PARA CREAR/ACTUALIZAR (Bulk Sync)
+  async syncRestriction(payload) {
+    const { nurseIds, restrictionTypeId, startDate, endDate, isTemporary, isActive, notes } = payload;
+
+    // 1. Eliminar las asignaciones previas de este TIPO específico
+    // (Opcional: Si quieres que el "Editar" reemplace la lista de enfermeras seleccionadas)
+    await this.prisma.nurseRestriction.deleteMany({
+      where: { restrictionTypeId: restrictionTypeId }
+    });
+
+    // 2. Crear las nuevas asignaciones en lote para todas las enfermeras seleccionadas
+    const bulkData = nurseIds.map(nurseId => ({
+      nurseId,
+      organizationId: payload.organizationId, // Asegúrate de tener este dato
+      restrictionTypeId,
+      startDate,
+      endDate,
+      isTemporary,
+      isActive,
+      notes
+    }));
+
+    await this.prisma.nurseRestriction.createMany({
+      data: bulkData
+    });
+
+    return { message: "Asignaciones actualizadas en lote correctamente" };
   }
 }

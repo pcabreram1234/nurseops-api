@@ -119,7 +119,12 @@ export class UsersService {
 
         orderBy: {
           createdAt: "desc",
-        },
+        }, omit: {
+          password: true,
+          createdAt: true,
+          lastLoginAt: true,
+
+        }
       }),
 
       this.prisma.user.count({
@@ -157,7 +162,12 @@ export class UsersService {
       include: {
         roles: true,
         organization: true,
-      },
+      }, omit: {
+        password: true,
+        createdAt: true,
+        lastLoginAt: true,
+
+      }
     });
 
     if (!record) {

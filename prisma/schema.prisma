@@ -70,7 +70,6 @@ model Organization {
   rules                    WorkRule[]
   shiftTemplates           ShiftTemplate[]
   branches                 Branch[]
-  roles                    Roles[]
   ruleGroups               RuleGroup[]
   monthlyDistributionRules MonthlyDistributionRule[]
   integrations             Integration[]
@@ -184,7 +183,7 @@ model Department {
   branch                   Branch                    @relation(fields: [branchId], references: [id])
   type                     DepartmentType
   criticalLevel            DepartmentCriticalLevel
-  minimum_staff            Int                       @default(1)
+  minimumStaff             Int                       @default(1)
   optimalStaff             Int                       @default(1)
   maxCapacity              Int
   allowOvertime            Boolean
@@ -435,6 +434,7 @@ model Nurse {
   nurseProfiles       NurseProfile[]
   isCrossDepartmental Boolean               @default(false)
 
+  @@unique([userId])
   @@map("nurses")
 }
 
@@ -580,14 +580,13 @@ model NurseProfile {
   organizationId        String
   organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   birthDate             DateTime
-  emergencyContact      String
+  emergencyContactName  String              @default("")
   emergencyContactPhone String
   educationLevel        EducationLevelTypes
   yearsOfExperience     Int?
   certifications        Json?
   languages             Json?
   notes                 String?
-  health_restrictions   String
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @default(now()) @updatedAt
 
@@ -595,39 +594,48 @@ model NurseProfile {
 }
 
 model NurseRestriction {
-  id                String                @id @default(uuid())
-  organizationId    String
-  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  nurseId           String
-  nurse             Nurse                 @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  restrictionType   NurseRestrictionType? @relation(fields: [restrictionTypeId], references: [id])
-  restrictionTypeId String?
-  startDate         DateTime?
-  endDate           DateTime?
-  notes             String?
-  isTemporary       Boolean               @default(false)
-  isActive          Boolean               @default(true)
-  createdById       String?
-  createdBy         User?                 @relation(fields: [createdById], references: [id])
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @default(now()) @updatedAt
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // 🔗 Clave Foránea y Relación hacia Nurse
+  nurseId String
+  nurse   Nurse  @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  // 🔗 Clave Foránea y Relación hacia NurseRestrictionType (Obligatoria para la conjunción)
+  restrictionTypeId String
+  restrictionType   NurseRestrictionType @relation(fields: [restrictionTypeId], references: [id], onDelete: Cascade)
+
+  // 📋 Atributos adicionales de la asignación (Metadatos de la conjunción)
+  startDate   DateTime?
+  endDate     DateTime?
+  notes       String?
+  isTemporary Boolean   @default(false)
+  isActive    Boolean   @default(true)
+
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  // 🛡️ BLINDAJE DE INTEGRIDAD: Evita que se repita la misma restricción para la misma enfermera
+  @@unique([nurseId, restrictionTypeId])
 }
 
 model NurseRestrictionType {
-  id                     String                       @id @default(uuid())
-  code                   String                       @unique
-  name                   NurseRestrictionTypes
-  description            NurseRestrictionDescriptions
-  severity               PriorityTypes
-  affects_scheduler      Boolean
-  affects_overtime       Boolean
-  affects_nights         Boolean
-  isSystem               Boolean
-  isActive               Boolean
-  createdAt              DateTime                     @default(now())
-  updatedAt              DateTime                     @default(now()) @updatedAt
-  restrictions           NurseRestriction[]
-  nurseRestrictionTypeId String
+  id                String                       @id @default(uuid())
+  code              String                       @unique
+  name              NurseRestrictionTypes
+  description       NurseRestrictionDescriptions
+  severity          PriorityTypes
+  affects_scheduler Boolean
+  affects_overtime  Boolean
+  affects_nights    Boolean
+  isSystem          Boolean
+  isActive          Boolean
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @default(now()) @updatedAt
+  restrictions      NurseRestriction[]
 
   @@map("nurse_restrictions_types")
 }
@@ -1159,8 +1167,6 @@ model Module {
 model Roles {
   id              String            @id @default(uuid())
   name            String // E.g., "Senior Nurse", "Junior Nurse", "Auxiliar"
-  organizationId  String
-  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   users           User[]
   rolePermissions RolePermissions[]
 

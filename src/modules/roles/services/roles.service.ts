@@ -10,27 +10,19 @@ import { AssignPermissionsDto } from "../dto/assign-permissions.dto";
 
 @Injectable()
 export class RolesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /*
   |--------------------------------------------------------------------------
   | CREATE ROLE
   |--------------------------------------------------------------------------
   */
-  async create(createRoleDto: CreateRoleDto, currentUser: any) {
-    // Si el usuario es ADMIN, forzamos a que el rol se cree bajo SU organización
-    let targetOrganizationId = createRoleDto.organizationId;
-
-    if (currentUser.role !== "SUPER") {
-      // Un ADMIN solo puede crear roles dentro de su propia organización
-      targetOrganizationId = currentUser.organizationId;
-    }
+  async create(createRoleDto: CreateRoleDto) {
 
     // Validar si el rol ya existe dentro de la misma organización
     const existingRole = await this.prisma.roles.findFirst({
       where: {
         name: createRoleDto.name,
-        organizationId: targetOrganizationId,
       },
     });
 
@@ -43,7 +35,6 @@ export class RolesService {
     return this.prisma.roles.create({
       data: {
         name: createRoleDto.name,
-        organizationId: targetOrganizationId, // Mapeo plano explícito para evitar fallos de tipo
       },
     });
   }
@@ -92,7 +83,7 @@ export class RolesService {
   | FIND ONE
   |--------------------------------------------------------------------------
   */
-  async findOne(id: string, currentUser: any) {
+  async findOne(id: string) {
     const role = await this.prisma.roles.findUnique({
       where: { id },
       include: {
@@ -108,11 +99,6 @@ export class RolesService {
       throw new NotFoundException("Role not found");
     }
 
-    // 🔒 Filtro de Seguridad: Un ADMIN no puede inspeccionar roles de otros hospitales
-    if (currentUser.role !== "SUPER" && role.organizationId !== currentUser.organizationId) {
-      throw new ForbiddenException("Access denied to this organization resource.");
-    }
-
     return role;
   }
 
@@ -121,9 +107,9 @@ export class RolesService {
   | UPDATE ROLE
   |--------------------------------------------------------------------------
   */
-  async update(id: string, body: any, currentUser: any) {
+  async update(id: string, body: any) {
     // Reutilizamos findOne para que ejecute la verificación de existencia y pertenencia
-    await this.findOne(id, currentUser);
+    await this.findOne(id);
 
     return this.prisma.roles.update({
       where: { id },
@@ -136,9 +122,9 @@ export class RolesService {
   | DELETE ROLE
   |--------------------------------------------------------------------------
   */
-  async remove(id: string, currentUser: any) {
+  async remove(id: string) {
     // Reutilizamos findOne para validar existencia y pertenencia antes de borrar
-    await this.findOne(id, currentUser);
+    await this.findOne(id);
 
     return this.prisma.roles.delete({
       where: { id },
@@ -152,7 +138,7 @@ export class RolesService {
   */
   async assignPermissions(roleId: string, dto: AssignPermissionsDto, currentUser: any) {
     // Valida existencia y pertenencia a la organización del ADMIN antes de alterar permisos
-    await this.findOne(roleId, currentUser);
+    await this.findOne(roleId);
 
     // Envolvemos el borrado e inserción en una transacción atómica segura
     await this.prisma.$transaction(async (tx) => {
@@ -178,6 +164,6 @@ export class RolesService {
       });
     });
 
-    return this.findOne(roleId, currentUser);
+    return this.findOne(roleId);
   }
 }

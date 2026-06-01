@@ -32,4 +32,12 @@ export class ShiftFilterDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  startTime!: string
+
+  @IsOptional()
+  @IsString()
+  endTime!: string
 }

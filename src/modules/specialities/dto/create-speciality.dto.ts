@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsOptional, IsString } from "class-validator";
 
 export class CreateSpecialityDto {
   @IsString()
@@ -12,9 +12,15 @@ export class CreateSpecialityDto {
 
   @IsOptional()
   @IsString()
-  description?: string;
+  description!: string;
 
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  // 🌟 CAMBIO: Ahora acepta un arreglo de strings enviado desde el FrontEnd
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  departmentIds?: string[];
 }

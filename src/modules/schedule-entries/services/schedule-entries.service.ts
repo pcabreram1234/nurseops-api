@@ -4,7 +4,7 @@ import { PrismaService } from "@infra/database/prisma.service";
 
 @Injectable()
 export class ScheduleEntriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: any, user: any) {
     return this.prisma.scheduleEntry.create({
@@ -30,17 +30,45 @@ export class ScheduleEntriesService {
         }),
         ...(query.startDate &&
           query.endDate && {
-            date: {
-              gte: new Date(query.startDate),
-              lte: new Date(query.endDate),
-            },
-          }),
+          date: {
+            gte: new Date(query.startDate),
+            lte: new Date(query.endDate),
+          },
+        }),
       },
-
-      include: {
-        nurse: true,
-        shift: true,
-        schedule: true,
+      select: {
+        id: true,
+        scheduleId: true,
+        shiftId: true,
+        date: true,
+        status: true,
+        nurseId: true,
+        notes: true,
+        isEmergencyCoverage: true,
+        // 🌟 Las relaciones se incluyen usando select internos:
+        nurse: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              }
+            }
+          }
+        },
+        shift: true,    // Trae todos los campos del shift
+        schedule: true, // Trae todos los campos del schedule
+        shiftTemplate: {
+          select: {
+            name: true,
+            department: {
+              select: { name: true, description: true }
+            }
+          }
+        },
       },
       orderBy: {
         date: "asc",
@@ -55,7 +83,15 @@ export class ScheduleEntriesService {
         organizationId: user.organizationId,
       },
       include: {
-        nurse: true,
+        nurse: {
+          include: {
+            user: {
+              select: {
+                firstName: true
+              }
+            }
+          }
+        },
         shift: true,
       },
     });

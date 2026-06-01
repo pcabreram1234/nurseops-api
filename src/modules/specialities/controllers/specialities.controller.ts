@@ -10,17 +10,13 @@ import {
 } from "@nestjs/common";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
-
 import { RolesGuard } from "@modules/auth/guards/roles.guards";
-
 import { Roles } from "@modules/auth/decorators/roles.decorator";
-
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
 import { SpecialitiesService } from "../services/specialities.service";
-
 import { CreateSpecialityDto } from "../dto/create-speciality.dto";
-import { UpdateSpecialityDto } from "../dto/update-speciality.dto";
+import { UpdateSpecialityDto } from "../dto/update-speciality.dto"; // Asegurar importación
 
 @Controller({
   path: "specialities",
@@ -47,7 +43,11 @@ export class SpecialitiesController {
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateSpecialityDto, @CurrentUser() user: any) {
+  update(
+    @Param("id") id: string, 
+    @Body() dto: UpdateSpecialityDto, // 🌟 Corregido el tipo al DTO de actualización
+    @CurrentUser() user: any
+  ) {
     return this.service.update(id, dto, user);
   }
 

@@ -18,7 +18,7 @@ export class ScheduleCronService {
      * Para pruebas locales usa: CronExpression.EVERY_MINUTE (se ejecuta cada minuto)
      * Para producción usa algo como: '0 2 20 * *' (se ejecuta el día 20 de cada mes a las 2:00 AM)
      */
-    @Cron(CronExpression.EVERY_10_SECONDS)
+    @Cron(CronExpression.EVERY_12_HOURS)
     async handleMonthlyScheduleGeneration() {
         if (this.isRunning) {
             this.logger.warn('⚠️ The job is already running. Skipping this iteration.');

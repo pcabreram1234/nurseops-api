@@ -6,12 +6,14 @@ import {
   IsString,
   IsInt,
   IsArray,
-  IsObject,
 } from "class-validator";
 
 import { EducationLevelTypes } from "@prisma/client";
 
 export class CreateNurseProfileDto {
+  @IsString()
+  organizationId!: string;
+
   @IsUUID()
   nurseId!: string;
 
@@ -26,10 +28,6 @@ export class CreateNurseProfileDto {
 
   @IsEnum(EducationLevelTypes)
   educationLevel!: EducationLevelTypes;
-
-  @IsOptional()
-  @IsObject()
-  healthRestrictions?: any;
 
   @IsOptional()
   @IsInt()

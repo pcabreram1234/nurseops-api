@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsUUID,
   IsOptional,
   IsBoolean,
   IsInt,
@@ -19,10 +18,10 @@ export class CreateDepartmentDto {
   @IsString()
   description?: string;
 
-  @IsUUID()
+  @IsString()
   organizationId!: string;
 
-  @IsUUID()
+  @IsString()
   branchId!: string;
 
   @IsEnum(DepartmentType)
@@ -45,7 +44,7 @@ export class CreateDepartmentDto {
 
   @IsOptional()
   @IsBoolean()
-  allowsOvertime?: boolean;
+  allowOvertime?: boolean;
 
   @IsOptional()
   @IsBoolean()
@@ -62,4 +61,8 @@ export class CreateDepartmentDto {
   @IsOptional()
   @IsInt()
   emergencyPriority?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

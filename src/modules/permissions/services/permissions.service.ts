@@ -58,17 +58,17 @@ export class PermissionsService {
       };
     }
 
-    if (query.module) {
-      where.module = query.module;
-    }
+    // if (query.module) {
+    //   where.module = query.module;
+    // }
 
     return this.prisma.permission.findMany({
       where,
 
       orderBy: [
-        {
-          module: 'asc',
-        },
+        // {
+        //   module: 'asc',
+        // },
 
         {
           name: 'asc',

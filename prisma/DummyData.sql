@@ -142,38 +142,38 @@ INSERT INTO "roles" ("id", "name", "organizationId") VALUES
 -- 1. TABLA: users (Unificada y Expandida)
 -- ====================================================================
 INSERT INTO "users" ("id", "email", "password", "firstName", "lastName", "organizationId", "departmentId" ,"rolesId", "status") VALUES
-('user-00', 'pcabreram1234@gmail.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Phillip', 'Cabrera', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'SUPER', 'ACTIVE' ),
-('00000000-0000-0000-0000-000000000000','cronbot@sistema.local', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C','SYSTEM', 'CRON_BOT', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01','CRON', 'ACTIVE'),
+('user-00', 'pcabreram1234@gmail.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Phillip', 'Cabrera', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'SUPER', 'ACTIVE' ),
+('00000000-0000-0000-0000-000000000000','cronbot@sistema.local', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6','SYSTEM', 'CRON_BOT', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01','CRON', 'ACTIVE'),
 -- Personal Base Original
-('user-01', 'maria.perez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Maria', 'Perez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
-('user-02', 'juan.gomez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Juan', 'Gomez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
-('user-03', 'ana.lopez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Ana', 'Lopez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
-('user-04', 'carlos.ruiz@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Carlos', 'Ruiz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04', 'role-06', 'ACTIVE'),
-('user-05', 'luisa.fernandez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Luisa', 'Fernandez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05', 'role-03', 'ACTIVE'),
-('user-06', 'pedro.martinez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Pedro', 'Martinez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'role-08', 'ACTIVE'),
-('user-07', 'laura.diaz@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Laura', 'Diaz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07', 'role-02', 'ACTIVE'),
-('user-08', 'jorge.torres@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Jorge', 'Torres', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08', 'role-03', 'ACTIVE'),
-('user-09', 'carmen.vargas@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Carmen', 'Vargas', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09', 'role-07', 'ACTIVE'),
-('user-10', 'miguel.castro@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Miguel', 'Castro', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10', 'role-02', 'ACTIVE'),
+('user-01', 'maria.perez@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Maria', 'Perez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-02', 'juan.gomez@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Juan', 'Gomez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+('user-03', 'ana.lopez@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Ana', 'Lopez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
+('user-04', 'carlos.ruiz@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Carlos', 'Ruiz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-04', 'role-06', 'ACTIVE'),
+('user-05', 'luisa.fernandez@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Luisa', 'Fernandez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-05', 'role-03', 'ACTIVE'),
+('user-06', 'pedro.martinez@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Pedro', 'Martinez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-06', 'role-08', 'ACTIVE'),
+('user-07', 'laura.diaz@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Laura', 'Diaz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-07', 'role-02', 'ACTIVE'),
+('user-08', 'jorge.torres@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Jorge', 'Torres', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-08', 'role-03', 'ACTIVE'),
+('user-09', 'carmen.vargas@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Carmen', 'Vargas', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-09', 'role-07', 'ACTIVE'),
+('user-10', 'miguel.castro@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Miguel', 'Castro', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-10', 'role-02', 'ACTIVE'),
 
 -- 🚀 NUEVAS ENFERMERAS PARA DEPT-01 (Refuerzo para pruebas del Engine)
 -- Total en dept-01 con estas: 5 enfermeras
-('user-11', 'elena.blanco@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Elena', 'Blanco', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
-('user-12', 'ramon.santos@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Ramon', 'Santos', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
-('user-13', 'lucia.mendez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Lucia', 'Mendez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
-('user-14', 'marcos.reyes@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Marcos', 'Reyes', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-11', 'elena.blanco@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Elena', 'Blanco', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-12', 'ramon.santos@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Ramon', 'Santos', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-13', 'lucia.mendez@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Lucia', 'Mendez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
+('user-14', 'marcos.reyes@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Marcos', 'Reyes', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-01', 'role-02', 'ACTIVE'),
 
 -- 🚀 NUEVAS ENFERMERAS PARA DEPT-02 
 -- Total en dept-02 con estas: 4 enfermeras
-('user-15', 'sofia.ortiz@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Sofia', 'Ortiz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
-('user-16', 'gabriel.nunez@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Gabriel', 'Nunez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
-('user-17', 'patricia.sosa@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Patricia', 'Sosa', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+('user-15', 'sofia.ortiz@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Sofia', 'Ortiz', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+('user-16', 'gabriel.nunez@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Gabriel', 'Nunez', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
+('user-17', 'patricia.sosa@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Patricia', 'Sosa', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-02', 'role-03', 'ACTIVE'),
 
 -- 🚀 NUEVAS ENFERMERAS PARA DEPT-03
 -- Total en dept-03 con estas: 4 enfermeras
-('user-18', 'andres.brito@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Andres', 'Brito', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
-('user-19', 'claudia.gil@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Claudia', 'Gil', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
-('user-20', 'manuel.rosa@hgc.com', '$2b$10$7Z2NqQYm8P8N4p4jK2NGeexl9qYj5n3rT6vV9XbZQ1M9u7W3Y4X5C', 'Manuel', 'Rosa', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE');
+('user-18', 'andres.brito@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Andres', 'Brito', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
+('user-19', 'claudia.gil@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Claudia', 'Gil', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE'),
+('user-20', 'manuel.rosa@hgc.com', '$2a$12$GudKEXW2CAlv2bqO7KnHauAGCLIP/bz8ZSqL56NEbMxKHZgxW0CY6', 'Manuel', 'Rosa', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca', 'dept-03', 'role-02', 'ACTIVE');
 
 
 -- ====================================================================

@@ -30,6 +30,7 @@ import { WorkRulesModule } from "@modules/work-rules/work-rules.module";
 import { RuleGroupsModule } from "@modules/rule-groups/rule-groups.module";
 import { EmergencyCoveragesModule } from "@modules/emergency-coverages/emergency-coverages.module";
 import { ScheduleVersionsModule } from "@modules/schedule-versions/schedule-versions.module";
+import { ShiftsModule } from "@modules/shifts/shifts.module";
 import { ShiftTemplatesModule } from "@modules/shift-templates/shift-templates.module";
 import { SpecialitiesModule } from "@modules/specialities/specialities.module";
 import { DepartmentConfigurationsModule } from "@modules/department-configurations/department-configurations.module";
@@ -42,6 +43,7 @@ import { NotificationTemplatesModule } from "@modules/notification-templates/not
 import { ModulesModule } from "@modules/modules/modules.module";
 import { ActivityLogsModule } from "@modules/activity-logs/activity-logs.module";
 import { ScheduleCronService } from "@modules/schedules/services/schedule-cron.service";
+import { PermissionsModule } from "@modules/permissions/permissions.module";
 
 @Module({
   imports: [
@@ -59,6 +61,7 @@ import { ScheduleCronService } from "@modules/schedules/services/schedule-cron.s
     UsersModule,
     OrganizationModule,
     RolesModule,
+    PermissionsModule,
     NursesModule,
     EmergencyCandidatesModule,
     NursePreferencesModule,
@@ -78,6 +81,7 @@ import { ScheduleCronService } from "@modules/schedules/services/schedule-cron.s
     RuleGroupsModule,
     EmergencyCoveragesModule,
     ScheduleVersionsModule,
+    ShiftsModule,
     ShiftTemplatesModule,
     SpecialitiesModule,
     DepartmentConfigurationsModule,

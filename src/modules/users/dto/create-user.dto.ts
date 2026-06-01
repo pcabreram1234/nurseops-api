@@ -21,6 +21,10 @@ export class CreateUserDto {
   @IsString()
   departmentId!: string;
 
-  @IsUUID()
+  @IsString()
   rolesId!: string;
+
+  @IsString()
+  status!: 'ACTIVE' | 'INACTIVE' | 'VACATION' | 'LICENSE' | 'SUSPENDED'
+
 }
