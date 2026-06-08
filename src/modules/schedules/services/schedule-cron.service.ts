@@ -32,7 +32,7 @@ export class ScheduleCronService {
         try {
             // 1. Determinar la fecha objetivo (Por defecto, el motor calcula para el PRÓXIMO mes)
             // Si estamos en mayo, esto calculará el horario de junio.
-            const targetDate = startOfMonth(addMonths(new Date(), 1));
+            const targetDate = startOfMonth(addMonths(new Date(), 0));
 
             // 2. Buscar todos los departamentos activos que necesitan un horario
             // Traemos también sus plantillas y especialidades para pasárselas al motor

@@ -63,7 +63,7 @@ export async function finalizeAndPersistSchedule(
                     // Suponiendo que guardas mes/año o la fecha base
                     month: month,
                     year: year,
-                    status: 'DRAFT', // Requerimiento exacto: Nace como borrador
+                    status: 'GENERATING', // Requerimiento exacto: Nace como borrador
                     hasConflicts: conflictReport.hasConflicts,
                     totalConflicts: conflictReport.totalConflicts,
                     generationTimeMs: generationTimeMs,
@@ -81,6 +81,10 @@ export async function finalizeAndPersistSchedule(
                 // Generamos una clave única: TemplateID + Fecha (sin hora)
                 const dateKey = new Date(slot.date).toISOString().split('T')[0];
                 const shiftKey = `${slot.shiftTemplateId}-${dateKey}`;
+
+                if (slot.shiftTemplateId === 'tmpl-04') {
+                    console.log(slot.shiftInfo)
+                }
 
                 if (!shiftInstancesMap.has(shiftKey)) {
                     // Generamos un ID nuevo para esta instancia de turno
@@ -109,6 +113,7 @@ export async function finalizeAndPersistSchedule(
             await tx.shift.createMany({
                 data: Array.from(shiftInstancesMap.values())
             });
+
 
 
 
@@ -171,6 +176,14 @@ export async function finalizeAndPersistSchedule(
                     // Si el Filtro B calculó métricas de equidad, podrías promediarlas y guardarlas aquí
                 }
             });
+
+            await tx.schedule.update({
+                where: {
+                    id: newSchedule.id
+                }, data: {
+                    status: "GENERATED"
+                }
+            })
 
             return newSchedule;
         });

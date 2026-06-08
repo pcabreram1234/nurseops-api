@@ -45,6 +45,8 @@ import { ActivityLogsModule } from "@modules/activity-logs/activity-logs.module"
 import { ScheduleCronService } from "@modules/schedules/services/schedule-cron.service";
 import { PermissionsModule } from "@modules/permissions/permissions.module";
 
+import { JwtModule } from "@nestjs/jwt";
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -55,6 +57,9 @@ import { PermissionsModule } from "@modules/permissions/permissions.module";
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
       }
+    }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
     }),
     PrismaModule,
     AuthModule,
@@ -94,6 +99,7 @@ import { PermissionsModule } from "@modules/permissions/permissions.module";
     ModulesModule,
     ActivityLogsModule
   ],
-  providers: [AuditInterceptor, AuditActionMapperService, AuditRouteFilterService, AuditSanitizerService, ScheduleCronService]
+  providers: [AuditInterceptor, AuditActionMapperService, AuditRouteFilterService, AuditSanitizerService, ScheduleCronService,
+  ]
 })
 export class AppModule { }

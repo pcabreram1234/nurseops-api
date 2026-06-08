@@ -1,4 +1,4 @@
-import { IsOptional, IsUUID, IsDateString } from "class-validator";
+import { IsOptional, IsUUID, IsDateString, IsString } from "class-validator";
 
 export class ScheduleEntryFilterDto {
   @IsOptional()
@@ -20,4 +20,9 @@ export class ScheduleEntryFilterDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
 }

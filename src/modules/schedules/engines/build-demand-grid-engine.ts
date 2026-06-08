@@ -26,16 +26,21 @@ export function buildDemandGrid(
             let totalSlotsCreatedForShift = 0;
 
             const [startH, startM] = shift.startTime.split(':').map(Number);
-            const currentShiftStartTime = new Date(date);
-            currentShiftStartTime.setHours(startH, startM, 0, 0);
-
             const [endH, endM] = shift.endTime.split(':').map(Number);
-            const currentShiftEndtime = new Date(date);
-            currentShiftEndtime.setHours(endH, endM, 0, 0);
+
+            const currentShiftStartTime = new Date(Date.UTC(
+                date.getFullYear(), date.getMonth(), date.getDate(), startH, startM, 0, 0));
+
+            const currentShiftEndtime = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), endH, endM, 0, 0));
+
+            // 🌟 CORRECCIÓN 2: Ahora que ambos son UTC puros, la comparación y mutación es 100% segura
+            if (currentShiftEndtime < currentShiftStartTime) {
+                currentShiftEndtime.setUTCDate(currentShiftEndtime.getUTCDate() + 1);
+            }
 
             const currentShiftInfo = {
                 type: shift.name, // Ej: 'Noche', 'Mañana' (ajusta según tu DB)
-                durationHours: (shift as any).duration_hours || 8, // Ajusta al campo real de tu DB
+                durationHours: (shift as any).durationHours || 8, // Ajusta al campo real de tu DB
                 isNightShift: (shift as any).is_night_shift || shift.name.toLowerCase().includes('NIGHT'),
                 startTime: currentShiftStartTime, // Ajusta al campo real de tu DB
                 endTime: currentShiftEndtime    // Ajusta al campo real de tu DB
@@ -83,6 +88,7 @@ export function buildDemandGrid(
             }
         }
     }
+
 
     console.log(`[Engine] Board successfully generated: ${slots.length} slots to cover.`);
     return slots;

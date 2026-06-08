@@ -7,6 +7,7 @@ import {
   Body,
   Query,
   UseGuards,
+  Delete
 } from "@nestjs/common";
 
 import { ScheduleEntriesService } from "../services/schedule-entries.service";
@@ -24,6 +25,8 @@ import { CreateScheduleEntryDto } from "../dto/create-schedule-entry.dto";
 import { UpdateScheduleEntryDto } from "../dto/update-schedule-entry.dto";
 
 import { ScheduleEntryFilterDto } from "../dto/schedule-entry-filter.dto";
+import { CreateBulkScheduleEntryDto } from "../dto/create-bulk-schedule-entry.dto";
+
 
 @Controller({
   path: "schedule-entries",
@@ -33,12 +36,18 @@ import { ScheduleEntryFilterDto } from "../dto/schedule-entry-filter.dto";
 export class ScheduleEntriesController {
   constructor(
     private readonly scheduleEntriesService: ScheduleEntriesService,
-  ) {}
+  ) { }
 
   @Post()
   @Permissions("CREATE_SCHEDULE_ENTRY")
   create(@Body() dto: CreateScheduleEntryDto, @CurrentUser() user: any) {
     return this.scheduleEntriesService.create(dto, user);
+  }
+
+  @Post("bulk")
+  @Permissions("CREATE_SCHEDULE_ENTRY")
+  createBulk(@Body() dto: CreateBulkScheduleEntryDto, @CurrentUser() user: any) {
+    return this.scheduleEntriesService.createBulk(dto, user)
   }
 
   @Get()
@@ -55,5 +64,13 @@ export class ScheduleEntriesController {
     @CurrentUser() user: any,
   ) {
     return this.scheduleEntriesService.update(id, dto, user);
+  }
+
+
+
+  @Delete(":id")
+  @Permissions("DELETE_SCHEDULE_ENTRY")
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.scheduleEntriesService.remove(id, user)
   }
 }

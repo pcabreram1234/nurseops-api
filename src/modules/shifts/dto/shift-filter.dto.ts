@@ -2,7 +2,6 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
-  IsUUID,
   IsEnum,
 } from "class-validator";
 
@@ -14,7 +13,7 @@ export class ShiftFilterDto {
   search?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   departmentId?: string;
 
   @IsOptional()

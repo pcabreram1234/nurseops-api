@@ -57,6 +57,8 @@ export class AuthService {
     // 4. Modificamos la generación de tokens para inyectar el rol y los permisos en el payload del JWT
     const tokens = await this.generateTokens({
       id: user.id,
+      sub: user.id,
+      name:user.firstName,
       email: user.email,
       role: user.roles?.name, // "SUPER", "ADMIN", etc.
       organizationId: user.organizationId,
@@ -69,6 +71,7 @@ export class AuthService {
       ...tokens,
       user: {
         id: user.id,
+        sub: user.id,
         email: user.email,
         name: user.firstName,
         role: user.roles?.name,
@@ -95,7 +98,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new UnauthorizedException("User does not exists");
     }
 
     if (user.status !== "ACTIVE") {
@@ -169,6 +172,7 @@ export class AuthService {
 
   async generateTokens(user: any) {
     const payload = {
+      id: user.id,
       sub: user.id,
       name: user.name,
       email: user.email,

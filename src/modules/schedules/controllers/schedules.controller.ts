@@ -26,13 +26,15 @@ import { UpdateScheduleDto } from "../dto/update-schedule.dto";
 
 import { ScheduleFilterDto } from "../dto/schedule-filter.dto";
 
+import { GenerateScheduleDto } from "../dto/generate-schedule.dto";
+
 @Controller({
   path: "schedules",
   version: "1",
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SchedulesController {
-  constructor(private readonly schedulesService: SchedulesService) {}
+  constructor(private readonly schedulesService: SchedulesService) { }
 
   @Post()
   @Permissions("CREATE_SCHEDULE")
@@ -54,7 +56,7 @@ export class SchedulesController {
 
   @Patch(":id")
   @Permissions("UPDATE_SCHEDULE")
-  update(@Param("id") id: string,@Body() dto: UpdateScheduleDto, @CurrentUser() user: any,) {
+  update(@Param("id") id: string, @Body() dto: UpdateScheduleDto, @CurrentUser() user: any,) {
     return this.schedulesService.update(id, dto, user);
   }
 
@@ -64,10 +66,12 @@ export class SchedulesController {
     return this.schedulesService.remove(id, user);
   }
 
-
-  @Post(":id/generate")
-  @Permissions("GENERATE_SCHEDULE")
-  generate(@Param("id") id: string, @CurrentUser() user: any,) {
-    return this.schedulesService.generate(id, user);
+  @Post("generate")
+  @Permissions("CREATE_SCHEDULE") // Reutiliza el permiso o usa uno específico si lo deseas
+  generateAutomated(
+    @Body() dto: GenerateScheduleDto,
+    @CurrentUser() user: any
+  ) {
+    return this.schedulesService.generateAutomated(dto, user);
   }
 }

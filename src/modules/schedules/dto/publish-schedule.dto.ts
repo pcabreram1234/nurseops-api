@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class PublishScheduleDto {
   @IsOptional()
@@ -28,4 +28,8 @@ export class PublishScheduleDto {
   @IsOptional()
   @IsString()
   publicationNotes?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  scheduleId!: string
 }

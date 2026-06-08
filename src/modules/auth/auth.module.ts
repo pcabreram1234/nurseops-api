@@ -9,7 +9,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './controllers/auth.controller';
 
 import { AuthService } from './services/auth.service';
-
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { JwtRefreshInterceptor } from './interceptors/jwt-refresh.interceptor';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -33,13 +34,21 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         },
       }),
     }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: {
+        expiresIn: "15m"
+      }
+    })
   ],
 
   controllers: [AuthController],
 
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, {
+    provide: APP_INTERCEPTOR, useClass: JwtRefreshInterceptor
+  }],
 
   exports: [AuthService],
-  
+
 })
-export class AuthModule {}
+export class AuthModule { }

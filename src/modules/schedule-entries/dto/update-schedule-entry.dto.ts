@@ -23,5 +23,17 @@ export class UpdateScheduleEntryDto {
 
   @IsOptional()
   @IsNumber()
-  optimizationScore?: number;
+  optimizationScore!: number;
+
+  @IsString()
+  departmentId!: string
+
+  @IsOptional()
+  @IsString()
+  nurseId?: string;
+
+  @IsOptional()
+  @IsString()
+  shiftId!: string
+
 }
