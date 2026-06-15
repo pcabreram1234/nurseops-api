@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 
 export class PublishScheduleDto {
   @IsOptional()
@@ -18,8 +18,12 @@ export class PublishScheduleDto {
   validateBeforePublish?: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  sendPushNotifications?: boolean;
+  @IsObject()
+  sendPushNotifications?: {
+    publish: boolean
+    sendPushNotifications: boolean
+    sendEmails: boolean
+  };
 
   @IsOptional()
   @IsBoolean()

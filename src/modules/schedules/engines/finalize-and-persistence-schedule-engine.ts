@@ -76,44 +76,52 @@ export async function finalizeAndPersistSchedule(
             // ==========================================
             const shiftInstancesMap = new Map<string, any>();
 
-            // Recorremos los slots para identificar turnos únicos
+            // Recorremos los slots para identificar turnos únicos en esta ejecución
             slots.forEach(slot => {
-                // Generamos una clave única: TemplateID + Fecha (sin hora)
+                // Generamos una clave única para la RAM: TemplateID + Fecha (sin hora)
                 const dateKey = new Date(slot.date).toISOString().split('T')[0];
                 const shiftKey = `${slot.shiftTemplateId}-${dateKey}`;
 
-                if (slot.shiftTemplateId === 'tmpl-04') {
-                    console.log(slot.shiftInfo)
-                }
+                console.log(`[Engine-Shift] Processing slot date: ${dateKey} for template: ${slot.shiftTemplateId}`);
 
                 if (!shiftInstancesMap.has(shiftKey)) {
-                    // Generamos un ID nuevo para esta instancia de turno
+                    // 1. Generamos un ID nuevo irrepetible para esta instancia física de turno
                     const shiftInstanceId = randomUUID();
+
+                    // 2. Generamos un sufijo único y corto extraído del propio UUID (ej: "a1b2c3d4")
+                    // Esto garantiza que si el motor vuelve a correr para el mismo día y template, el código sea único.
+                    const uniqueHash = shiftInstanceId.split('-')[0];
+
+                    // 3. Limpiamos el nombre/código del template eliminando caracteres especiales si los tuviera
+                    const cleanTemplateCode = slot.shiftTemplateId.replace(/[^a-zA-Z0-9]/g, '');
+                    const cleanDate = dateKey.replace(/-/g, '');
+
+                    // Resultado final único: "TEMP-20260615-a1b2c3d4"
+                    const uniqueShiftCode = `${cleanTemplateCode}-${cleanDate}-${uniqueHash}`.toUpperCase();
 
                     shiftInstancesMap.set(shiftKey, {
                         id: shiftInstanceId,
                         organizationId: organizationId,
-                        name: slot.shiftTemplateId, // O el nombre del template
-                        code: `${slot.shiftTemplateId}-${dateKey.replace(/-/g, '')}`, // Código único
+                        name: slot.shiftTemplateId,
+                        code: uniqueShiftCode, // 🔥 AHORA SÍ ES 100% ÚNICO GLOBALMENTE
                         type: slot.shiftInfo.type as ShiftType,
                         startTime: new Date(slot.shiftInfo.startTime),
                         endTime: new Date(slot.shiftInfo.endTime),
-                        durationHours: slot.shiftInfo.durationHours, // Asegúrate de que esto sea number
+                        durationHours: Number(slot.shiftInfo.durationHours), // Forzamos cast a number por seguridad
                         departmentId: departmentId,
                         isNightShift: slot.shiftInfo.isNightShift,
                         shiftTemplateId: slot.shiftTemplateId
                     });
                 }
 
-                // Inyectamos el ID del turno creado para usarlo en la siguiente fase
+                // Inyectamos el ID del turno creado para usarlo en la siguiente fase de inserción de ScheduleEntry
                 (slot as any).generatedShiftId = shiftInstancesMap.get(shiftKey).id;
             });
 
-            // Insertamos solo los turnos únicos
+            // Insertamos los turnos únicos generados en esta corrida
             await tx.shift.createMany({
                 data: Array.from(shiftInstancesMap.values())
             });
-
 
 
 

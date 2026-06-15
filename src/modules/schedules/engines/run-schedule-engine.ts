@@ -5,9 +5,9 @@ import { runAssignmentLoop } from "./run-assigment-engine-loop";
 import { generateConflictReport } from "./generate-conflict-reporte-engine";
 import { finalizeAndPersistSchedule } from "./finalize-and-persistence-schedule-engine";
 import { ShiftTemplate, WorkRuleActions } from "@prisma/client";
-import { DepartmentSpeciality } from "@prisma/client";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { evaluateEventRule } from "../rule-engine/evaluators";
+import { wipeAndAuditSchedule } from "./wipeAndAuditSchedule"; // Importa la nueva función
 
 export async function runScheduleEngine(
     prisma: PrismaService,
@@ -15,12 +15,32 @@ export async function runScheduleEngine(
     departmentId: string,
     targetDate: Date,
     shiftTemplates: ShiftTemplate[],
-    triggeredById: string
+    triggeredById: string,
+    technicalMeta?: { ipAddress?: string; userAgent?: string; requestId?: string }
 ) {
     // ⏱️ Iniciar el cronómetro
     const engineStartTime = Date.now();
 
     try {
+
+        const month = targetDate.getMonth() + 1;
+        const year = targetDate.getFullYear();
+
+        // ==========================================================================
+        // 🔥 FASE 0: LIMPIEZA ATÓMICA Y ENTRADA DE AUDITORÍA (MÓDULO SEPARADO)
+        // ==========================================================================
+        const existingScheduleId = await wipeAndAuditSchedule({
+            prisma,
+            organizationId,
+            departmentId,
+            month,
+            year,
+            triggeredById,
+            ipAddress: technicalMeta?.ipAddress,
+            userAgent: technicalMeta?.userAgent,
+            requestId: technicalMeta?.requestId
+        });
+
         // Fase 1: Cargar el Mundo en RAM
         const context = await buildScheduleContext(organizationId, departmentId, targetDate, prisma);
 

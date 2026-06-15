@@ -18,9 +18,10 @@ export class SchedulePublicationService {
     private readonly eventEmitter: EventEmitter2,
     @InjectQueue("notifications")
     private readonly notificationsQueue: Queue,
-  ) {}
+  ) { }
 
   async publish(id: string, dto: PublishScheduleDto, user: any) {
+    console.log(dto)
     // 1. Verificación previa de existencia del horario maestro
     const scheduleExists = await this.prisma.schedule.findUnique({
       where: { id },
@@ -60,7 +61,7 @@ export class SchedulePublicationService {
     |--------------------------------------------------------------------------
     */
     const publishedSchedule = await this.prisma.$transaction(async (tx) => {
-      
+
       // A. Actualizar el estado maestro del Cronograma (Schedule)
       const updatedSchedule = await tx.schedule.update({
         where: { id },
@@ -114,7 +115,7 @@ export class SchedulePublicationService {
             nurseIds, // Enviamos el listado de afectados para que el worker procese en paralelo
             channels: {
               email: dto.sendEmails ?? true,
-              push: dto.sendPushNotifications ?? true,
+              push: dto.sendPushNotifications?.publish ?? true,
             },
             notes: dto.publicationNotes || "",
           },
