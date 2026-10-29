@@ -42,8 +42,17 @@ import { NotificationTypesModule } from "@modules/notification-types/notificatio
 import { NotificationTemplatesModule } from "@modules/notification-templates/notification-templates.module";
 import { ModulesModule } from "@modules/modules/modules.module";
 import { ActivityLogsModule } from "@modules/activity-logs/activity-logs.module";
+import { NurseAvailabilityModule } from "@modules/nurse-availability/nurse-availability.module";
+import { OperationalAlertsModule } from "@modules/operational-alerts/operational-alerts.module";
+import { OptimizationRunsModule } from "@modules/optimization-runs/optimization-runs.module";
+import { IntegrationsModule } from "@modules/integrations/integrations.module";
+import { WebhookLogsModule } from "@modules/webhook-logs/webhook-logs.module";
+import { WorkRuleConditionsModule } from "@modules/work-rule-conditions/work-rule-conditions.module";
+import { WorkRuleActionsModule } from "@modules/work-rule-actions/work-rule-actions.module";
 import { ScheduleCronService } from "@modules/schedules/services/schedule-cron.service";
 import { PermissionsModule } from "@modules/permissions/permissions.module";
+import { AuditLogModule } from "@modules/audit-log/audit-log.module";
+import { DashboardModule } from "@modules/dashboard/dashboard.module";
 
 import { JwtModule } from "@nestjs/jwt";
 
@@ -97,7 +106,16 @@ import { JwtModule } from "@nestjs/jwt";
     NotificationTypesModule,
     NotificationTemplatesModule,
     ModulesModule,
-    ActivityLogsModule
+    ActivityLogsModule,
+    NurseAvailabilityModule,
+    OperationalAlertsModule,
+    OptimizationRunsModule,
+    IntegrationsModule,
+    WebhookLogsModule,
+    WorkRuleConditionsModule,
+    WorkRuleActionsModule,
+    AuditLogModule,
+    DashboardModule
   ],
   providers: [AuditInterceptor, AuditActionMapperService, AuditRouteFilterService, AuditSanitizerService, ScheduleCronService,
   ]
