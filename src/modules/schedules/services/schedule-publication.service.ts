@@ -31,6 +31,11 @@ export class SchedulePublicationService {
             nurseId: true,
           },
         },
+        department: {
+          select: {
+            organizationId: true,
+          },
+        },
       },
     });
 
@@ -134,8 +139,10 @@ export class SchedulePublicationService {
     */
     this.eventEmitter.emit("schedule.published", {
       scheduleId: id,
-      publishedBy: user.id || user.sub,
-      timestamp: new Date(),
+      organizationId: scheduleExists.department.organizationId,
+      publishedById: user.id || user.sub,
+      publishedAt: new Date(),
+      notifyStaff: dto.notifyStaff ?? false,
     });
 
     return publishedSchedule;

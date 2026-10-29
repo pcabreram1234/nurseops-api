@@ -1,16 +1,98 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
+import { assertBranchInOrganization } from "@common/utils/branch-scope";
 
 @Injectable()
 export class LeavesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveBranchForUser(
+    userId: string,
+    organizationId: string,
+    requestedBranchId?: string,
+  ): Promise<string | null> {
+    if (requestedBranchId) {
+      await assertBranchInOrganization(
+        this.prisma,
+        requestedBranchId,
+        organizationId,
+      );
+      return requestedBranchId;
+    }
+
+    const employee = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        branchId: true,
+        department: {
+          select: {
+            branches: {
+              where: { isPrimary: true },
+              select: { branchId: true },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+
+    if (!employee) {
+      throw new BadRequestException("The selected user does not exist.");
+    }
+
+    return (
+      employee.branchId ??
+      employee.department?.branches?.[0]?.branchId ??
+      null
+    );
+  }
+
   async create(dto: any, user: any) {
+    const { branchId: requestedBranchId, ...rest } = dto;
+
+    const employee = await this.prisma.user.findFirst({
+      where: {
+        id: dto.userId,
+        organizationId: user.organizationId,
+      },
+      select: { id: true, departmentId: true },
+    });
+
+    if (!employee) {
+      throw new BadRequestException(
+        "The selected user does not belong to your organization.",
+      );
+    }
+
+    if (!employee.departmentId) {
+      throw new BadRequestException(
+        "The selected user does not have a department assigned.",
+      );
+    }
+
+    const branchId = await this.resolveBranchForUser(
+      dto.userId,
+      user.organizationId,
+      requestedBranchId,
+    );
+
     return this.prisma.leave.create({
       data: {
-        ...dto,
-        organizationId: user.organizationId,
+        ...rest,
+        organiztionId: user.organizationId,
+        departmentId: employee.departmentId,
+        ...(branchId ? { branchId } : {}),
+      },
+      include: {
+        user: { include: { branch: true } },
+        approvedBy: true,
+        department: true,
+        branch: true,
       },
     });
   }
@@ -18,12 +100,20 @@ export class LeavesService {
   async findAll(query: any, user: any) {
     return this.prisma.leave.findMany({
       where: {
-        organizationId: user.organizationId,
+        organiztionId: user.organizationId,
         ...(query.userId && {
           userId: query.userId,
-          ...(query.type && {}),
+        }),
+        ...(query.branchId && {
+          branchId: query.branchId,
+        }),
+        ...(query.departmentId && {
+          departmentId: query.departmentId,
+        }),
+        ...(query.type && {
           type: query.type,
-          ...(query.status && {}),
+        }),
+        ...(query.status && {
           status: query.status,
         }),
         ...(query.startDate &&
@@ -37,8 +127,10 @@ export class LeavesService {
       },
 
       include: {
-        user: true,
+        user: { include: { branch: true } },
         approvedBy: true,
+        department: true,
+        branch: true,
       },
       orderBy: {
         startDate: "asc",
@@ -50,11 +142,13 @@ export class LeavesService {
     const leave = await this.prisma.leave.findFirst({
       where: {
         id,
-        organizationId: user.organizationId,
+        organiztionId: user.organizationId,
       },
       include: {
-        user: true,
+        user: { include: { branch: true } },
         approvedBy: true,
+        department: true,
+        branch: true,
       },
     });
 
@@ -67,12 +161,22 @@ export class LeavesService {
 
   async update(id: string, dto: any, user: any) {
     await this.findOne(id, user);
+
+    if (dto.branchId) {
+      await assertBranchInOrganization(
+        this.prisma,
+        dto.branchId,
+        user.organizationId,
+      );
+    }
+
     return this.prisma.leave.update({
       where: {
         id,
       },
 
       data: dto,
+      include: { branch: true },
     });
   }
 }

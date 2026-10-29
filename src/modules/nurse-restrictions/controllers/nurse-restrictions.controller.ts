@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -18,8 +19,8 @@ import { Roles } from "@modules/auth/decorators/roles.decorator";
 
 import { CreateNurseRestrictionDto } from "../dto/create-nurse-restriction.dto";
 import { UpdateNurseRestrictionDto } from "../dto/update-nurse-restriction.dto";
-// 🌟 Importamos el nuevo DTO masivo
 import { SyncNurseRestrictionDto } from "../dto/sync-nurse-restriction.dto";
+import { NurseRestrictionFilterDto } from "../dto/nurse-restriction-filter.dto";
 
 @Controller({
   path: "nurse-restrictions",
@@ -32,14 +33,12 @@ export class NurseRestrictionsController {
     private readonly nurseRestrictionsService: NurseRestrictionsService,
   ) { }
 
-  // 🌟 NUEVO ENDPOINT: Sincronización en lote / Asignación múltiple
   @Post("sync")
-  @Permissions("CREATE_NURSE_RESTRICTION") // Reutiliza el permiso o usa uno nuevo si aplica (ej. SYNC_NURSE_RESTRICTIONS)
+  @Permissions("CREATE_NURSE_RESTRICTION")
   syncRestrictions(@Body() dto: SyncNurseRestrictionDto, @CurrentUser() user: any) {
-    // Extraemos la organización del token del usuario logueado para pasárselo al payload
     const payload = {
       ...dto,
-      organizationId: user.organizationId // O de donde extraigas el contexto en tu arquitectura de Prisma
+      organizationId: user.organizationId
     };
     return this.nurseRestrictionsService.syncRestriction(payload);
   }
@@ -52,8 +51,8 @@ export class NurseRestrictionsController {
 
   @Get()
   @Permissions("VIEW_NURSE_RESTRICTIONS")
-  findAll(@CurrentUser() user: any) {
-    return this.nurseRestrictionsService.findAll(user);
+  findAll(@Query() query: NurseRestrictionFilterDto, @CurrentUser() user: any) {
+    return this.nurseRestrictionsService.findAll(query, user);
   }
 
   @Patch(":id")

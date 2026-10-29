@@ -43,8 +43,8 @@ export class NursesController {
 
   @Get()
   @Permissions("VIEW_NURSES")
-  findAll(@Query() @CurrentUser() user: any) {
-    return this.nursesService.findAll(user);
+  findAll(@Query() query: NurseFilterDto, @CurrentUser() user: any) {
+    return this.nursesService.findAll(query, user);
   }
 
   @Get(":id")

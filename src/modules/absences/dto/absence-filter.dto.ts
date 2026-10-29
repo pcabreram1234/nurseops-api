@@ -1,4 +1,5 @@
-import { IsOptional, IsUUID, IsEnum, IsDateString } from "class-validator";
+import { IsOptional, IsString, IsEnum, IsDateString, IsInt, Min, Max } from "class-validator";
+import { Type } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
 
 import { AbsenceStatus, AbsenceType } from "@prisma/client";
@@ -6,9 +7,18 @@ import { randomUUID } from "node:crypto";
 
 export class AbsenceFilterDto {
   @IsOptional()
-  @IsUUID()
+  @IsString()
   @ApiProperty({ description: "Id de la enfermera", example: randomUUID() })
   nurseId?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ description: "Id de la sede", example: randomUUID() })
+  branchId?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
 
   @IsOptional()
   @IsEnum(AbsenceType)
@@ -28,4 +38,17 @@ export class AbsenceFilterDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  limit?: number = 25;
 }

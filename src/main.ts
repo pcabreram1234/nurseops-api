@@ -64,7 +64,9 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  // app.useGlobalInterceptors(app.get(AuditInterceptor));
+  // Auditoría (AuditLog): intercepta mutaciones y emite `audit.created`
+  // para persistir old_value/new_value/IP/userAgent/requestId en la tabla audit_logs.
+  app.useGlobalInterceptors(app.get(AuditInterceptor));
 
   /*
   |--------------------------------------------------------------------------

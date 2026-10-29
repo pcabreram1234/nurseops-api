@@ -1,34 +1,98 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
+import {
+  assertBranchInOrganization,
+  resolveDepartmentBranch,
+} from "@common/utils/branch-scope";
 
 @Injectable()
 export class ShiftTemplatesService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(dto: any) {
-    return this.prisma.shiftTemplate.create({
-      data: dto,
-    });
+  private async resolveBranch(
+    dto: any,
+    organizationId: string,
+  ): Promise<string> {
+    if (dto.departmentId) {
+      return resolveDepartmentBranch(
+        this.prisma,
+        dto.departmentId,
+        organizationId,
+        dto.branchId,
+      );
+    }
+
+    if (!dto.branchId) {
+      throw new BadRequestException(
+        "A branch (sede) is required for a shift template.",
+      );
+    }
+
+    await assertBranchInOrganization(
+      this.prisma,
+      dto.branchId,
+      organizationId,
+    );
+    return dto.branchId;
   }
 
-  async findAll(user: any) {
-    const isSuperAdmin = user.role === "SUPER"
-    return this.prisma.shiftTemplate.findMany({
-      where: isSuperAdmin ? {
+  async create(dto: any, user?: any) {
+    const organizationId = user?.organizationId || dto.organizationId;
 
-      } : { organizationId: user.organizationId },
+    if (!organizationId) {
+      throw new BadRequestException("organizationId is required.");
+    }
+
+    const branchId = await this.resolveBranch(dto, organizationId);
+
+    return this.prisma.shiftTemplate.create({
+      data: {
+        ...dto,
+        organizationId,
+        branchId,
+      },
       include: {
+        branch: true,
         department: true,
       },
     });
   }
 
-  async findOne(id: string, user: any) {
-    const isSuperAdmin = user.role === "SUPER"
-    const template = await this.prisma.shiftTemplate.findFirst({
-      where: isSuperAdmin ? { id } : { organizationId: user.organizationId, id: id },
+  async findAll(query: any, user: any) {
+    const isSuperAdmin = user.role === "SUPER";
+
+    return this.prisma.shiftTemplate.findMany({
+      where: {
+        ...(isSuperAdmin
+          ? {}
+          : {
+              organizationId: user.organizationId,
+            }),
+        ...(query?.branchId && { branchId: query.branchId }),
+        ...(query?.departmentId && {
+          OR: [
+            { departmentId: query.departmentId },
+            { departmentId: null },
+          ],
+        }),
+      },
       include: {
+        branch: true,
+        department: true,
+      },
+      orderBy: [{ branch: { name: "asc" } }, { name: "asc" }],
+    });
+  }
+
+  async findOne(id: string, user: any) {
+    const isSuperAdmin = user.role === "SUPER";
+    const template = await this.prisma.shiftTemplate.findFirst({
+      where: isSuperAdmin
+        ? { id }
+        : { organizationId: user.organizationId, id: id },
+      include: {
+        branch: true,
         department: true,
       },
     });
@@ -41,11 +105,27 @@ export class ShiftTemplatesService {
   }
 
   async update(id: string, dto: any, user: any) {
-    const isSuperAdmin = user.role === "SUPER"
-    await this.findOne(id, user);
+    const current = await this.findOne(id, user);
+
+    const organizationId = current.organizationId;
+    const branchId = await this.resolveBranch(
+      {
+        departmentId: dto.departmentId,
+        branchId: dto.branchId ?? current.branchId,
+      },
+      organizationId,
+    );
+
     return this.prisma.shiftTemplate.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        branchId,
+      },
+      include: {
+        branch: true,
+        department: true,
+      },
     });
   }
 

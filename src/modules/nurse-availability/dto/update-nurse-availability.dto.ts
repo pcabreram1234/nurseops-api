@@ -1,4 +1,4 @@
-import { IsOptional, IsEnum, IsBoolean, IsString } from "class-validator";
+import { IsOptional, IsEnum, IsBoolean, IsString, IsDateString } from "class-validator";
 
 import {
   NurseAvailabilityStatusType,
@@ -6,6 +6,14 @@ import {
 } from "@prisma/client";
 
 export class UpdateNurseAvailabilityDto {
+  @IsOptional()
+  @IsString()
+  nurseId?: string;
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
+
   @IsOptional()
   @IsEnum(NurseAvailabilityStatusType)
   status?: NurseAvailabilityStatusType;
@@ -25,4 +33,8 @@ export class UpdateNurseAvailabilityDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -16,7 +17,8 @@ import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
 import { SpecialitiesService } from "../services/specialities.service";
 import { CreateSpecialityDto } from "../dto/create-speciality.dto";
-import { UpdateSpecialityDto } from "../dto/update-speciality.dto"; // Asegurar importación
+import { UpdateSpecialityDto } from "../dto/update-speciality.dto";
+import { SpecialityFilterDto } from "../dto/speciality-filter.dto";
 
 @Controller({
   path: "specialities",
@@ -33,8 +35,8 @@ export class SpecialitiesController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.service.findAll(user.organizationId);
+  findAll(@Query() query: SpecialityFilterDto, @CurrentUser() user: any) {
+    return this.service.findAll(query, user.organizationId);
   }
 
   @Get(":id")
@@ -44,8 +46,8 @@ export class SpecialitiesController {
 
   @Patch(":id")
   update(
-    @Param("id") id: string, 
-    @Body() dto: UpdateSpecialityDto, // 🌟 Corregido el tipo al DTO de actualización
+    @Param("id") id: string,
+    @Body() dto: UpdateSpecialityDto,
     @CurrentUser() user: any
   ) {
     return this.service.update(id, dto, user);

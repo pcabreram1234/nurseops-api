@@ -35,8 +35,8 @@ export class UsersController {
 
   @Post()
   @Roles("ADMIN", "SUPER")
-  create(@Body() createUserDto: CreateUserDto,) {
-    return this.usersService.create(createUserDto);
+  create(@Body() createUserDto: CreateUserDto, @CurrentUser() user: any) {
+    return this.usersService.create(createUserDto, user);
   }
 
   @Get()

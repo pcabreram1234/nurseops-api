@@ -34,8 +34,8 @@ export class BranchesController {
 
   @Post()
   @Permissions("CREATE_BRANCH")
-  create(@Body() dto: CreateBranchDto) {
-    return this.branchesService.create(dto);
+  create(@Body() dto: CreateBranchDto, @CurrentUser() user: any) {
+    return this.branchesService.create(dto, user);
   }
 
   @Get()

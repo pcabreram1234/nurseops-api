@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -21,6 +22,7 @@ import { IntegrationsService } from "../services/integrations.service";
 
 import { CreateIntegrationDto } from "../dto/create-integration.dto";
 import { UpdateIntegrationDto } from "../dto/update-integration.dto";
+import { IntegrationFilterDto } from "../dto/integration-filter.dto";
 
 @Controller({
   path: "integrations",
@@ -37,8 +39,8 @@ export class IntegrationsController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.service.findAll(user.organizationId);
+  findAll(@Query() query: IntegrationFilterDto, @CurrentUser() user: any) {
+    return this.service.findAll(query, user.organizationId);
   }
 
   @Get(":id")

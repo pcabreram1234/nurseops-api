@@ -56,6 +56,17 @@ export class ScheduleEntriesController {
     return this.scheduleEntriesService.findAll(query, user);
   }
 
+  /**
+   * Estadísticas de cobertura del conjunto filtrado (total, estados,
+   * emergencias y distribución por plantilla de turno).
+   * Permite mantener indicadores precisos cuando la lista va paginada.
+   */
+  @Get("stats")
+  @Permissions("VIEW_SCHEDULE_ENTRIES")
+  stats(@Query() query: ScheduleEntryFilterDto, @CurrentUser() user: any) {
+    return this.scheduleEntriesService.stats(query, user);
+  }
+
   @Patch(":id")
   @Permissions("UPDATE_SCHEDULE_ENTRY")
   update(

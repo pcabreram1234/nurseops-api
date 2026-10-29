@@ -69,15 +69,32 @@ export function runAssignmentLoop(
         }
     }
 
+    // 🚀 PRE-COMPUTE: Map de shiftTemplates para acceso O(1) en vez de .find()
+    const templateMap = new Map<string, ShiftTemplate>();
+    for (const t of shiftTemplates) templateMap.set(t.id, t);
+
+    // 🚀 PRE-COMPUTE: Map de nurseIds ya asignados por fecha, para check O(1)
+    // Key: date.getTime() (number), Value: Set de nurseIds
+    const assignedByDate = new Map<number, Set<string>>();
+    for (const s of slots) {
+        if (s.assignedNurseId) {
+            const key = s.date.getTime();
+            if (!assignedByDate.has(key)) assignedByDate.set(key, new Set());
+            assignedByDate.get(key)!.add(s.assignedNurseId);
+        }
+    }
+
     // 2. Iteración Cronológica: Recorrer cada ranura vacía
     for (const slot of slots) {
         if (slot.assignedNurseId) continue; // Ya fue llenada (seguridad)
 
-        const shiftInfo = shiftTemplates.find(s => s.id === slot.shiftTemplateId);
+        const shiftInfo = templateMap.get(slot.shiftTemplateId);
         if (!shiftInfo) continue;
 
         let bestCandidateId: string | null = null;
         let highestScore = -Infinity;
+
+        const slotDateKey = slot.date.getTime();
 
         // 3. Evaluar a cada enfermera del universo
         for (const nurse of context.nurses) {
@@ -87,13 +104,11 @@ export function runAssignmentLoop(
                 continue; // Esta enfermera no puede entrar aquí
             }
 
-            // 1. ¿Esta enfermera ya tiene turno este día?
-            const alreadyWorking = slots.some(s =>
-                s.date.getTime() === slot.date.getTime() &&
-                s.assignedNurseId === nurse.id
-            );
-
-            if (alreadyWorking) continue; // Si ya tiene turno hoy, salta a la siguiente
+            // 1. ¿Esta enfermera ya tiene turno este día? — O(1) con el Map pre-computado
+            const nursesToday = assignedByDate.get(slotDateKey);
+            if (nursesToday && nursesToday.has(nurse.id)) {
+                continue; // Si ya tiene turno hoy, salta a la siguiente
+            }
 
             const state = nurseStates.get(nurse.id)!; // Lo sacamos aquí para pasarlo a los evaluadore
 
@@ -156,7 +171,10 @@ export function runAssignmentLoop(
         // 4. Asignación y Actualización de Estado
         if (bestCandidateId) {
             slot.assignedNurseId = bestCandidateId;
-            // console.log(`Slot ${slot.id} asignado a enfermera ${bestCandidateId}`);
+
+            // 🚀 Actualizar el Map de asignados por fecha para checks O(1) en slots siguientes
+            if (!assignedByDate.has(slotDateKey)) assignedByDate.set(slotDateKey, new Set());
+            assignedByDate.get(slotDateKey)!.add(bestCandidateId);
 
             const winningState = nurseStates.get(bestCandidateId)!;
 

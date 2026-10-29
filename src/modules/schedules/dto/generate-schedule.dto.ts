@@ -1,9 +1,13 @@
-import { IsString, IsNotEmpty, IsNumber, Min, Max } from "class-validator";
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max } from "class-validator";
 
 export class GenerateScheduleDto {
   @IsString()
   @IsNotEmpty({ message: "The department is required to run the rules engine." })
   departmentId!: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 
   @IsNumber()
   @Min(1, { message: "The month must be between 1 and 12." })

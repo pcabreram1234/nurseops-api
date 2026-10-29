@@ -11,12 +11,16 @@ import {
 import { ShiftType } from "@prisma/client";
 
 export class CreateShiftDto {
-  @IsUUID()
+  @IsString()
   organizationId!: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   departmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 
   @IsString()
   name!: string;

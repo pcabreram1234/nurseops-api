@@ -13,11 +13,38 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 
 import { randomUUID } from "crypto";
 
+import { PrismaService } from "@infra/database/prisma.service";
+
 import { AuditActionMapperService } from "@modules/audit-log/services/audit-action-mapper.service";
 
 import { AuditRouteFilterService } from "@modules/audit-log/services/audit-route-filter.service";
 
 import { AuditSanitizerService } from "@modules/audit-log/services/audit-sanitizer.service";
+
+/**
+ * Mapeo segmento de ruta → modelo Prisma para tomar el snapshot
+ * del estado ANTES de una mutación sobre `/:id` (old_value real).
+ */
+const AUDITABLE_MODEL_BY_PATH: Record<string, string> = {
+  schedules: "schedule",
+  "schedule-entries": "scheduleEntry",
+  absences: "absence",
+  vacations: "vacation",
+  "nurse-availability": "nurseAvailability",
+  nurses: "nurse",
+  users: "user",
+  roles: "roles",
+  departments: "department",
+  branches: "branch",
+  organizations: "organization",
+  "shift-templates": "shiftTemplate",
+  "work-rules": "workRule",
+  "work-rule-conditions": "workRuleConditions",
+  "work-rule-actions": "workRuleActions",
+  integrations: "integration",
+  "shift-change-requests": "shiftChangeRequest",
+  "notification-templates": "notificationTemplate",
+};
 
 @Injectable()
 export class AuditInterceptor
@@ -30,6 +57,8 @@ export class AuditInterceptor
     private readonly routeFilter: AuditRouteFilterService,
 
     private readonly sanitizer: AuditSanitizerService,
+
+    private readonly prisma: PrismaService,
   ) { }
 
   intercept(
@@ -118,12 +147,26 @@ export class AuditInterceptor
         user?.sub,
     };
 
+    /*
+    |--------------------------------------------------------------------------
+    | SNAPSHOT PRE-UPDATE (old_value real para PATCH/PUT/DELETE sobre /:id)
+    |--------------------------------------------------------------------------
+    */
+
+    const oldValuePromise = this.snapshotBefore(
+      method,
+      path,
+      request.params,
+    );
+
     return next.handle().pipe(
       tap(
         async (
           response,
         ) => {
           try {
+            const oldValue = await oldValuePromise;
+
             /*
             |--------------------------------------------------------------------------
             | EMIT EVENT
@@ -142,6 +185,8 @@ export class AuditInterceptor
                   this.extractModule(
                     path,
                   ),
+
+                oldValue,
 
                 response:
                   this.sanitizer.sanitize(
@@ -163,6 +208,35 @@ export class AuditInterceptor
         },
       ),
     );
+  }
+
+  /**
+   * Lee el registro ANTES de que el handler lo modifique.
+   * Devuelve `null` si no aplica o si algo falla (nunca rompe la petición).
+   */
+  private async snapshotBefore(
+    method: string,
+    path: string,
+    params: Record<string, string>,
+  ): Promise<any | null> {
+    if (!["PATCH", "PUT", "DELETE"].includes(method)) return null;
+    if (!params?.id) return null;
+
+    try {
+      const segment = this.extractModule(path);
+      const modelKey = AUDITABLE_MODEL_BY_PATH[segment];
+      if (!modelKey) return null;
+
+      const model = (this.prisma as any)[modelKey];
+      if (!model?.findUnique) return null;
+
+      const record = await model.findUnique({ where: { id: params.id } });
+      if (!record) return null;
+
+      return this.sanitizer.sanitize(record);
+    } catch {
+      return null;
+    }
   }
 
   private extractModule(

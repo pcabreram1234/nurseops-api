@@ -4,6 +4,8 @@ import {
   IsBoolean,
   IsInt,
   IsEnum,
+  IsArray,
+  ArrayMinSize,
 } from "class-validator";
 
 import { DepartmentType, DepartmentCriticalLevel } from "@prisma/client";
@@ -18,11 +20,28 @@ export class CreateDepartmentDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
   @IsString()
-  organizationId!: string;
+  organizationId?: string;
 
+  /**
+   * Sedes en las que opera el departamento (N:M).
+   * `branchIds` es la forma nueva; `branchId` se mantiene por compatibilidad.
+   */
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  branchIds?: string[];
+
+  @IsOptional()
   @IsString()
-  branchId!: string;
+  branchId?: string;
+
+  /** Sede principal del departamento. Debe pertenecer a `branchIds`. */
+  @IsOptional()
+  @IsString()
+  primaryBranchId?: string;
 
   @IsEnum(DepartmentType)
   type!: DepartmentType;

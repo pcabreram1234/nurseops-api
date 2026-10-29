@@ -10,6 +10,10 @@ export class BranchFilterDto {
   isActive?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isMainBranch?: boolean;
+
+  @IsOptional()
   @IsString()
   city?: string;
 

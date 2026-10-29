@@ -4,6 +4,8 @@ import { BullModule } from "@nestjs/bullmq";
 
 import { EventEmitterModule } from "@nestjs/event-emitter";
 
+import { MailModule } from "@infra/mail/mail.module";
+
 import { NotificationsProcessor } from "./processors/notifications.processor";
 
 import { NotificationsService } from "./services/notifications.service";
@@ -20,6 +22,8 @@ import { NotificationListener } from "./listeners/notification.listener";
 
 import { NotificationsController } from "./controllers/notifications.controller";
 
+import { TemplateRendererService } from "@modules/notification-templates/services/template-renderer.service";
+
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
@@ -27,6 +31,8 @@ import { NotificationsController } from "./controllers/notifications.controller"
     BullModule.registerQueue({
       name: "notifications",
     }),
+
+    MailModule,
   ],
 
   controllers: [NotificationsController],
@@ -45,6 +51,8 @@ import { NotificationsController } from "./controllers/notifications.controller"
     NotificationsGateway,
 
     NotificationListener,
+
+    TemplateRendererService,
   ],
 
   exports: [NotificationsService],

@@ -1,13 +1,21 @@
-import { IsUUID, IsInt, IsOptional, IsEnum, IsBoolean } from "class-validator";
+import { IsString, IsInt, IsOptional, IsEnum, IsBoolean } from "class-validator";
 
 import { ScheduleStatus } from "@prisma/client";
 
 export class CreateScheduleDto {
-  @IsUUID()
-  organizationId!: string;
+  @IsOptional()
+  @IsString()
+  organizationId?: string;
 
-  @IsUUID()
+  @IsString()
   departmentId!: string;
+
+  /**
+   * Sede del horario. Si se omite se usa la sede principal del departamento.
+   */
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 
   @IsInt()
   month!: number;

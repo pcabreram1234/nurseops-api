@@ -38,8 +38,8 @@ export class SchedulesController {
 
   @Post()
   @Permissions("CREATE_SCHEDULE")
-  create(@Body() dto: CreateScheduleDto) {
-    return this.schedulesService.create(dto);
+  create(@Body() dto: CreateScheduleDto, @CurrentUser() user: any) {
+    return this.schedulesService.create(dto, user);
   }
 
   @Get()

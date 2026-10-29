@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto';
 export async function finalizeAndPersistSchedule(
     prisma: PrismaService,
     departmentId: string,
+    branchId: string,
     organizationId: string,
     targetDate: Date,
     slots: ScheduleSlot[],
@@ -46,7 +47,7 @@ export async function finalizeAndPersistSchedule(
             const year = targetDate.getFullYear();
 
             const existingDraft = await tx.schedule.findFirst({
-                where: { departmentId, month, year, status: 'DRAFT' }
+                where: { departmentId, branchId, month, year, status: 'DRAFT' }
             });
 
             if (existingDraft) {
@@ -59,6 +60,7 @@ export async function finalizeAndPersistSchedule(
             const newSchedule = await tx.schedule.create({
                 data: {
                     departmentId,
+                    branchId,
                     organizationId,
                     // Suponiendo que guardas mes/año o la fecha base
                     month: month,
@@ -81,8 +83,6 @@ export async function finalizeAndPersistSchedule(
                 // Generamos una clave única para la RAM: TemplateID + Fecha (sin hora)
                 const dateKey = new Date(slot.date).toISOString().split('T')[0];
                 const shiftKey = `${slot.shiftTemplateId}-${dateKey}`;
-
-                console.log(`[Engine-Shift] Processing slot date: ${dateKey} for template: ${slot.shiftTemplateId}`);
 
                 if (!shiftInstancesMap.has(shiftKey)) {
                     // 1. Generamos un ID nuevo irrepetible para esta instancia física de turno
@@ -109,6 +109,7 @@ export async function finalizeAndPersistSchedule(
                         endTime: new Date(slot.shiftInfo.endTime),
                         durationHours: Number(slot.shiftInfo.durationHours), // Forzamos cast a number por seguridad
                         departmentId: departmentId,
+                        branchId: branchId,
                         isNightShift: slot.shiftInfo.isNightShift,
                         shiftTemplateId: slot.shiftTemplateId
                     });
@@ -136,7 +137,8 @@ export async function finalizeAndPersistSchedule(
                 nurseId: slot.assignedNurseId as string,
                 status: slot.assignedNurseId ? ScheduleEntryStatus.ASSIGNED : ScheduleEntryStatus.OPEN,
                 assignedById: triggeredById,
-                organizationId: organizationId
+                organizationId: organizationId,
+                branchId: branchId
             }));
 
             await tx.scheduleEntry.createMany({

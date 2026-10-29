@@ -44,8 +44,8 @@ export class DepartmentsController {
 
   @Post()
   @Permissions("CREATE_DEPARTMENT")
-  create(@Body() dto: CreateDepartmentDto) {
-    return this.departmentsService.create(dto);
+  create(@Body() dto: CreateDepartmentDto, @CurrentUser() user: any) {
+    return this.departmentsService.create(dto, user);
   }
 
   /*

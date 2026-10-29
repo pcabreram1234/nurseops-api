@@ -4,12 +4,35 @@ import {
   IsEnum,
   IsBoolean,
   IsInt,
+  IsDateString,
   IsUUID,
+  ValidateIf,
 } from "class-validator";
 
-import { AbsenceStatus } from "@prisma/client";
+import { AbsenceStatus, AbsenceType } from "@prisma/client";
 
 export class UpdateAbsenceDto {
+  @IsOptional()
+  @IsString()
+  nurseId?: string;
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== "" && value !== null && value !== undefined)
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsEnum(AbsenceType)
+  type?: AbsenceType;
+
+  @IsOptional()
+  @IsString()
+  reporterById?: string;
+
   @IsOptional()
   @IsString()
   reason?: string;
@@ -21,6 +44,10 @@ export class UpdateAbsenceDto {
   @IsOptional()
   @IsUUID()
   approvedById?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 
   @IsOptional()
   @IsString()

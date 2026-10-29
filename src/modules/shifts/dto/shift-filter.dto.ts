@@ -17,6 +17,10 @@ export class ShiftFilterDto {
   departmentId?: string;
 
   @IsOptional()
+  @IsString()
+  branchId?: string;
+
+  @IsOptional()
   @IsEnum(ShiftType)
   type?: ShiftType;
 

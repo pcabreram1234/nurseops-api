@@ -4,6 +4,10 @@ import { VacationStatus } from "@prisma/client";
 
 export class UpdateVacationDto {
   @IsOptional()
+  @IsString()
+  nurseId?: string;
+
+  @IsOptional()
   @IsDateString()
   startDate?: string;
 
@@ -22,4 +26,8 @@ export class UpdateVacationDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

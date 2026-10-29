@@ -42,6 +42,10 @@ export class CreateNurseDto {
 
   @IsString()
   @IsOptional()
+  branchId?: string;
+
+  @IsString()
+  @IsOptional()
   specialityId!: string;
 
   /*

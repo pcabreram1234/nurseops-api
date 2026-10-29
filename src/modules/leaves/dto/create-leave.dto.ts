@@ -1,17 +1,20 @@
 import {
-  IsUUID,
+  IsString,
   IsEnum,
   IsDateString,
   IsOptional,
-  IsString,
   IsBoolean,
 } from "class-validator";
 
 import { LeaveType } from "@prisma/client";
 
 export class CreateLeaveDto {
-  @IsUUID()
+  @IsString()
   userId!: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 
   @IsEnum(LeaveType)
   type!: LeaveType;

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -32,13 +33,13 @@ export class ShiftTemplatesController {
   constructor(private readonly service: ShiftTemplatesService) { }
 
   @Post()
-  create(@Body() dto: CreateShiftTemplateDto) {
-    return this.service.create(dto);
+  create(@Body() dto: CreateShiftTemplateDto, @CurrentUser() user: any) {
+    return this.service.create(dto, user);
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.service.findAll(user);
+  findAll(@CurrentUser() user: any, @Query() query: any = {}) {
+    return this.service.findAll(query, user);
   }
 
   @Get(":id")

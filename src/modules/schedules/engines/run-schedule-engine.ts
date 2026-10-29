@@ -13,9 +13,11 @@ export async function runScheduleEngine(
     prisma: PrismaService,
     organizationId: string,
     departmentId: string,
+    branchId: string,
     targetDate: Date,
     shiftTemplates: ShiftTemplate[],
     triggeredById: string,
+    eventEmitter: EventEmitter2,
     technicalMeta?: { ipAddress?: string; userAgent?: string; requestId?: string }
 ) {
     // ⏱️ Iniciar el cronómetro
@@ -33,6 +35,7 @@ export async function runScheduleEngine(
             prisma,
             organizationId,
             departmentId,
+            branchId,
             month,
             year,
             triggeredById,
@@ -69,19 +72,19 @@ export async function runScheduleEngine(
                 triggeredEvents.push(rule.workRuleActions[0]);
             }
         }
-        const emitter = new EventEmitter2()
-        triggeredEvents.forEach(action => emitter.emit(action.action_type, action.metadata));
+        triggeredEvents.forEach(action => eventEmitter.emit(action.action_type, action.metadata));
 
         // Fase 6: Persistencia, Analíticas y Notificaciones
         const newScheduleId = await finalizeAndPersistSchedule(
             prisma,
             departmentId,
+            branchId,
             organizationId,
             targetDate,
             assignedSlots.slots,
             conflictReport,
             engineStartTime,
-            triggeredById, emitter, assignedSlots.metrics
+            triggeredById, eventEmitter, assignedSlots.metrics
         );
 
         return { success: true, scheduleId: newScheduleId };

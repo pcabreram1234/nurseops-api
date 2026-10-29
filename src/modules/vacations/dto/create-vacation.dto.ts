@@ -1,5 +1,4 @@
 import {
-  IsUUID,
   IsDateString,
   IsEnum,
   IsOptional,
@@ -9,7 +8,7 @@ import {
 import { VacationStatus } from "@prisma/client";
 
 export class CreateVacationDto {
-  @IsUUID()
+  @IsString()
   nurseId!: string;
 
   @IsDateString()
@@ -29,4 +28,8 @@ export class CreateVacationDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

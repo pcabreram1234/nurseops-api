@@ -23,10 +23,11 @@ export class UpdateScheduleEntryDto {
 
   @IsOptional()
   @IsNumber()
-  optimizationScore!: number;
+  optimizationScore?: number;
 
+  @IsOptional()
   @IsString()
-  departmentId!: string
+  departmentId?: string;
 
   @IsOptional()
   @IsString()
@@ -34,6 +35,9 @@ export class UpdateScheduleEntryDto {
 
   @IsOptional()
   @IsString()
-  shiftId!: string
+  shiftId?: string;
 
+  @IsOptional()
+  @IsString()
+  shiftTemplateId?: string;
 }

@@ -8,20 +8,31 @@ import {
 } from "class-validator";
 
 export class CreateScheduleEntryDto {
-  @IsUUID()
+  @IsString()
   scheduleId!: string;
 
-  @IsUUID()
+  @IsString()
   nurseId!: string;
 
-  @IsUUID()
+  @IsString()
   shiftId!: string;
+
+  @IsString()
+  shiftTemplateId!: string;
+
+  /**
+   * Opcional: se deriva del horario (Schedule) y la base de datos lo valida.
+   */
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 
   @IsDateString()
   date!: string;
 
-  @IsUUID()
-  assignedById!: string;
+  @IsOptional()
+  @IsString()
+  assignedById?: string;
 
   @IsOptional()
   @IsString()

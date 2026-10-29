@@ -1,7 +1,6 @@
 import {
   IsBoolean,
   IsInt,
-  IsJSON,
   IsOptional,
   IsString,
   Min,
@@ -12,7 +11,11 @@ export class CreateShiftTemplateDto {
   organizationId!: string;
 
   @IsString()
-  departmentId!: string;
+  branchId!: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
 
   @IsString()
   name!: string;
@@ -21,8 +24,8 @@ export class CreateShiftTemplateDto {
   @IsString()
   description?: string;
 
-  @IsJSON()
-  configuration: any;
+  @IsOptional()
+  configuration?: any;
 
   @IsString()
   startTime!: string;
@@ -30,13 +33,25 @@ export class CreateShiftTemplateDto {
   @IsString()
   endTime!: string;
 
+  @IsInt()
+  @Min(1)
+  durationHours!: number;
+
+  @IsBoolean()
+  isNightShift!: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  minimum_staff?: number;
+
   @IsOptional()
   @IsString()
   color?: string;
 
   @IsOptional()
   @IsBoolean()
-  active?: boolean;
+  isActive?: boolean;
 
   @IsOptional()
   @IsBoolean()

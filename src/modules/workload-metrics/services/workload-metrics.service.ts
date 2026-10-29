@@ -3,7 +3,6 @@ import { PrismaService } from "@infra/database/prisma.service";
 import { WorkloadMetricFilterDto } from '../dto/workload-metric-filter.dto';
 import { WorkloadCacheService } from './workload-cache.service';
 
-
 @Injectable()
 export class WorkloadMetricsService {
   constructor(
@@ -44,31 +43,55 @@ export class WorkloadMetricsService {
   }
 
   async findAll(query: any, user: any) {
-    return this.prisma.workLoadMetrics.findMany({
-      where: {
-        organizationId: user.organizationId,
-        ...(query.nurseId && {
-          nurseId: query.nurseId,
-        }),
-        ...(query.month && {
-          month: Number(query.month),
-        }),
-        ...(query.year && {
-          year: Number(query.year),
-        }),
-      },
-      include: {
-        nurse: true,
-      },
-      orderBy: [
-        {
-          year: "desc",
+    const page = Math.max(1, query.page || 1);
+    const limit = Math.min(500, Math.max(1, query.limit || 25));
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      organizationId: user.organizationId,
+    };
+
+    if (query.nurseId) where.nurseId = query.nurseId;
+    if (query.month) where.month = Number(query.month);
+    if (query.year) where.year = Number(query.year);
+    if (query.search) {
+      where.nurse = {
+        OR: [
+          { firstName: { contains: query.search, mode: 'insensitive' } },
+          { lastName: { contains: query.search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.workLoadMetrics.findMany({
+        where,
+        include: {
+          nurse: {
+            include: {
+              user: true,
+            },
+          },
         },
-        {
-          month: "desc",
-        },
-      ],
-    });
+        orderBy: [
+          { year: 'desc' },
+          { month: 'desc' },
+        ],
+        skip,
+        take: limit,
+      }),
+      this.prisma.workLoadMetrics.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: string, user: any) {
@@ -95,7 +118,6 @@ export class WorkloadMetricsService {
       where: {
         id,
       },
-
       data: dto,
     });
   }

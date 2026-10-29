@@ -11,6 +11,14 @@ export class QueryUsersDto {
 
   @IsOptional()
   @IsString()
+  branchId?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @IsOptional()
+  @IsString()
   role?: string;
 
   @IsOptional()

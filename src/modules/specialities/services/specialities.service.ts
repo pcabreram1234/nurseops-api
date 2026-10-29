@@ -31,15 +31,54 @@ export class SpecialitiesService {
     });
   }
 
-  async findAll(organizationId: string) {
-    return this.prisma.speciality.findMany({
-      where: { organizationId },
-      include: {
-        nurses: true,
-        departmentSpecialities: {
-          include: { department: true }
-        },
+  async findAll(query: any, organizationId: string) {
+    const where = {
+      organizationId,
+      ...(query.search && {
+        OR: [
+          {
+            name: { contains: query.search, mode: "insensitive" as const },
+          },
+          {
+            code: { contains: query.search, mode: "insensitive" as const },
+          },
+        ],
+      }),
+    };
+
+    const include = {
+      nurses: true,
+      departmentSpecialities: {
+        include: { department: true },
       },
+    };
+
+    const orderBy = { createdAt: "desc" as const };
+
+    // Paginación opcional
+    if (query.page || query.limit) {
+      const page = Math.max(1, Number(query.page) || 1);
+      const limit = Math.min(500, Math.max(1, Number(query.limit) || 25));
+      const [data, total] = await Promise.all([
+        this.prisma.speciality.findMany({
+          where,
+          include,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        this.prisma.speciality.count({ where }),
+      ]);
+      return {
+        data,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      };
+    }
+
+    return this.prisma.speciality.findMany({
+      where,
+      include,
+      orderBy,
     });
   }
 

@@ -50,7 +50,7 @@ export function buildDemandGrid(
 
             // Verificamos si el departamento del shift actual requiere o no una especialidad
 
-            if (specialityRequirements.departmentId === shift.departmentId) {
+            if (shift.departmentId === null || specialityRequirements.departmentId === shift.departmentId) {
                 // 4. Inyectar primero los requerimientos de especialidad OBLIGATORIOS
                 // Si el departamento exige 1 especialista de UCI en este turno, creamos esa ranura específica
                 for (let i = 0; i < specialityRequirements.minimum_staff; i++) {

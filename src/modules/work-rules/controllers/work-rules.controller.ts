@@ -24,6 +24,8 @@ import { CreateWorkRuleDto } from "../dto/create-work-rule.dto";
 
 import { UpdateWorkRuleDto } from "../dto/update-work-rule.dto";
 
+import { WorkRuleFilterDto } from "../dto/work-rule-filter.dto";
+
 @Controller({
   path: "work-rules",
   version: "1",
@@ -39,8 +41,8 @@ export class WorkRulesController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: any,) {
-    return this.workRulesService.findAll(user.organizationId, user);
+  findAll(@Query() query: WorkRuleFilterDto, @CurrentUser() user: any) {
+    return this.workRulesService.findAll(query, user);
   }
 
   @Get(":id")

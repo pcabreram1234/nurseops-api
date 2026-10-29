@@ -17,6 +17,10 @@ export class UpdateNurseDto {
 
   @IsOptional()
   @IsString()
+  branchId?: string;
+
+  @IsOptional()
+  @IsString()
   specialityId!: string;
 
   @IsString()

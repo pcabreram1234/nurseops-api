@@ -28,4 +28,8 @@ export class UpdateLeaveDto {
   @IsOptional()
   @IsBoolean()
   affectsSchedule?: boolean;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

@@ -1,8 +1,9 @@
-import { IsUUID, IsString, IsOptional, IsBoolean, IsLatitude, IsLongitude, isBoolean } from "class-validator";
+import { IsString, IsOptional, IsBoolean, IsLatitude, IsLongitude } from "class-validator";
 
 export class CreateBranchDto {
-  @IsUUID()
-  organizationId!: string;
+  @IsOptional()
+  @IsString()
+  organizationId?: string;
 
   @IsString()
   name!: string;

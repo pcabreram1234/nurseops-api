@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 
 import * as bcrypt from "bcrypt";
@@ -13,6 +14,10 @@ import { CreateUserDto } from "../dto/create-user.dto";
 
 import { UpdateUserDto } from "../dto/update-user.dto";
 import { randomUUID } from "node:crypto";
+import {
+  assertBranchInOrganization,
+  resolveDepartmentBranch,
+} from "@common/utils/branch-scope";
 
 @Injectable()
 export class UsersService {
@@ -24,7 +29,7 @@ export class UsersService {
   |--------------------------------------------------------------------------
   */
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto, user?: any) {
     const existingUser = await this.prisma.user.findUnique({
       where: {
         email: createUserDto.email,
@@ -35,21 +40,51 @@ export class UsersService {
       throw new ConflictException("Email already exists");
     }
 
+    const organizationId =
+      user?.organizationId || createUserDto.organizationId;
+
+    if (!organizationId) {
+      throw new BadRequestException("organizationId is required.");
+    }
+
+    let branchId = createUserDto.branchId;
+    if (branchId) {
+      if (createUserDto.departmentId) {
+        branchId = await resolveDepartmentBranch(
+          this.prisma,
+          createUserDto.departmentId,
+          organizationId,
+          branchId,
+        );
+      } else {
+        await assertBranchInOrganization(this.prisma, branchId, organizationId);
+      }
+    } else if (createUserDto.departmentId) {
+      branchId = await resolveDepartmentBranch(
+        this.prisma,
+        createUserDto.departmentId,
+        organizationId,
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     return this.prisma.user.create({
       data: {
         ...createUserDto,
+        organizationId,
+        ...(branchId ? { branchId } : {}),
 
         password: hashedPassword,
 
         status: "ACTIVE",
-        auditLogId: randomUUID()
+        auditLogId: randomUUID(),
       },
 
       include: {
         roles: true,
         organization: true,
+        branch: true,
       },
     });
   }
@@ -105,6 +140,14 @@ export class UsersService {
       where.status = query.status;
     }
 
+    if (query.branchId) {
+      where.branchId = query.branchId;
+    }
+
+    if (query.departmentId) {
+      where.departmentId = query.departmentId;
+    }
+
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
@@ -115,6 +158,7 @@ export class UsersService {
         include: {
           roles: true,
           organization: true,
+          branch: true,
         },
 
         orderBy: {
@@ -162,6 +206,7 @@ export class UsersService {
       include: {
         roles: true,
         organization: true,
+        branch: true,
       }, omit: {
         password: true,
         createdAt: true,
@@ -184,14 +229,38 @@ export class UsersService {
   */
 
   async update(id: string, updateUserDto: UpdateUserDto, user: any) {
-    await this.findOne(id, user);
+    const current = await this.findOne(id, user);
+
+    const data: any = { ...updateUserDto };
+
+    const departmentId = updateUserDto.departmentId ?? current.departmentId;
+
+    if (updateUserDto.branchId || updateUserDto.departmentId) {
+      if (departmentId) {
+        data.branchId = await resolveDepartmentBranch(
+          this.prisma,
+          departmentId,
+          current.organizationId,
+          updateUserDto.branchId,
+        );
+      } else if (updateUserDto.branchId) {
+        await assertBranchInOrganization(
+          this.prisma,
+          updateUserDto.branchId,
+          current.organizationId,
+        );
+      }
+    }
 
     return this.prisma.user.update({
       where: {
         id,
       },
 
-      data: updateUserDto,
+      data,
+      include: {
+        branch: true,
+      },
     });
   }
 

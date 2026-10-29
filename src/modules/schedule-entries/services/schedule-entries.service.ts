@@ -13,85 +13,270 @@ export class ScheduleEntriesService {
   ) { }
 
   async create(dto: any, user: any) {
+    const { shiftTemplateId, shiftId, scheduleId, nurseId, assignedById, date, ...rest } = dto;
+    const entryDate = date && !date.includes("T") ? date + "T00:00:00.000Z" : date;
     return this.prisma.scheduleEntry.create({
       data: {
-        ...dto,
-        organizationId: user.organizationId,
+        ...rest,
+        date: entryDate,
+        organization: { connect: { id: user.organizationId } },
+        shiftTemplate: { connect: { id: shiftTemplateId } },
+        shift: { connect: { id: shiftId } },
+        schedule: { connect: { id: scheduleId } },
+        assignedBy: { connect: { id: assignedById || user.id || user.sub } },
+        ...(nurseId && nurseId !== "" ? { nurse: { connect: { id: nurseId } } } : {}),
       },
     });
   }
 
-  async findAll(query: any, user: any) {
-    return this.prisma.scheduleEntry.findMany({
-      where: {
-        organizationId: user.organizationId,
-        ...(query.scheduleId && {
-          scheduleId: query.scheduleId,
-        }),
-        ...(query.nurseId && {
-          nurseId: query.nurseId,
-        }),
-        ...(query.shiftId && {
-          shiftId: query.shiftId,
-        }),
-        ...(query.startDate &&
-          query.endDate && {
-          date: {
-            gte: new Date(query.startDate),
-            lte: new Date(query.endDate),
-          },
-        }),
-        // 🌟 CORRECCIÓN DEL FILTRO: Navegación profunda en la relación
-        ...(query.departmentId && {
-          shiftTemplate: {
-            departmentId: query.departmentId // O department: { id: query.departmentId } según tu esquema
-          }
+  /**
+   * Normaliza los extremos del rango de fechas. Las fechas sin hora se
+   * interpretan como días completos (00:00:00 del inicio y 23:59:59.999
+   * del final) para que el filtro "hasta" incluya el día seleccionado.
+   */
+  private parseDateBoundary(value: string, endOfDay: boolean): Date | undefined {
+    const trimmed = value?.trim();
+    if (!trimmed) return undefined;
+
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(trimmed);
+    const normalized = isDateOnly
+      ? `${trimmed}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`
+      : trimmed;
+
+    const parsed = new Date(normalized);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  }
+
+  /** Construye el where compartido entre findAll y stats. */
+  private buildWhere(query: any, user: any): any {
+    const startDate = query.startDate
+      ? this.parseDateBoundary(query.startDate, false)
+      : undefined;
+    const endDate = query.endDate
+      ? this.parseDateBoundary(query.endDate, true)
+      : undefined;
+    const dateFilter = {
+      ...(startDate && { gte: startDate }),
+      ...(endDate && { lte: endDate }),
+    };
+
+    return {
+      organizationId: user.organizationId,
+      ...(query.scheduleId && { scheduleId: query.scheduleId }),
+      ...(query.nurseId && { nurseId: query.nurseId }),
+      ...(query.shiftId && { shiftId: query.shiftId }),
+      ...(Object.keys(dateFilter).length > 0 && { date: dateFilter }),
+      ...(query.departmentId && {
+        schedule: { departmentId: query.departmentId },
+      }),
+      ...(query.branchId && {
+        branchId: query.branchId,
+      }),
+      ...(query.status && {
+        status: query.status as any,
+      }),
+      ...(query.search && {
+        OR: [
+          { notes: { contains: query.search, mode: "insensitive" as const } },
+          { shift: { name: { contains: query.search, mode: "insensitive" as const } } },
+          { nurse: { user: { OR: [
+            { firstName: { contains: query.search, mode: "insensitive" as const } },
+            { lastName: { contains: query.search, mode: "insensitive" as const } },
+          ] } } },
+        ],
+      }),
+    };
+  }
+
+  /**
+   * Agregados de cobertura (totales por estado, emergencias y por plantilla)
+   * para mantener los indicadores precisos cuando la lista va paginada.
+   */
+  async stats(query: any, user: any) {
+    const where = this.buildWhere(query, user);
+
+    const [byStatus, total, emergencies, totalsByTemplate, assignedByTemplate] = await Promise.all([
+      this.prisma.scheduleEntry.groupBy({
+        by: ["status"],
+        where,
+        _count: { _all: true },
+      }),
+      this.prisma.scheduleEntry.count({ where }),
+      this.prisma.scheduleEntry.count({ where: { ...where, isEmergencyCoverage: true } }),
+      this.prisma.scheduleEntry.groupBy({
+        by: ["shiftTemplateId"],
+        where,
+        _count: { _all: true },
+      }),
+      this.prisma.scheduleEntry.groupBy({
+        by: ["shiftTemplateId"],
+        where: {
+          AND: [
+            where,
+            { nurseId: { not: null } },
+            {
+              status: {
+                in: [ScheduleEntryStatus.ASSIGNED, ScheduleEntryStatus.CONFIRMED],
+              },
+            },
+          ],
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const statusCounts: Record<string, number> = {};
+    for (const row of byStatus) statusCounts[row.status] = row._count._all;
+
+    const assigned = (statusCounts["ASSIGNED"] ?? 0) + (statusCounts["CONFIRMED"] ?? 0);
+
+    // Nombres de plantilla para la distribución por turno
+    const templateIds = totalsByTemplate.map((r) => r.shiftTemplateId);
+    const templates = templateIds.length
+      ? await this.prisma.shiftTemplate.findMany({
+          where: { id: { in: templateIds } },
+          select: { id: true, name: true },
         })
+      : [];
+    const templateNames = new Map(templates.map((t) => [t.id, t.name]));
+
+    /*
+     * La distribución se agrupa por TIPO de turno (MORNING, AFTERNOON...),
+     * no por ID de plantilla. Así, cuando no hay departamento seleccionado,
+     * las plantillas equivalentes de varias sedes/departamentos se suman en
+     * una sola tarjeta en lugar de repetir "MORNING" varias veces.
+     */
+    const byShiftMap = new Map<
+      string,
+      { id: string; name: string; total: number; assigned: number }
+    >();
+
+    for (const row of totalsByTemplate) {
+      const name = templateNames.get(row.shiftTemplateId) || "SIN_TURNO";
+      const current = byShiftMap.get(name) || {
+        id: name,
+        name,
+        total: 0,
+        assigned: 0,
+      };
+      current.total += row._count._all;
+      byShiftMap.set(name, current);
+    }
+
+    for (const row of assignedByTemplate) {
+      const name = templateNames.get(row.shiftTemplateId) || "SIN_TURNO";
+      const current = byShiftMap.get(name);
+      if (current) current.assigned += row._count._all;
+    }
+
+    const shiftOrder = [
+      "MORNING",
+      "AFTERNOON",
+      "NIGHT",
+      "MORNING_AFTERNOON",
+      "MORNING_NIGHT",
+      "NIGTH_AFTERNOON",
+    ];
+
+    const byShift = Array.from(byShiftMap.values()).sort((a, b) => {
+      const aIndex = shiftOrder.indexOf(a.name);
+      const bIndex = shiftOrder.indexOf(b.name);
+      if (aIndex !== -1 || bIndex !== -1) {
+        return (aIndex === -1 ? shiftOrder.length : aIndex) -
+          (bIndex === -1 ? shiftOrder.length : bIndex);
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return {
+      total,
+      assigned,
+      vacant: statusCounts["OPEN"] ?? 0,
+      pending: statusCounts["PENDING"] ?? 0,
+      cancelled: statusCounts["CANCELLED"] ?? 0,
+      emergencies,
+      statusCounts,
+      coverage: total > 0 ? Math.round((assigned / total) * 100) : 0,
+      byShift,
+    };
+  }
+
+  async findAll(query: any, user: any) {
+    const where = this.buildWhere(query, user);
+
+    const select = {
+      id: true,
+      scheduleId: true,
+      shiftId: true,
+      branchId: true,
+      date: true,
+      status: true,
+      nurseId: true,
+      notes: true,
+      isEmergencyCoverage: true,
+      branch: {
+        select: { id: true, name: true },
       },
-      select: {
-        id: true,
-        scheduleId: true,
-        shiftId: true,
-        date: true,
-        status: true,
-        nurseId: true,
-        notes: true,
-        isEmergencyCoverage: true,
-        nurse: {
-          select: {
-            id: true,
-            departmentId: true, // 🌟 Añadido para facilitar validaciones de préstamo interdepartamental en el front
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-              }
+      nurse: {
+        select: {
+          id: true,
+          departmentId: true, // 🌟 Añadido para facilitar validaciones de préstamo interdepartamental en el front
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
             }
           }
-        },
-        shift: true,
-        schedule: true,
-        shiftTemplate: {
-          select: {
-            name: true,
-            departmentId: true, // 🌟 Crítico: Expone el ID directo de la plantilla para el matching del modal
-            startTime: true,
-            endTime: true,
-            department: {
-              select: {
-                id: true,
-                name: true,
-                description: true
-              }
+        }
+      },
+      shift: true,
+      schedule: true,
+      shiftTemplate: {
+        select: {
+          name: true,
+          departmentId: true, // 🌟 Crítico: Expone el ID directo de la plantilla para el matching del modal
+          startTime: true,
+          endTime: true,
+          department: {
+            select: {
+              id: true,
+              name: true,
+              description: true
             }
           }
-        },
+        }
       },
-      orderBy: {
-        date: "asc",
-      },
+    };
+
+    const orderBy = { date: "asc" as const };
+
+    // Paginación opcional: sin page/limit se mantiene el array plano
+    // (backward compatible con el calendario global y otros consumidores)
+    if (query.page || query.limit) {
+      const page = Math.max(1, Number(query.page) || 1);
+      const limit = Math.min(500, Math.max(1, Number(query.limit) || 25));
+      const [data, total] = await Promise.all([
+        this.prisma.scheduleEntry.findMany({
+          where,
+          select,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        this.prisma.scheduleEntry.count({ where }),
+      ]);
+      return {
+        data,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      };
+    }
+
+    return this.prisma.scheduleEntry.findMany({
+      where,
+      select,
+      orderBy,
     });
   }
 
@@ -120,8 +305,10 @@ export class ScheduleEntriesService {
         shiftTemplate: {
           include: {
             department: true,
+            branch: true,
           },
         },
+        branch: true,
       },
     });
 
@@ -134,11 +321,10 @@ export class ScheduleEntriesService {
 
   async update(id: string, dto: any, user: any) {
 
-    // 1. Obtener el estado actual del turno antes de ser modificado (Para auditoría)
+    // 1. Obtener el estado actual del turno ANTES de ser modificado (Para auditoría)
+    // 🐛 FIX: Buscar por `id` (el ID del ScheduleEntry), no por `shiftId`
     const currentEntry = await this.prisma.scheduleEntry.findFirst({
-      where: {
-        shiftId: dto.shiftId
-      }
+      where: { id }
     })
 
     if (!currentEntry) {
@@ -341,12 +527,10 @@ export class ScheduleEntriesService {
         nurseId: isVacant ? null : entry.nurseId,
         status: currentStatus,
         notes: entry.notes || null,
-        shiftTemplateId: dto?.entries[0].shiftTemplateId,
+        shiftTemplateId: entry.shiftTemplateId, // 🐛 FIX: usar el template de CADA fila, no solo el primero
         scheduleId: dto.scheduleId,
         assignedById: user.id,
         organizationId: user.organizationId
-        // Si tu esquema maneja organizationId o campos de auditoría heredados:
-        // organizationId: user.organizationId 
       });
     }
 

@@ -1,11 +1,19 @@
-import { IsOptional, IsUUID, IsEnum, IsDateString } from "class-validator";
+import { IsOptional, IsString, IsEnum, IsDateString } from "class-validator";
 
 import { LeaveStatus, LeaveType } from "@prisma/client";
 
 export class LeaveFilterDto {
   @IsOptional()
-  @IsUUID()
+  @IsString()
   userId?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
 
   @IsOptional()
   @IsEnum(LeaveType)

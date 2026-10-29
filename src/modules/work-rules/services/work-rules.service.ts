@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
+import { Prisma } from "@prisma/client";
 
 import { CreateWorkRuleDto } from "../dto/create-work-rule.dto";
 
@@ -16,12 +17,50 @@ export class WorkRulesService {
     });
   }
 
-  async findAll(organizationId: string, user: any) {
+  async findAll(query: any, user: any) {
     const isSuperAdmin = user.role === "SUPER"
+    const where: Prisma.WorkRuleWhereInput = isSuperAdmin
+      ? {}
+      : { organizationId: user.organizationId };
+    
+    if (query.isActive !== undefined) {
+      where.isActive = query.isActive;
+    }
+    if (query.code) {
+      where.code = query.code;
+    }
+    if (query.search) {
+      where.OR = [
+        { name: { contains: query.search, mode: "insensitive" } },
+        { code: { contains: query.search, mode: "insensitive" } },
+        { description: { contains: query.search, mode: "insensitive" } },
+      ];
+    }
+
+    const orderBy = { createdAt: "desc" } as Prisma.WorkRuleOrderByWithRelationInput;
+
+    // Paginación opcional
+    if (query.page || query.limit) {
+      const page = Math.max(1, Number(query.page) || 1);
+      const limit = Math.min(500, Math.max(1, Number(query.limit) || 25));
+      const [data, total] = await Promise.all([
+        this.prisma.workRule.findMany({
+          where,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        this.prisma.workRule.count({ where }),
+      ]);
+      return {
+        data,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      };
+    }
+
     return this.prisma.workRule.findMany({
-      where: isSuperAdmin ? {} : {
-        organizationId,
-      },
+      where,
+      orderBy,
     });
   }
 

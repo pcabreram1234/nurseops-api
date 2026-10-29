@@ -1,23 +1,24 @@
 import {
-  IsUUID,
   IsDateString,
   IsString,
   IsEnum,
   IsOptional,
   IsBoolean,
   IsInt,
+  ValidateIf,
 } from "class-validator";
 
 import { AbsenceType } from "@prisma/client";
 
 export class CreateAbsenceDto {
-  @IsUUID()
+  @IsString()
   nurseId!: string;
 
   @IsDateString()
   date!: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== "" && value !== null && value !== undefined)
   @IsDateString()
   endDate?: string;
 
@@ -27,7 +28,7 @@ export class CreateAbsenceDto {
   @IsEnum(AbsenceType)
   type!: AbsenceType;
 
-  @IsUUID()
+  @IsString()
   reporterById!: string;
 
   @IsOptional()
@@ -41,4 +42,8 @@ export class CreateAbsenceDto {
   @IsOptional()
   @IsInt()
   emergencyLevel?: number;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

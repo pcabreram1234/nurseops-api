@@ -10,6 +10,14 @@ export class CreateEmergencyCoverageDto {
   @IsString()
   departmentId?: string;
 
+  /**
+   * Sede de la cobertura. Obligatoria a nivel de base de datos; si no se envía
+   * se deriva del departamento o del turno.
+   */
+  @IsOptional()
+  @IsString()
+  branchId?: string;
+
   @IsString()
   shiftId!: string;
 

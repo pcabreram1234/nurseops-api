@@ -1,7 +1,21 @@
-import { IsOptional, IsUUID } from "class-validator";
+import { IsOptional, IsUUID, IsInt, Min, Max } from "class-validator";
+import { Type } from "class-transformer";
 
 export class OptimizationScoreFilterDto {
   @IsOptional()
   @IsUUID()
   nurseId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  limit?: number = 25;
 }

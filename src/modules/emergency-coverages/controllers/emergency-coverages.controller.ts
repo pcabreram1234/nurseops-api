@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -32,27 +33,27 @@ export class EmergencyCoveragesController {
   constructor(private readonly service: EmergencyCoveragesService) { }
 
   @Post()
-  create(@Body() dto: CreateEmergencyCoverageDto) {
-    return this.service.create(dto);
+  create(@Body() dto: CreateEmergencyCoverageDto, @CurrentUser() user: any) {
+    return this.service.create(dto, user);
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.service.findAll(user.organizationId);
+  findAll(@CurrentUser() user: any, @Query() query: any = {}) {
+    return this.service.findAll(user.organizationId, query);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.service.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.findOne(id, user);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateEmergencyCoverageDto) {
-    return this.service.update(id, dto);
+  update(@Param("id") id: string, @Body() dto: UpdateEmergencyCoverageDto, @CurrentUser() user: any) {
+    return this.service.update(id, dto, user);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.service.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.service.remove(id, user);
   }
 }

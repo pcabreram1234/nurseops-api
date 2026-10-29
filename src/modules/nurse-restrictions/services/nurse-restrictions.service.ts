@@ -20,18 +20,51 @@ export class NurseRestrictionsService {
     });
   }
 
-  async findAll(user: any) {
+  async findAll(query: any, user: any) {
+    const where = {
+      organizationId: user.organizationId,
+      ...(query.nurseId && { nurseId: query.nurseId }),
+      ...(query.restrictionTypeId && { restrictionTypeId: query.restrictionTypeId }),
+      ...(query.search && {
+        OR: [
+          { nurse: { user: { firstName: { contains: query.search, mode: "insensitive" as const } } } },
+          { nurse: { user: { lastName: { contains: query.search, mode: "insensitive" as const } } } },
+          { restrictionType: { name: { contains: query.search, mode: "insensitive" as const } } },
+        ],
+      }),
+    };
+
+    const include = {
+      nurse: true,
+      restrictionType: true,
+    };
+
+    const orderBy = { createdAt: "desc" as const };
+
+    // Paginación opcional
+    if (query.page || query.limit) {
+      const page = Math.max(1, Number(query.page) || 1);
+      const limit = Math.min(500, Math.max(1, Number(query.limit) || 25));
+      const [data, total] = await Promise.all([
+        this.prisma.nurseRestriction.findMany({
+          where,
+          include,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        this.prisma.nurseRestriction.count({ where }),
+      ]);
+      return {
+        data,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      };
+    }
+
     return this.prisma.nurseRestriction.findMany({
-      where: {
-        organizationId: user.organizationId,
-      },
-      include: {
-        nurse: true,
-        restrictionType: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      where,
+      include,
+      orderBy,
     });
   }
 

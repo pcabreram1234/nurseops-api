@@ -6,6 +6,7 @@ interface WipeOptions {
 	prisma: PrismaService;
 	organizationId: string;
 	departmentId: string;
+	branchId: string;
 	month: number;
 	year: number;
 	triggeredById: string;
@@ -24,6 +25,7 @@ export async function wipeAndAuditSchedule(options: WipeOptions): Promise<string
 		prisma,
 		organizationId,
 		departmentId,
+		branchId,
 		month,
 		year,
 		triggeredById,
@@ -38,6 +40,7 @@ export async function wipeAndAuditSchedule(options: WipeOptions): Promise<string
 	const existingSchedule = await prisma.schedule.findFirst({
 		where: {
 			departmentId: departmentId,
+			branchId: branchId,
 			organizationId: organizationId,
 			month: month,
 			year: year
@@ -74,6 +77,7 @@ export async function wipeAndAuditSchedule(options: WipeOptions): Promise<string
 					details: {
 						message: `Start of automatic initial calendar generation for the period ${month}/${year}.`,
 						departmentId,
+						branchId,
 						month,
 						year
 					}
@@ -86,7 +90,7 @@ export async function wipeAndAuditSchedule(options: WipeOptions): Promise<string
 					action: ActionAuditLogTypes.AUTO_GENERATE,
 					moduleId,
 					old_value: {},
-					new_value: { departmentId, month, year, mode: "INITIAL_GENERATION" },
+					new_value: { departmentId, branchId, month, year, mode: "INITIAL_GENERATION" },
 					ipAddress,
 					userAgent,
 					requestId
@@ -124,6 +128,7 @@ export async function wipeAndAuditSchedule(options: WipeOptions): Promise<string
 		prisma.shift.deleteMany({
 			where: {
 				departmentId: departmentId,
+				branchId: branchId,
 				organizationId: organizationId,
 				startTime: {
 					gte: startDate,
@@ -171,6 +176,7 @@ export async function wipeAndAuditSchedule(options: WipeOptions): Promise<string
 					scheduleId: existingSchedule.id,
 					status: "GENERATING",
 					departmentId,
+					branchId,
 					month,
 					year
 				},

@@ -65,16 +65,66 @@ export class OptimizationRunsService {
     }
 
     async findAll(filters: OptimizationFilterDto) {
-        return this.prisma.optimizationRun.findMany({
-            where: {
-                ...(filters.scheduleId && { scheduleId: filters.scheduleId }),
+        const where = {
+            ...(filters.scheduleId && { scheduleId: filters.scheduleId }),
+        };
+
+        const include = {
+            schedule: {
+                select: {
+                    id: true,
+                    month: true,
+                    year: true,
+                    status: true,
+                    department: { select: { id: true, name: true } },
+                },
             },
+            department: { select: { id: true, name: true } },
+        } as const;
+
+        // Paginación opcional: sin page/limit se mantiene el array plano
+        if (filters.page || filters.limit) {
+            const page = Math.max(1, filters.page ?? 1);
+            const limit = Math.min(500, Math.max(1, filters.limit ?? 25));
+            const [data, total] = await Promise.all([
+                this.prisma.optimizationRun.findMany({
+                    where,
+                    include,
+                    orderBy: { startedAt: 'desc' },
+                    skip: (page - 1) * limit,
+                    take: limit,
+                }),
+                this.prisma.optimizationRun.count({ where }),
+            ]);
+            return {
+                data,
+                meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+            };
+        }
+
+        return this.prisma.optimizationRun.findMany({
+            where,
+            include,
             orderBy: { startedAt: 'desc' },
         });
     }
 
     async findOne(id: string) {
-        const record = await this.prisma.optimizationRun.findUnique({ where: { id } });
+        const record = await this.prisma.optimizationRun.findUnique({
+            where: { id },
+            include: {
+                schedule: {
+                    select: {
+                        id: true,
+                        month: true,
+                        year: true,
+                        status: true,
+                        department: { select: { id: true, name: true } },
+                    },
+                },
+                department: { select: { id: true, name: true } },
+            },
+        });
         if (!record) throw new NotFoundException('Registro de optimización no encontrado.');
         return record;
     }

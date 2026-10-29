@@ -1,16 +1,52 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
+import {
+  assertBranchInOrganization,
+  resolveDepartmentBranch,
+} from "@common/utils/branch-scope";
 
 @Injectable()
 export class ShiftsService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(dto: any) {
+  private async resolveBranch(dto: any, organizationId: string) {
+    if (dto.departmentId) {
+      return resolveDepartmentBranch(
+        this.prisma,
+        dto.departmentId,
+        organizationId,
+        dto.branchId,
+      );
+    }
+
+    if (dto.branchId) {
+      await assertBranchInOrganization(
+        this.prisma,
+        dto.branchId,
+        organizationId,
+      );
+      return dto.branchId as string;
+    }
+
+    return undefined;
+  }
+
+  async create(dto: any, user?: any) {
+    const organizationId = user?.organizationId || dto.organizationId;
+    const branchId = organizationId
+      ? await this.resolveBranch(dto, organizationId)
+      : dto.branchId;
+
     return this.prisma.shift.create({
-      data: dto,
+      data: {
+        ...dto,
+        ...(organizationId ? { organizationId } : {}),
+        ...(branchId ? { branchId } : {}),
+      },
       include: {
         department: true,
+        branch: true,
       },
     });
   }
@@ -41,17 +77,24 @@ export class ShiftsService {
           departmentId: query.departmentId,
         }),
 
+        ...(query.branchId && {
+          branchId: query.branchId,
+        }),
+
         ...(query.type && {
           type: query.type,
         }),
 
         ...(query.isNightShift !== undefined && {
           // Aseguramos la conversión a booleano si viene como string desde la URL
-          isNightShift: query.isNightShift === 'true' || query.isNightShift === true,
+          isNightShift:
+            query.isNightShift === "true" || query.isNightShift === true,
         }),
 
         ...(query.isEmergencyShift !== undefined && {
-          isEmergencyShift: query.isEmergencyShift === 'true' || query.isEmergencyShift === true,
+          isEmergencyShift:
+            query.isEmergencyShift === "true" ||
+            query.isEmergencyShift === true,
         }),
 
         // 🕒 NUEVO: Filtro por rango de inicio del turno (startTime)
@@ -67,22 +110,11 @@ export class ShiftsService {
             lte: new Date(query.endDate),
           },
         }),
-
-        /* 💡 NOTA DE ARQUITECTURA: 
-          Si el frontend envía un día específico (ej: "2026-06-01") y quieres buscar 
-          todos los turnos que EMPIECEN dentro de ese día, puedes estructurarlo así:
-          
-          ...(query.startDate && query.endDate && {
-            startTime: {
-              gte: new Date(query.startDate), // Ejemplo: 2026-06-01T00:00:00.000Z
-              lte: new Date(query.endDate),   // Ejemplo: 2026-06-01T23:59:59.999Z
-            }
-          })
-        */
       },
 
       include: {
         department: true,
+        branch: true,
       },
 
       orderBy: {
@@ -101,6 +133,7 @@ export class ShiftsService {
 
       include: {
         department: true,
+        branch: true,
 
         scheduleEntries: true,
       },
@@ -116,12 +149,20 @@ export class ShiftsService {
   async update(id: string, dto: any, user: any) {
     await this.findOne(id, user);
 
+    const branchId = await this.resolveBranch(dto, user.organizationId);
+
     return this.prisma.shift.update({
       where: {
         id,
       },
 
-      data: dto,
+      data: {
+        ...dto,
+        ...(branchId ? { branchId } : {}),
+      },
+      include: {
+        branch: true,
+      },
     });
   }
 

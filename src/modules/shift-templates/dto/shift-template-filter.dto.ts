@@ -4,4 +4,8 @@ export class ShiftTemplateFilterDto {
   @IsOptional()
   @IsString()
   departmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

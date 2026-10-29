@@ -24,7 +24,7 @@ export class AlertEscalationService {
 
         const updated = await this.prisma.operationalAlert.update({
             where: { id: alertId },
-            data: { severity: 'CRITICAL' },
+            data: { severity: 'CRITICAL', status: 'ESCALATED' },
         });
 
         await this.notification.dispatch(alertId, 'CLINICAL_DIRECTOR', AlertChannel.SMS, `CRITICAL: Alert escalated due to inaction: ${reason}`);

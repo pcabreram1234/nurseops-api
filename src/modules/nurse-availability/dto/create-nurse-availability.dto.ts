@@ -1,5 +1,4 @@
 import {
-  IsUUID,
   IsDateString,
   IsEnum,
   IsOptional,
@@ -13,7 +12,7 @@ import {
 } from "@prisma/client";
 
 export class CreateNurseAvailabilityDto {
-  @IsUUID()
+  @IsString()
   nurseId!: string;
 
   @IsDateString()
@@ -37,4 +36,8 @@ export class CreateNurseAvailabilityDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
 }

@@ -1,11 +1,20 @@
-import { IsOptional, IsUUID, IsEnum, IsDateString } from "class-validator";
+import { IsOptional, IsString, IsEnum, IsDateString, IsInt, Min, Max } from "class-validator";
+import { Type } from "class-transformer";
 
 import { NurseAvailabilityStatusType } from "@prisma/client";
 
 export class NurseAvailabilityFilterDto {
   @IsOptional()
-  @IsUUID()
+  @IsString()
   nurseId?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
 
   @IsOptional()
   @IsEnum(NurseAvailabilityStatusType)
@@ -18,4 +27,17 @@ export class NurseAvailabilityFilterDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  limit?: number = 25;
 }

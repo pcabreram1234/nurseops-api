@@ -25,9 +25,27 @@ export class ShiftChangeRequestsService {
     private readonly eventEmitter: EventEmitter2,
   ) { }
 
-  async create(dto: any) {
+  async create(dto: any, user?: any) {
+    const { requesterId, receiverId, sourceShiftId, targetShiftId, ...rest } = dto;
+
+    // Prisma 7 exige connect para relaciones requeridas y organizationId es obligatorio
     return this.prisma.shiftChangeRequest.create({
-      data: dto,
+      data: {
+        ...rest,
+        requester: { connect: { id: requesterId } },
+        ...(receiverId && { receiver: { connect: { id: receiverId } } }),
+        sourceShift: { connect: { id: sourceShiftId } },
+        ...(targetShiftId && { targetShift: { connect: { id: targetShiftId } } }),
+        ...(user?.organizationId && {
+          organization: { connect: { id: user.organizationId } },
+        }),
+      },
+      include: {
+        requester: { select: { id: true, firstName: true, lastName: true, email: true } },
+        receiver: { select: { id: true, firstName: true, lastName: true } },
+        sourceShift: { select: { id: true, startTime: true, endTime: true } },
+        targetShift: { select: { id: true, startTime: true, endTime: true } },
+      },
     });
   }
 
@@ -162,9 +180,10 @@ export class ShiftChangeRequestsService {
   }
 
   async findOne(id: string, user: any) {
-    const isSuperAdmin = user.role === "SUPE"
+    const isSuperAdmin = user.role === "SUPER" // 🐛 FIX: era "SUPE" (typo)
     const request = await this.prisma.shiftChangeRequest.findUnique({
-      where: isSuperAdmin ? { id } : { id, organization: user.organizationId },
+      // 🐛 FIX: `organization: <string>` no es válido en Prisma (relación espera objeto)
+      where: isSuperAdmin ? { id } : { id, organizationId: user.organizationId },
     });
 
     if (!request) {
@@ -209,8 +228,7 @@ export class ShiftChangeRequestsService {
       where: isSuperAdmin ? { id } : { id, organizationId: user.organizationId },
       data: {
         status: "CANCELLED",
-
-        cancelledAt: new Date(),
+        // 🐛 FIX: se eliminó `cancelledAt` (campo inexistente en el modelo Prisma)
       },
     });
   }

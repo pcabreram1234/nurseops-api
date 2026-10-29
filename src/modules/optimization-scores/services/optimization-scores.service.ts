@@ -16,19 +16,43 @@ export class OptimizationScoresService {
   }
 
   async findAll(query: any, user: any) {
-    return this.prisma.optimizationScore.findMany({
-      where: {
-        organizationId: user.organizationId,
-        ...(query.nurseId && {
-          nurseId: query.nurseId,
+    const where = {
+      organizationId: user.organizationId,
+      ...(query.nurseId && {
+        nurseId: query.nurseId,
+      }),
+    };
+
+    const include = {
+      nurse: true,
+    };
+
+    const orderBy = { overall_score: "desc" as const };
+
+    // Paginación opcional
+    if (query.page || query.limit) {
+      const page = Math.max(1, Number(query.page) || 1);
+      const limit = Math.min(500, Math.max(1, Number(query.limit) || 25));
+      const [data, total] = await Promise.all([
+        this.prisma.optimizationScore.findMany({
+          where,
+          include,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
         }),
-      },
-      include: {
-        nurse: true,
-      },
-      orderBy: {
-        overall_score: "desc",
-      },
+        this.prisma.optimizationScore.count({ where }),
+      ]);
+      return {
+        data,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      };
+    }
+
+    return this.prisma.optimizationScore.findMany({
+      where,
+      include,
+      orderBy,
     });
   }
 

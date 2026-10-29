@@ -1,10 +1,13 @@
 import {
   IsOptional,
   IsString,
-  IsUUID,
   IsEnum,
   IsBoolean,
+  IsInt,
+  Min,
+  Max,
 } from "class-validator";
+import { Type } from "class-transformer";
 
 import { DepartmentType, DepartmentCriticalLevel } from "@prisma/client";
 
@@ -14,7 +17,7 @@ export class DepartmentFilterDto {
   search?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   branchId?: string;
 
   @IsOptional()
@@ -32,4 +35,17 @@ export class DepartmentFilterDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  limit?: number = 25;
 }
