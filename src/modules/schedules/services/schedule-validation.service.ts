@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { differenceInDays, isSameDay, differenceInHours, isBefore, isAfter } from 'date-fns';
 import { evaluateHardRule } from '../rule-engine/evaluators';
 import { SystemConfigurationKeys } from '@prisma/client';
+import { windowsOverlap, maxConcurrentWindows, TimeWindowLike } from '../utils/simultaneity.util';
 
 
 
@@ -57,7 +58,7 @@ export class ScheduleValidationService {
     // --- Validación de Bloqueos Físicos/Legales Inmediatos ---
     // 1. Validar Vacaciones Aprobadas
     const isOnVacation = context.blocks.vacations.some(v =>
-      targetDate >= new Date(v.start_Date) && targetDate <= new Date(v.end_Date)
+      targetDate >= new Date(v.date) && targetDate <= new Date(v.endDate)
     );
 
     if (isOnVacation) {
@@ -126,8 +127,8 @@ export class ScheduleValidationService {
 
     if (shiftDepartmentId && nurseDepartmentId && shiftDepartmentId !== nurseDepartmentId) {
       // Si los departamentos no coinciden, verificamos si tiene permitido el Cross Departmental
-      // Nota: Adapta "allowCrossDepartment" al nombre exacto de la columna en tu modelo Nurse
-      const canFloat = (context.nurse as any).allowCrossDepartment === true;
+// Nota: El campo exacto en el modelo Nurse es "isCrossDepartmental"
+      const canFloat = (context.nurse as any).isCrossDepartmental === true;
 
       if (!canFloat) {
         errors.push(
@@ -140,6 +141,58 @@ export class ScheduleValidationService {
           `Cross-departmental assignment: Nurse belongs to "${context.nurse?.department?.name || 'another department'}" ` +
           `but has permissions to cover this shift.`
         );
+      }
+    }
+
+    // ==========================================================================
+    // 🌟 NUEVA VALIDACIÓN 4b: MÁXIMO DE ENFERMERAS SIMULTÁNEAS POR DEPARTAMENTO
+    // ==========================================================================
+    // Restricción operativa CONFIGURABLE por departamento
+    // (DepartmentConfiguration.maxSimultaneousNurses). Si no está configurada, no aplica.
+    const limitDepartmentId = shiftDepartmentId || nurseDepartmentId;
+    if (limitDepartmentId && context.targetShift) {
+      const deptConfig = await this.prisma.departmentConfiguration.findFirst({
+        where: { departmentId: limitDepartmentId },
+        select: { maxSimultaneousNurses: true },
+      });
+
+      const maxSim = deptConfig?.maxSimultaneousNurses ?? null;
+      if (maxSim !== null && maxSim > 0) {
+        const dayStart = new Date(targetDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(targetDate);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const entriesToday = await this.prisma.scheduleEntry.findMany({
+          where: {
+            date: { gte: dayStart, lte: dayEnd },
+            nurseId: { not: null },
+            ...(entryId ? { id: { not: entryId } } : {}),
+            shiftTemplate: { departmentId: limitDepartmentId },
+          },
+          include: {
+            shiftTemplate: {
+              select: { startTime: true, endTime: true, isNightShift: true },
+            },
+          },
+        });
+
+        const targetWindow: TimeWindowLike = {
+          startTime: context.targetShift.startTime,
+          endTime: context.targetShift.endTime,
+          isNightShift: context.targetShift.isNightShift === true,
+        };
+
+        const simultaneous = entriesToday.filter(
+          (e) => e.shiftTemplate && windowsOverlap(targetWindow, e.shiftTemplate),
+        );
+
+        if (simultaneous.length >= maxSim) {
+          errors.push(
+            `Operational Limit: the department allows a maximum of ${maxSim} simultaneous nurses ` +
+            `and ${simultaneous.length} are already assigned to overlapping shifts on this date.`,
+          );
+        }
       }
     }
 
@@ -372,13 +425,15 @@ export class ScheduleValidationService {
         where: { id: departmentId },
       }),
 
-      // Vacaciones que colisionen con el mes analizado
-      this.prisma.vacation.findMany({
+      // Ausencias por vacaciones aprobadas que colisionen con el mes analizado
+      // (Absence es la fuente única de indisponibilidad efectiva para el planificador)
+      this.prisma.absence.findMany({
         where: {
           nurseId,
+          type: 'VACATION',
           status: 'APPROVED',
           OR: [
-            { start_Date: { lte: endOfCurrentMonth }, end_Date: { gte: startOfCurrentMonth } }
+            { date: { lte: endOfCurrentMonth }, endDate: { gte: startOfCurrentMonth } }
           ]
         }
       }),
@@ -665,6 +720,48 @@ export class ScheduleValidationService {
         errors.push(
           `Coverage Shortage: The "${data.name}" template requires a minimum of ${data.required} nurses, but only ${data.assigned} have been assigned..`
         );
+      }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 3b. VALIDACIÓN: MÁXIMO DE ENFERMERAS SIMULTÁNEAS POR DEPARTAMENTO
+    |--------------------------------------------------------------------------
+    | Restricción operativa CONFIGURABLE por departamento
+    | (DepartmentConfiguration.maxSimultaneousNurses). Null = sin límite.
+    */
+    const publishDeptConfig = schedule.departmentId
+      ? await this.prisma.departmentConfiguration.findFirst({
+          where: { departmentId: schedule.departmentId },
+          select: { maxSimultaneousNurses: true },
+        })
+      : null;
+
+    const publishMaxSim = publishDeptConfig?.maxSimultaneousNurses ?? null;
+    if (publishMaxSim !== null && publishMaxSim > 0) {
+      // Agrupar asignaciones por día y evaluar el pico de simultaneidad
+      const entriesByDay = new Map<number, typeof schedule.scheduleEntries>();
+      for (const entry of schedule.scheduleEntries) {
+        if (!entry.nurseId || !entry.shiftTemplate) continue;
+        const dayKey = new Date(entry.date).setHours(0, 0, 0, 0);
+        if (!entriesByDay.has(dayKey)) entriesByDay.set(dayKey, []);
+        entriesByDay.get(dayKey)!.push(entry);
+      }
+
+      for (const [dayKey, dayEntries] of entriesByDay.entries()) {
+        const windows: TimeWindowLike[] = dayEntries.map((e) => ({
+          startTime: e.shiftTemplate!.startTime,
+          endTime: e.shiftTemplate!.endTime,
+          isNightShift: e.shiftTemplate!.isNightShift === true,
+        }));
+
+        const peak = maxConcurrentWindows(windows);
+        if (peak > publishMaxSim) {
+          errors.push(
+            `Operational Limit: on ${new Date(dayKey).toISOString().split('T')[0]} up to ${peak} simultaneous nurses ` +
+            `were assigned, exceeding the department maximum of ${publishMaxSim}.`
+          );
+        }
       }
     }
 

@@ -40,4 +40,13 @@ export class UpdateScheduleEntryDto {
   @IsOptional()
   @IsString()
   shiftTemplateId?: string;
+
+  // Agrega estos dos que los estás enviando desde el frontend:
+  @IsOptional()
+  @IsString()
+  date?: string;
+
+  @IsOptional()
+  @IsString()
+  scheduleId?: string;
 }
