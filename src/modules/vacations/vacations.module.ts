@@ -2,12 +2,14 @@ import { Module } from "@nestjs/common";
 
 import { PrismaModule } from "@infra/database/prisma.module";
 
-import { VacationsController } from "./controllers/vacations.controller";
+import { VacationPoliciesModule } from "../vacation-policies/vacation-policies.module";
 
 import { VacationsService } from "./services/vacations.service";
 
+import { VacationsController } from "./controllers/vacations.controller";
+
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, VacationPoliciesModule],
 
   controllers: [VacationsController],
 

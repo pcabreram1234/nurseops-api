@@ -55,46 +55,54 @@ enum FeaturTypes {
 }
 
 model Organization {
-  id                       String                    @id @default(uuid())
-  name                     String
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @default(now()) @updatedAt
-  code                     String
-  timezone                 String
-  country                  String
-  status                   String                    @default("A")
-  settings                 OrganizationSetting?
-  departments              Department[]
-  users                    User[]
-  shifts                   Shift[]
-  rules                    WorkRule[]
-  shiftTemplates           ShiftTemplate[]
-  branches                 Branch[]
-  ruleGroups               RuleGroup[]
-  monthlyDistributionRules MonthlyDistributionRule[]
-  integrations             Integration[]
-  notifications            Notification[]
-  schedules                Schedule[]
-  auditLogs                AuditLog[]
-  nurses                   Nurse[]
-  emergencyCoverages       EmergencyCoverages[]
-  nursePreferences         NursePreferences[]
-  optimizationScores       OptimizationScore[]
-  scheduleEntries          ScheduleEntry[]
-  absences                 Absence[]
-  leaves                   Leave[]
-  workLoadMetrics          WorkLoadMetrics[]
-  nurseProfiles            NurseProfile[]
-  nurseAvailabilities      NurseAvailability[]
-  nurseRestrictions        NurseRestriction[]
-  vacations                Vacation[]
-  departmentConfigurations DepartmentConfiguration[]
-  specialities             Speciality[]
-  shiftChangeRequests      ShiftChangeRequest[]
-  shiftChangeApprovals     ShiftChangeApprovals[]
-  shiftChangeDocuments     ShiftChangeDocument[]
-  notificationTypes        NotificationType[]
-  notificationTemplates    NotificationTemplates[]
+  id                        String                     @id @default(uuid())
+  name                      String
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @default(now()) @updatedAt
+  code                      String
+  timezone                  String
+  country                   String
+  status                    String                     @default("A")
+  settings                  OrganizationSetting?
+  departments               Department[]
+  users                     User[]
+  shifts                    Shift[]
+  rules                     WorkRule[]
+  shiftTemplates            ShiftTemplate[]
+  branches                  Branch[]
+  ruleGroups                RuleGroup[]
+  monthlyDistributionRules  MonthlyDistributionRule[]
+  integrations              Integration[]
+  notifications             Notification[]
+  schedules                 Schedule[]
+  auditLogs                 AuditLog[]
+  nurses                    Nurse[]
+  emergencyCoverages        EmergencyCoverages[]
+  nursePreferences          NursePreferences[]
+  optimizationScores        OptimizationScore[]
+  scheduleEntries           ScheduleEntry[]
+  absences                  Absence[]
+  leaves                    Leave[]
+  workLoadMetrics           WorkLoadMetrics[]
+  nurseProfiles             NurseProfile[]
+  nurseAvailabilities       NurseAvailability[]
+  nurseRestrictions         NurseRestriction[]
+  vacations                 Vacation[]
+  departmentConfigurations  DepartmentConfiguration[]
+  specialities              Speciality[]
+  shiftChangeRequests       ShiftChangeRequest[]
+  shiftChangeApprovals      ShiftChangeApprovals[]
+  shiftChangeDocuments      ShiftChangeDocument[]
+  notificationTypes         NotificationType[]
+  notificationTemplates     NotificationTemplates[]
+  vacationRegimes           VacationRegime[]
+  vacationEmployeesCategory VacationEmployeeCategory[]
+  documentTemplates         DocumentTemplate[]
+  generatedDocuments        GeneratedDocument[]
+  vacationPolicies          VacationPolicy[]
+  nurseVacationProfiles     NurseVacationProfile[]
+  vacationBalances          VacationBalance[]
+  vacationTransactions      VacationTransaction[]
 
   @@map("organizations")
 }
@@ -257,6 +265,9 @@ model DepartmentConfiguration {
   minimum_staff_per_shift Int
   allow_externeal_support Boolean
   allow_double_shift      Boolean
+  // Restricción operativa configurable por departamento:
+  // máximo de enfermeras simultáneas (mismo día + mismo turno). Null = sin límite.
+  maxSimultaneousNurses    Int?
   createdAt               DateTime     @default(now())
   updatedAt               DateTime     @default(now()) @updatedAt
 
@@ -299,6 +310,7 @@ enum OperationalAlertyTypes {
   BURNOUT_CRITICAL
   STAFFING_SHORTAGE
   SYSTEM_WARNING
+  MISSING_SPECIALIST
 }
 
 model Schedule {
@@ -414,32 +426,34 @@ enum ScheduleEntryStatus {
 }
 
 model Nurse {
-  id                  String                @id @default(uuid())
-  userId              String
-  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  departmentId        String
-  department          Department            @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  contract_type       ContracTypeList       @default(PERMANENT)
-  hire_date           DateTime
-  status              NurseStatusType       @default(ACTIVE)
-  specialityId        String?
-  speciality          Speciality?           @relation(fields: [specialityId], references: [id], onDelete: Cascade)
-  absences            Absence[]
-  nurseAvailabilities NurseAvailability[]
-  workLoadMetrics     WorkLoadMetrics[]
-  vacations           Vacation[]
-  nurseRestrictions   NurseRestriction[]
-  optimizationScores  OptimizationScore[]
-  emergencyCandidates EmergencyCandidates[]
-  organizationId      String
-  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  emergencyCoverages  EmergencyCoverages[]
-  nursePreferences    NursePreferences?
-  scheduleEntries     ScheduleEntry[]
-  nurseProfiles       NurseProfile[]
-  isCrossDepartmental Boolean               @default(false)
-  branchId            String?
-  branch              Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  id                    String                 @id @default(uuid())
+  userId                String
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId          String
+  department            Department             @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  contract_type         ContracTypeList        @default(PERMANENT)
+  hire_date             DateTime
+  status                NurseStatusType        @default(ACTIVE)
+  specialityId          String?
+  speciality            Speciality?            @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+  absences              Absence[]
+  nurseAvailabilities   NurseAvailability[]
+  workLoadMetrics       WorkLoadMetrics[]
+  vacations             Vacation[]
+  nurseRestrictions     NurseRestriction[]
+  optimizationScores    OptimizationScore[]
+  emergencyCandidates   EmergencyCandidates[]
+  organizationId        String
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  emergencyCoverages    EmergencyCoverages[]
+  nursePreferences      NursePreferences?
+  scheduleEntries       ScheduleEntry[]
+  nurseProfiles         NurseProfile[]
+  nurseVacationProfiles NurseVacationProfile[] // NUEVA RELACIÓN
+  generatedDocuments    GeneratedDocument[]
+  isCrossDepartmental   Boolean                @default(false)
+  branchId              String?
+  branch                Branch?                @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   @@unique([userId])
   @@index([branchId])
@@ -467,10 +481,19 @@ model Absence {
   reporter         User          @relation(fields: [reporterById], references: [id], onDelete: Cascade)
   approvedBy       User?         @relation("absence_approver", fields: [approvedById], references: [id])
   branchId         String?
+  vacationId       String?       @unique
+  vacation         Vacation?     @relation(fields: [vacationId], references: [id], onDelete: SetNull)
+  source           AbsenceSource @default(MANUAL)
+  cancelledAt      DateTime?
   branch           Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   @@index([branchId])
   @@map("absences")
+}
+
+enum AbsenceSource {
+  VACATION_REQUEST
+  MANUAL
 }
 
 enum AbsenceType {
@@ -522,74 +545,74 @@ enum VacationTransactionType {
 }
 
 model VacationRegime {
-  id             String @id @default(uuid())
+  id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   code           String
   name           String
-  countryCode    String   @default("DO")
+  countryCode    String       @default("DO")
   legalReference String?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now()) @updatedAt
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
 
   @@unique([organizationId, code])
   @@map("vacation_regimes")
 }
 
 model VacationEmployeeCategory {
-  id              String @id @default(uuid())
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  code            String
-  name            String
-  description     String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @default(now()) @updatedAt
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  description    String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
 
   @@unique([organizationId, code])
   @@map("vacation_employee_categories")
 }
 
 model VacationPolicy {
-  id              String               @id @default(uuid())
-  organizationId  String
-  organization    Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  code            String
-  name            String
-  description     String?
-  countryCode     String               @default("DO")
-  regimeCode      String
-  status          VacationPolicyStatus @default(DRAFT)
-  version         Int                  @default(1)
-  effectiveFrom   DateTime
-  effectiveTo     DateTime?
-  cycleType       VacationCycleType    @default(CALENDAR_YEAR)
-  cycleStartMonth Int                  @default(1)
-  cycleStartDay   Int                  @default(1)
-  dayBasis        VacationDayBasis     @default(WORKING_DAYS)
-  carryForwardEnabled       Boolean  @default(false)
-  maxCarryForwardDays       Decimal? @db.Decimal(6, 2)
-  carryForwardExpiryMonths  Int?
-  minNoticeDays             Int      @default(0)
-  allowPartialDays          Boolean  @default(false)
-  allowSplitting            Boolean  @default(true)
-  maxRequestsPerCycle       Int?
-  reserveOnSubmit           Boolean  @default(false)
-  requiresHrApproval        Boolean  @default(true)
-  legalReference            String?
-  createdById               String?
-  approvedById              String?
-  approvedAt                DateTime?
-  supersedesPolicyId        String?  @unique
-  supersedesPolicy          VacationPolicy?  @relation("PolicyVersion", fields: [supersedesPolicyId], references: [id])
-  supersededByPolicy        VacationPolicy?  @relation("PolicyVersion")
-  rules                     VacationPolicyRule[]
-  profiles                  NurseVacationProfile[]
-  vacations                 Vacation[]
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @default(now()) @updatedAt
+  id                       String                 @id @default(uuid())
+  organizationId           String
+  organization             Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code                     String
+  name                     String
+  description              String?
+  countryCode              String                 @default("DO")
+  regimeCode               String
+  status                   VacationPolicyStatus   @default(DRAFT)
+  version                  Int                    @default(1)
+  effectiveFrom            DateTime
+  effectiveTo              DateTime?
+  cycleType                VacationCycleType      @default(CALENDAR_YEAR)
+  cycleStartMonth          Int                    @default(1)
+  cycleStartDay            Int                    @default(1)
+  dayBasis                 VacationDayBasis // Obligatorio: cómputo de días (calendario/laborables/turnos), sin default
+  carryForwardEnabled      Boolean                @default(false)
+  maxCarryForwardDays      Decimal?               @db.Decimal(6, 2)
+  carryForwardExpiryMonths Int?
+  minNoticeDays            Int                    @default(0)
+  allowPartialDays         Boolean                @default(false)
+  allowSplitting           Boolean                @default(true)
+  maxRequestsPerCycle      Int?
+  reserveOnSubmit          Boolean                @default(false)
+  requiresHrApproval       Boolean                @default(true)
+  legalReference           String?
+  createdById              String?
+  approvedById             String?
+  approvedAt               DateTime?
+  supersedesPolicyId       String?                @unique
+  supersedesPolicy         VacationPolicy?        @relation("PolicyVersion", fields: [supersedesPolicyId], references: [id])
+  supersededByPolicy       VacationPolicy?        @relation("PolicyVersion")
+  rules                    VacationPolicyRule[]
+  profiles                 NurseVacationProfile[]
+  vacations                Vacation[]
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @default(now()) @updatedAt
 
   @@unique([organizationId, code, version])
   @@index([organizationId, status, effectiveFrom])
@@ -597,50 +620,50 @@ model VacationPolicy {
 }
 
 model VacationPolicyRule {
-  id                   String          @id @default(uuid())
+  id                   String            @id @default(uuid())
   policyId             String
-  policy               VacationPolicy  @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  policy               VacationPolicy    @relation(fields: [policyId], references: [id], onDelete: Cascade)
   name                 String
-  priority             Int             @default(1)
+  priority             Int               @default(1)
   seniorityFromMonths  Int
   seniorityToMonths    Int?
-  daysGranted          Decimal         @db.Decimal(6, 2)
-  accrualMethod        String          @default("ANNUAL_GRANT") // ANNUAL_GRANT, MONTHLY_ACCRUAL, PER_WORKED_HOUR
+  daysGranted          Decimal           @db.Decimal(6, 2)
+  accrualMethod        String            @default("ANNUAL_GRANT") // ANNUAL_GRANT, MONTHLY_ACCRUAL, PER_WORKED_HOUR
   contractTypes        ContracTypeList[]
   employeeCategoryCode String?
-  minWeeklyHours       Decimal?        @db.Decimal(5, 2)
+  minWeeklyHours       Decimal?          @db.Decimal(5, 2)
   effectiveFrom        DateTime?
   effectiveTo          DateTime?
-  isActive             Boolean         @default(true)
+  isActive             Boolean           @default(true)
   conditions           Json?
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @default(now()) @updatedAt
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @default(now()) @updatedAt
 
   @@index([policyId, priority])
   @@map("vacation_policy_rules")
 }
 
 model NurseVacationProfile {
-  id                    String          @id @default(uuid())
-  organizationId        String
-  organization          Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  nurseId               String
-  nurse                 Nurse           @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  policyId              String
-  policy                VacationPolicy  @relation(fields: [policyId], references: [id], onDelete: Restrict)
-  regimeCode            String
-  employeeCategoryCode  String?
-  contractType          ContracTypeList?
-  hireDate              DateTime
+  id                      String            @id @default(uuid())
+  organizationId          String
+  organization            Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nurseId                 String
+  nurse                   Nurse             @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  policyId                String
+  policy                  VacationPolicy    @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  regimeCode              String
+  employeeCategoryCode    String?
+  contractType            ContracTypeList?
+  hireDate                DateTime
   recognizedSeniorityDate DateTime
-  effectiveFrom         DateTime
-  effectiveTo           DateTime?
-  isActive              Boolean         @default(true)
-  assignedById          String?
-  notes                 String?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @default(now()) @updatedAt
-  balances              VacationBalance[]
+  effectiveFrom           DateTime
+  effectiveTo             DateTime?
+  isActive                Boolean           @default(true)
+  assignedById            String?
+  notes                   String?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @default(now()) @updatedAt
+  balances                VacationBalance[]
 
   @@unique([nurseId, effectiveFrom])
   @@index([organizationId, policyId, isActive])
@@ -648,28 +671,28 @@ model NurseVacationProfile {
 }
 
 model VacationBalance {
-  id                    String          @id @default(uuid())
-  organizationId        String
-  organization          Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  profileId             String
-  profile               NurseVacationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  policyId              String
-  policyVersion         Int
-  periodStart           DateTime        @db.Date
-  periodEnd             DateTime        @db.Date
-  accruedDays           Decimal         @default(0) @db.Decimal(6, 2)
-  carriedInDays         Decimal         @default(0) @db.Decimal(6, 2)
-  adjustmentDays        Decimal         @default(0) @db.Decimal(6, 2)
-  usedDays              Decimal         @default(0) @db.Decimal(6, 2)
-  reservedDays          Decimal         @default(0) @db.Decimal(6, 2)
-  availableDays         Decimal         @default(0) @db.Decimal(6, 2)
-  expiredDays           Decimal         @default(0) @db.Decimal(6, 2)
-  version               Int             @default(0)
-  policySnapshot        Json
-  closedAt              DateTime?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @default(now()) @updatedAt
-  transactions          VacationTransaction[]
+  id             String                @id @default(uuid())
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  profileId      String
+  profile        NurseVacationProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  policyId       String
+  policyVersion  Int
+  periodStart    DateTime              @db.Date
+  periodEnd      DateTime              @db.Date
+  accruedDays    Decimal               @default(0) @db.Decimal(6, 2)
+  carriedInDays  Decimal               @default(0) @db.Decimal(6, 2)
+  adjustmentDays Decimal               @default(0) @db.Decimal(6, 2)
+  usedDays       Decimal               @default(0) @db.Decimal(6, 2)
+  reservedDays   Decimal               @default(0) @db.Decimal(6, 2)
+  availableDays  Decimal               @default(0) @db.Decimal(6, 2)
+  expiredDays    Decimal               @default(0) @db.Decimal(6, 2)
+  version        Int                   @default(0)
+  policySnapshot Json
+  closedAt       DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @default(now()) @updatedAt
+  transactions   VacationTransaction[]
 
   @@unique([profileId, periodStart, periodEnd])
   @@index([organizationId, periodEnd])
@@ -690,9 +713,6 @@ model VacationTransaction {
   reason         String?
   notes          String?
   idempotencyKey String?                 @unique
-  reversalOfId   String?                 @unique
-  reversalOf     VacationTransaction?    @relation("TransactionReversal", fields: [reversalOfId], references: [id])
-  reversalOf     VacationTransaction?    @relation("TransactionReversal")
   balanceAfter   Json?
   createdById    String?
   createdAt      DateTime                @default(now())
@@ -762,26 +782,39 @@ model WorkLoadMetrics {
 }
 
 model Vacation {
-  id              String         @id @default(uuid())
-  departmentId    String
-  department      Department     @relation(fields: [departmentId], references: [id])
-  organizationId  String
-  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  nurseId         String
-  nurse           Nurse          @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  start_Date      DateTime
-  end_Date        DateTime
-  status          VacationStatus
-  reason          String
-  notes           String
-  approvedById    String?
-  approvedBy      User?          @relation(fields: [approvedById], references: [id])
-  approvedAt      DateTime?
-  rejectionReason String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @default(now()) @updatedAt
-  branchId        String?
-  branch          Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  id                   String                @id @default(uuid())
+  departmentId         String
+  department           Department            @relation(fields: [departmentId], references: [id])
+  organizationId       String
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nurseId              String
+  nurse                Nurse                 @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  startDate            DateTime              @map("start_Date")
+  endDate              DateTime              @map("end_Date")
+  policyId             String?
+  policyVersion        Int?
+  profileId            String?
+  balanceId            String?
+  requestedDays        Decimal?              @db.Decimal(6, 2) // días de disfrute solicitados
+  chargedDays          Decimal?              @db.Decimal(6, 2) // días que descuentan saldo
+  absenceDays          Int? // duración natural de la ausencia
+  payrollDays          Decimal?              @db.Decimal(6, 2) // días para nómina, si aplica
+  status               VacationStatus
+  reason               String
+  notes                String
+  approvedById         String?
+  approvedBy           User?                 @relation(fields: [approvedById], references: [id])
+  approvedAt           DateTime?
+  rejectionReason      String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @default(now()) @updatedAt
+  branchId             String?
+  branch               Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  absence              Absence? // lado opuesto de Absence.vacation (FK en Absence.vacationId)
+  vacationPolicy       VacationPolicy?       @relation(fields: [vacationPolicyId], references: [id])
+  vacationPolicyId     String?
+  vacationTransactions VacationTransaction[]
+  generatedDocuments   GeneratedDocument[]
 
   @@index([branchId])
   @@map("vacations")
@@ -1095,6 +1128,8 @@ model Branch {
   leaves              Leave[]
   nurseAvailabilities NurseAvailability[]
   emergencyCoverages  EmergencyCoverages[]
+  documentTemplates   DocumentTemplate[]
+  generatedDocuments  GeneratedDocument[]
 
   @@unique([organizationId, name])
   @@map("branches")
@@ -1137,6 +1172,125 @@ enum MonthlyDistributionRuleType {
   FAIRNESS_PRIORITY
   DISTRIBUTE_NEW_STAFF
   ICU_ROTATION
+}
+
+// ============================================================================
+// MÓDULO DE DOCUMENTOS (plantillas + generación + auditoría)
+// ============================================================================
+
+enum DocumentTemplateStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum DocumentTemplateFormat {
+  PDF
+  DOCX
+}
+
+enum GeneratedDocumentStatus {
+  GENERATED
+  SUBSTITUTED
+  VOID
+}
+
+enum DocumentActionType {
+  GENERATED
+  VIEWED
+  DOWNLOADED
+  SUBSTITUTED
+  VOIDED
+}
+
+model DocumentTemplate {
+  id                String                 @id @default(uuid())
+  organizationId    String
+  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId          String?
+  branch            Branch?                @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  code              String
+  name              String
+  description       String?
+  documentType      String // VACATION_RECEIPT, ABSENCE_CERTIFICATE, SCHEDULE_REPORT, ...
+  format            DocumentTemplateFormat @default(PDF)
+  header            Json? // título, datos institucionales, colores
+  body              String // plantilla con campos dinámicos {{campo}}
+  footer            Json?
+  logoPath          String? // ruta/URL del logotipo institucional
+  fields            Json? // definición de campos dinámicos disponibles
+  numberingPrefix   String? // prefijo de numeración correlativa, ej: VAC-
+  numberingDigits   Int? // dígitos de la numeración correlativa
+  nextSequence      Int                    @default(1)
+  signatureBlocks   Json? // espacios de firma y aprobaciones
+  isDefault         Boolean                @default(false)
+  status            DocumentTemplateStatus @default(DRAFT)
+  version           Int                    @default(1)
+  effectiveFrom     DateTime               @default(now())
+  effectiveTo       DateTime?
+  supersedesTemplateId String? @unique
+  supersedesTemplate  DocumentTemplate?   @relation("TemplateSupersede", fields: [supersedesTemplateId], references: [id])
+  supersededByTemplate DocumentTemplate?  @relation("TemplateSupersede")
+  retentionDays     Int? // retención/archivo del documento generado (días)
+  createdById       String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @default(now()) @updatedAt
+  documents         GeneratedDocument[]
+
+  @@unique([organizationId, code, version])
+  @@index([organizationId, documentType, status])
+  @@map("document_templates")
+}
+
+model GeneratedDocument {
+  id                 String                  @id @default(uuid())
+  organizationId     String
+  organization       Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId           String?
+  branch             Branch?                 @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  templateId         String
+  template           DocumentTemplate        @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  templateVersion    Int // versión de la plantilla usada al generar (inmutable histórica)
+  documentType       String
+  documentNumber     String? // número correlativo asignado
+  title              String
+  status             GeneratedDocumentStatus @default(GENERATED)
+  filePath           String // ruta de almacenamiento de la copia emitida
+  mimeType           String                  @default("application/pdf")
+  sizeBytes          Int?
+  employeeId         String? // enfermera relacionada (si aplica)
+  employee           Nurse?                  @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  vacationId         String?
+  vacation           Vacation?               @relation(fields: [vacationId], references: [id], onDelete: SetNull)
+  metadata           Json? // datos congelados usados al generar
+  generatedById      String?
+  retentionUntil     DateTime?
+  substitutedById    String? @unique // documento que lo sustituyó
+  substitutedBy      GeneratedDocument?      @relation("DocumentSubstitution", fields: [substitutedById], references: [id])
+  substitutes        GeneratedDocument?      @relation("DocumentSubstitution")
+  voidReason         String?
+  voidedAt           DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @default(now()) @updatedAt
+  actions            DocumentAction[]
+
+  @@index([organizationId, documentType, status])
+  @@index([employeeId])
+  @@index([vacationId])
+  @@map("generated_documents")
+}
+
+model DocumentAction {
+  id          String            @id @default(uuid())
+  documentId  String
+  document    GeneratedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  action      DocumentActionType
+  userId      String?
+  details     Json?
+  createdAt   DateTime          @default(now())
+
+  @@index([documentId, createdAt])
+  @@map("document_actions")
 }
 
 model Integration {
@@ -1919,4 +2073,12 @@ enum ActivityLogType {
   SCHEDULE_PUBLISHED
   SCHEDULE_GENERATION_STARTED
   SCHEDULE_REGENERATED
+  ACCRUAL
+  ADJUSTMENT
+  CARRY_FORWARD
+  EXPIRATION
+  RESERVATION
+  RESERVATION_RELEASE
+  CONSUMPTION
+  REVERSAL
 }

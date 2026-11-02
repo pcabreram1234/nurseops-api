@@ -55,6 +55,8 @@ import { AuditLogModule } from "@modules/audit-log/audit-log.module";
 import { DashboardModule } from "@modules/dashboard/dashboard.module";
 
 import { JwtModule } from "@nestjs/jwt";
+import { VacationPoliciesModule } from "@modules/vacation-policies/vacation-policies.module";
+import { DocumentsModule } from "@modules/documents/documents.module";
 
 @Module({
   imports: [
@@ -87,6 +89,8 @@ import { JwtModule } from "@nestjs/jwt";
     NurseProfilesModule,
     NurseRestrictionsModule,
     VacationsModule,
+    VacationPoliciesModule,
+    DocumentsModule,
     BranchesModule,
     DepartmentsModule,
     NotificationsModule,
