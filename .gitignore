@@ -150,3 +150,7 @@ JWT_SECRET=ABCDFEFAFA324242.@1
 JWT_REFRESH_SECRET=
 
 /generated/prisma
+
+# Runtime storage and backups
+storage/
+prisma/seed.ts.bak
