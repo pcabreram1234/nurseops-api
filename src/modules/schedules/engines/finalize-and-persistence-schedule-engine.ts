@@ -148,12 +148,20 @@ export async function finalizeAndPersistSchedule(
 
             // FASE 4. GUARDAR ALERTAS
             if (conflictReport.hasConflicts && conflictReport.alerts) {
+                // Mapeo del tipo de alerta detectado por el reporte de conflictos
+                // al enum real de Prisma (antes se hardcodeaba STAFF_SHORTAGE y se
+                // perdían NO_NIGHT_COVERAGE / MISSING_SPECIALIST).
+                const alertTypeMap: Record<string, OperationalAlertyTypes> = {
+                    STAFF_SHORTAGE: OperationalAlertyTypes.STAFF_SHORTAGE,
+                    NO_NIGHT_COVERAGE: OperationalAlertyTypes.NO_NIGHT_COVERAGE,
+                    MISSING_SPECIALIST: OperationalAlertyTypes.MISSING_SPECIALIST,
+                };
+
                 const alertsToInsert = conflictReport.alerts.map((alert: any) => ({
                     departmentId: departmentId,
                     message: alert.message,
-                    severity: alert.severity || "HIGH",
-                    // Aquí estaba el error: alert.type debe asignarse a alertType
-                    alertType: OperationalAlertyTypes.STAFF_SHORTAGE
+                    severity: alert.severity || (alert.type === 'NO_NIGHT_COVERAGE' ? 'CRITICAL' : 'HIGH'),
+                    alertType: alertTypeMap[alert.type] ?? OperationalAlertyTypes.STAFF_SHORTAGE
                 }));
 
                 await tx.operationalAlert.createMany({

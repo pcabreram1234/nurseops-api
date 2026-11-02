@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsString, Min } from "class-validator";
+import { IsBoolean, IsInt, IsOptional, IsString, Min } from "class-validator";
 
 export class CreateDepartmentConfigurationDto {
   @IsString()
@@ -20,4 +20,11 @@ export class CreateDepartmentConfigurationDto {
 
   @IsBoolean()
   allow_double_shift!: boolean;
+
+  // Restricción operativa: máximo de enfermeras simultáneas (mismo día + turno).
+  // Opcional: si se omite (o null), el departamento no tiene límite.
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxSimultaneousNurses?: number;
 }

@@ -6,6 +6,7 @@ import { NurseStateTracker } from "../../nurses/interfaces/nurse-state-tracker-i
 import { EngineMetrics } from '../interfaces/schedule-engine-metrics';
 import { evaluateHardRule } from '../rule-engine/evaluators';
 import { evaluateSoftRule } from '../rule-engine/evaluators';
+import { windowsOverlap, TimeWindowLike } from '../utils/simultaneity.util';
 
 export function runAssignmentLoop(
     slots: ScheduleSlot[],
@@ -13,6 +14,28 @@ export function runAssignmentLoop(
     shiftTemplates: ShiftTemplate[],
     departmentId: string // Asumiendo que ahora incluye durationHours, isNight, etc.
 ): { slots: ScheduleSlot[], metrics: EngineMetrics } {
+
+    // ============================================================
+    // RESTRICCIÓN OPERATIVA CONFIGURABLE:
+    // Máximo de enfermeras simultáneas por departamento.
+    // Definida en DepartmentConfiguration.maxSimultaneousNurses (null = sin límite).
+    // ============================================================
+    const deptConfigs: any[] = (context.settings.department as any)?.departmentConfigurations ?? [];
+    const deptConfig = deptConfigs.find((c: any) => c.departmentId === departmentId) ?? deptConfigs[0];
+    const maxSimultaneousNurses: number | null =
+        deptConfig?.maxSimultaneousNurses != null && deptConfig.maxSimultaneousNurses > 0
+            ? deptConfig.maxSimultaneousNurses
+            : null;
+
+    // Ventanas ya ocupadas por día (pre-asignadas + las de esta corrida)
+    const assignedWindowsByDate = new Map<number, TimeWindowLike[]>();
+    for (const s of slots) {
+        if (s.assignedNurseId) {
+            const key = s.date.getTime();
+            if (!assignedWindowsByDate.has(key)) assignedWindowsByDate.set(key, []);
+            assignedWindowsByDate.get(key)!.push(s.shiftInfo);
+        }
+    }
 
     // 1. Inicializar el Tracker para todas las enfermeras
     const nurseStates = new Map<string, NurseStateTracker>();
@@ -90,6 +113,22 @@ export function runAssignmentLoop(
 
         const shiftInfo = templateMap.get(slot.shiftTemplateId);
         if (!shiftInfo) continue;
+
+        // ============================================================
+        // RESTRICCIÓN OPERATIVA: máximo de enfermeras simultáneas.
+        // Si la ventana de este turno ya alcanzó el tope configurado para el
+        // departamento, la ranura queda sin cubrir (generará alerta de cobertura).
+        // ============================================================
+        if (maxSimultaneousNurses !== null) {
+            const windowsToday = assignedWindowsByDate.get(slot.date.getTime()) ?? [];
+            const simultaneousCount = windowsToday.filter((w) => windowsOverlap(w, slot.shiftInfo)).length;
+            if (simultaneousCount >= maxSimultaneousNurses) {
+                console.warn(
+                    `⛔ Límite de enfermeras simultáneas (${maxSimultaneousNurses}) alcanzado en ${slot.date.toISOString().split('T')[0]} para el turno ${shiftInfo.name}. Ranura queda abierta.`,
+                );
+                continue;
+            }
+        }
 
         let bestCandidateId: string | null = null;
         let highestScore = -Infinity;
@@ -175,6 +214,10 @@ export function runAssignmentLoop(
             // 🚀 Actualizar el Map de asignados por fecha para checks O(1) en slots siguientes
             if (!assignedByDate.has(slotDateKey)) assignedByDate.set(slotDateKey, new Set());
             assignedByDate.get(slotDateKey)!.add(bestCandidateId);
+
+            // Contabilidad de simultaneidad (restricción operativa por departamento)
+            if (!assignedWindowsByDate.has(slotDateKey)) assignedWindowsByDate.set(slotDateKey, []);
+            assignedWindowsByDate.get(slotDateKey)!.push(slot.shiftInfo);
 
             const winningState = nurseStates.get(bestCandidateId)!;
 

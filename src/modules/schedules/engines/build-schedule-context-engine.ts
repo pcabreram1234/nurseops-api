@@ -25,7 +25,8 @@ export async function buildScheduleContext(
         orgSettings,
         department,
         nurses,
-        vacations,
+        // En lugar de vacations, usaremos absences de tipo VACATION
+        absences,
         leaves,
         availabilities,
         prevMetrics,
@@ -72,7 +73,7 @@ export async function buildScheduleContext(
                 speciality: true,
                 nurseRestrictions: {
                     where: {
-                        // Solo traer restricciones que crucen o estén vigentes este mes
+                        // Solo traer restricciones que cruzen o estén vigentes este mes
                         OR: [
                             { endDate: { gte: startOfCurrentMonth } },
                             { endDate: null } // Restricciones permanentes
@@ -82,20 +83,20 @@ export async function buildScheduleContext(
             }
         }),
 
-        // -> 3. Bloqueos temporales: Vacaciones (Cruces de fechas)
-        prisma.vacation.findMany({
+        // -> 3. Bloqueos temporales: Ausencias (Cruces de fechas)
+        // Usamos Absence en lugar de Vacation, filtrando por type VACATION y status APPROVED
+        prisma.absence.findMany({
             where: {
                 organizationId: organizationId,
-                nurse: {
-                    OR: [
-                        { departmentId: departmentId },
-                        { isCrossDepartmental: true }
-                    ]
-                },
-                status: { in: ['APPROVED', 'IN_PROGRESS'] },
+                type: "VACATION",
+                status: "APPROVED",
+                OR: [
+                    { nurse: { departmentId: departmentId } },
+                    { nurse: { isCrossDepartmental: true } }
+                ],
                 // Lógica de solapamiento: Inicia antes del fin de mes, y termina después del inicio de mes
-                start_Date: { lte: endOfCurrentMonth },
-                end_Date: { gte: startOfCurrentMonth }
+                date: { lte: endOfCurrentMonth },
+                endDate: { gte: startOfCurrentMonth }
             }
         }),
 
@@ -179,7 +180,7 @@ export async function buildScheduleContext(
         },
         nurses,
         blocks: {
-            vacations,
+            vacations: absences, // Ahora usamos absences en lugar de vacations puros
             leaves,
             availabilities
         },
