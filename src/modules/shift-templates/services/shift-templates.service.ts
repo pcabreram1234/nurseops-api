@@ -67,8 +67,8 @@ export class ShiftTemplatesService {
         ...(isSuperAdmin
           ? {}
           : {
-              organizationId: user.organizationId,
-            }),
+            organizationId: user.organizationId,
+          }),
         ...(query?.branchId && { branchId: query.branchId }),
         ...(query?.departmentId && {
           OR: [
@@ -80,6 +80,9 @@ export class ShiftTemplatesService {
       include: {
         branch: true,
         department: true,
+        organization: {
+          select: { name: true }
+        }
       },
       orderBy: [{ branch: { name: "asc" } }, { name: "asc" }],
     });

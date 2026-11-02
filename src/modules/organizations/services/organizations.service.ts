@@ -1,6 +1,7 @@
 import {
   Injectable,
   ConflictException,
+  BadRequestException,
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@infra/database/prisma.service"; // Ajusta la ruta según tu arquitectura
@@ -156,12 +157,27 @@ export class OrganizationsService {
 
   /**
    * Elimina una organización de la base de datos.
-   * Nota: Tu esquema tiene 'onDelete: Cascade' en cascada para settings y branches,
-   * por lo que borrará todo lo asociado de forma limpia y automática.
+   * FLUJO EN CASCADA: si la organización tiene dependencias operativas
+   * (departamentos, personal, usuarios o historial), se bloquea el borrado
+   * físico y se recomienda la DESACTIVACIÓN, que conserva el historial y
+   * la auditoría intactos (el AuditInterceptor registra ambas acciones).
    */
   async remove(id: string, user: any) {
-    // Verificar si existe primero
-    await this.findOne(id, user);
+    const organization = await this.findOne(id, user);
+
+    const [departments, nurses, users] = await Promise.all([
+      this.prisma.department.count({ where: { organizationId: id } }),
+      this.prisma.nurse.count({ where: { organizationId: id } }),
+      this.prisma.user.count({ where: { organizationId: id } }),
+    ]);
+
+    const dependents = departments + nurses + users;
+    if (dependents > 0) {
+      throw new BadRequestException(
+        "This organization has associated departments, staff or users. " +
+        "Deactivate it instead of deleting it to preserve operational history and auditability.",
+      );
+    }
 
     await this.prisma.organization.delete({
       where: { id },
@@ -169,7 +185,7 @@ export class OrganizationsService {
 
     return {
       deleted: true,
-      message: `The organization with the ID '${id}' and  all its dependecies was deleted successfully.`,
+      message: `The organization '${organization.name}' was deleted successfully.`,
     };
   }
 }

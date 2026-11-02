@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
 import { Prisma } from "@prisma/client";
@@ -130,6 +130,7 @@ export class NursesService {
           id: true,
         },
       },
+      nurseProfiles: true
     };
 
     const orderBy: Prisma.NurseOrderByWithRelationInput = { hire_date: "desc" };
@@ -201,12 +202,12 @@ export class NursesService {
     const branchId =
       dto.branchId || dto.departmentId
         ? await this.resolveBranch(
-            {
-              ...dto,
-              departmentId: dto.departmentId ?? current.departmentId,
-            },
-            user.organizationId,
-          )
+          {
+            ...dto,
+            departmentId: dto.departmentId ?? current.departmentId,
+          },
+          user.organizationId,
+        )
         : undefined;
 
     return this.prisma.nurse.update({
@@ -224,8 +225,29 @@ export class NursesService {
     });
   }
 
+  /**
+   * Elimina una enfermera.
+   * FLUJO EN CASCADA: si existe historial operativo (asignaciones, ausencias,
+   * vacaciones, etc.), se bloquea el borrado físico y se recomienda marcarla
+   * como INACTIVE, conservando el historial y la auditoría.
+   */
   async remove(id: string, user: any) {
     await this.findOne(id, user);
+
+    const [scheduleEntries, absences, vacations, leaves] = await Promise.all([
+      this.prisma.scheduleEntry.count({ where: { nurseId: id } }),
+      this.prisma.absence.count({ where: { nurseId: id } }),
+      this.prisma.vacation.count({ where: { nurseId: id } }),
+      this.prisma.leave.count({ where: { userId: id } }),
+    ]);
+
+    const operationalRecords = scheduleEntries + absences + vacations + leaves;
+    if (operationalRecords > 0) {
+      throw new BadRequestException(
+        "This nurse has operational records (assignments, absences or vacations). " +
+        "Mark the profile as INACTIVE instead of deleting it to preserve history and auditability.",
+      );
+    }
 
     return this.prisma.nurse.delete({
       where: {

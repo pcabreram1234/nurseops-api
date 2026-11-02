@@ -370,8 +370,46 @@ export class DepartmentsService {
   |--------------------------------------------------------------------------
   */
 
+  /**
+   * Elimina un departamento.
+   * FLUJO EN CASCADA: si tiene personal o historial operativo, se bloquea el
+   * borrado físico y se recomienda DESACTIVARLO (isActive=false). Al
+   * desactivarlo, la asociación con las sucursales (DepartmentBranch) se
+   * conserva para trazabilidad histórica, pero el frontend lo muestra marcado
+   * como inactivo en lugar de contar como departamento operativo.
+   * El AuditInterceptor registra la acción con el estado previo.
+   */
   async remove(id: string, user: any) {
     await this.findOne(id, user);
+
+    const [
+      nurses,
+      users,
+      schedules,
+      scheduleEntries,
+      shiftTemplates,
+      configurations,
+    ] = await Promise.all([
+      this.prisma.nurse.count({ where: { departmentId: id } }),
+      this.prisma.user.count({ where: { departmentId: id } }),
+      this.prisma.schedule.count({ where: { departmentId: id } }),
+      this.prisma.scheduleEntry.count({
+        where: { shiftTemplate: { departmentId: id } },
+      }),
+      this.prisma.shiftTemplate.count({ where: { departmentId: id } }),
+      this.prisma.departmentConfiguration.count({ where: { departmentId: id } }),
+    ]);
+
+    const operationalRecords =
+      nurses + users + schedules + scheduleEntries + shiftTemplates + configurations;
+
+    if (operationalRecords > 0) {
+      throw new BadRequestException(
+        "This department has staff, schedules or operational records. " +
+        "Deactivate it instead of deleting it to preserve history and auditability.",
+      );
+    }
+
     return this.prisma.department.delete({
       where: {
         id,

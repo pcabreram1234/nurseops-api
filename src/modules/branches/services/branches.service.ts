@@ -57,7 +57,7 @@ export class BranchesService {
           include: {
             departments: {
               include: {
-                department: { select: { id: true, name: true, code: true } },
+                department: { select: { id: true, name: true, code: true, isActive: true } },
               },
             },
             organization: true,
@@ -101,7 +101,7 @@ export class BranchesService {
       include: {
         departments: {
           include: {
-            department: { select: { id: true, name: true, code: true } },
+            department: { select: { id: true, name: true, code: true, isActive: true } },
           },
         },
         organization: true,

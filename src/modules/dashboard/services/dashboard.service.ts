@@ -87,12 +87,13 @@ export class DashboardService {
           status: { in: ['PENDING', 'APPROVED'] },
         },
       }),
-      this.prisma.vacation.count({
+      this.prisma.absence.count({
         where: {
           ...orgFilter,
+          type: 'VACATION',
           status: 'APPROVED',
-          start_Date: { lte: endOfToday },
-          end_Date: { gte: startOfToday },
+          date: { lte: endOfToday },
+          endDate: { gte: startOfToday },
         },
       }),
       this.prisma.activityLog.findMany({

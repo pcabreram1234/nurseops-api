@@ -37,7 +37,7 @@ export class WorkRulesService {
       ];
     }
 
-    const orderBy = { createdAt: "desc" } as Prisma.WorkRuleOrderByWithRelationInput;
+    // const orderBy = { createdAt: "desc" } as Prisma.WorkRuleOrderByWithRelationInput;
 
     // Paginación opcional
     if (query.page || query.limit) {
@@ -46,7 +46,7 @@ export class WorkRulesService {
       const [data, total] = await Promise.all([
         this.prisma.workRule.findMany({
           where,
-          orderBy,
+          // orderBy,
           skip: (page - 1) * limit,
           take: limit,
         }),
@@ -60,7 +60,7 @@ export class WorkRulesService {
 
     return this.prisma.workRule.findMany({
       where,
-      orderBy,
+      // orderBy,
     });
   }
 
