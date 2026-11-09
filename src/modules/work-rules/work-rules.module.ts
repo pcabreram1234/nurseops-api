@@ -11,6 +11,10 @@ import { WorkRuleEngineService } from "./services/work-rule-engine.service";
 import { MaxHoursValidator } from "./validators/max-hours.validator";
 import { NightShiftsValidator } from "./validators/night-shifts.validator";
 import { ConsecutiveDaysValidator } from "./validators/consecutive-days.validator";
+import { RestBetweenShiftsValidator } from "./validators/rest-between-shifts.validator";
+import { SpecialtyValidator } from "./validators/specialty.validator";
+import { DepartmentCoverageValidator } from "./validators/department-coverage.validator";
+import { AvailabilityValidator } from "./validators/availability.validator";
 import { WorkRuleListener } from "./listeners/work-rule.listener";
 import { WorkRuleRegistryService } from "./services/work-rule-registry.service";
 
@@ -31,6 +35,14 @@ import { WorkRuleRegistryService } from "./services/work-rule-registry.service";
     NightShiftsValidator,
 
     ConsecutiveDaysValidator,
+
+    RestBetweenShiftsValidator,
+
+    SpecialtyValidator,
+
+    DepartmentCoverageValidator,
+
+    AvailabilityValidator,
 
     WorkRuleListener,
   ],

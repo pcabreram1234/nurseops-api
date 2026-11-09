@@ -1,6 +1,6 @@
 import {
   IsNotEmpty,
-  IsString,
+  IsString, IsOptional, IsNumberString
 } from 'class-validator';
 
 export class CreatePermissionDto {
@@ -9,9 +9,13 @@ export class CreatePermissionDto {
   name!: string;
 
   @IsString()
-  @IsNotEmpty()
-  module!: string;
-
-  @IsString()
   description!: string;
+
+  @IsOptional()
+  @IsNumberString()
+  page?: string;
+
+  @IsOptional()
+  @IsNumberString()
+  limit?: string;
 }

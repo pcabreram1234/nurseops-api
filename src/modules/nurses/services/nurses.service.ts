@@ -72,8 +72,24 @@ export class NursesService {
   }
 
   async findAll(query: any, user: any) {
+    const userRole = user.role?.toUpperCase();
+
+    // 🔒 Restricción por organización según el rol
+    let organizationCondition = {};
+    if (userRole === "SUPER") {
+      organizationCondition = {}; // Sin restricciones de organización
+    } else {
+      organizationCondition = { organizationId: user.organizationId };
+    }
+
+    // 🔒 Restricción por usuario individual si es rol de enfermería
+    const isNurseRole = ["NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE"].includes(userRole);
+    const nurseSpecificCondition = isNurseRole ? { userId: user.id || user.sub } : {};
+
     const where: Prisma.NurseWhereInput = {
-      organizationId: user.organizationId,
+      ...organizationCondition,
+      ...nurseSpecificCondition,
+
       ...(query.search && {
         OR: [
           {
@@ -99,6 +115,9 @@ export class NursesService {
       }),
       ...(query.contractType && {
         contractType: query.contractType,
+      }),
+      ...(query.specialityId && {
+        specialityId: query.specialityId,
       }),
     };
 
@@ -163,12 +182,27 @@ export class NursesService {
   }
 
   async findOne(id: string, user: any) {
-    const nurse = await this.prisma.nurse.findFirst({
-      where: {
-        id,
-        organizationId: user.organizationId,
-      },
+    const userRole = user.role?.toUpperCase();
 
+    // 🔒 Construcción dinámica de la condición `where` según el rol
+    let whereCondition: any = { id };
+
+    if (userRole === "SUPER") {
+      // SUPER puede buscar por ID sin restringir organizationId
+      whereCondition = { id };
+    } else {
+      // Resto de roles se limitan a su propia organización
+      whereCondition.organizationId = user.organizationId;
+
+      // Si es un rol de enfermería, solo puede ver su propio registro (basado en su userId/sub)
+      const isNurseRole = ["NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE"].includes(userRole);
+      if (isNurseRole) {
+        whereCondition.userId = user.id || user.sub;
+      }
+    }
+
+    const nurse = await this.prisma.nurse.findFirst({
+      where: whereCondition,
       include: {
         workLoadMetrics: true,
         branch: true,
@@ -187,7 +221,7 @@ export class NursesService {
           },
         },
       },
-    });
+    })
 
     if (!nurse) {
       throw new NotFoundException("Nurse not found");

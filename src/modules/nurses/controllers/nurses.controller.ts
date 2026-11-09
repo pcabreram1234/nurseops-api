@@ -16,6 +16,8 @@ import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
@@ -36,18 +38,21 @@ export class NursesController {
   constructor(private readonly nursesService: NursesService) { }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("CREATE_NURSE")
   create(@Body() dto: CreateNurseDto, @CurrentUser() user: any) {
     return this.nursesService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_NURSES")
   findAll(@Query() query: NurseFilterDto, @CurrentUser() user: any) {
     return this.nursesService.findAll(query, user);
   }
 
   @Get(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_NURSE")
   findOne(@Param("id") id: string, @CurrentUser() user: any) {
     return this.nursesService.findOne(id, user);
@@ -60,6 +65,7 @@ export class NursesController {
   }
 
   @Delete(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("DELETE_NURSE")
   remove(@Param("id") id: string, @CurrentUser() user: any) {
     return this.nursesService.remove(id, user);

@@ -1,10 +1,13 @@
 import {
   IsBoolean,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
   Min,
 } from "class-validator";
+
+import { PreferredShift } from "@prisma/client";
 
 export class CreateShiftTemplateDto {
   @IsString()
@@ -17,8 +20,12 @@ export class CreateShiftTemplateDto {
   @IsString()
   departmentId?: string;
 
+  @IsEnum(PreferredShift)
+  type!: PreferredShift;
+
+  @IsOptional()
   @IsString()
-  name!: string;
+  name?: string;
 
   @IsOptional()
   @IsString()

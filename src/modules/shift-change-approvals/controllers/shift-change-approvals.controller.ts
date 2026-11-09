@@ -6,6 +6,8 @@ import { ApproveShiftChangeDto } from '../dto/approve-shift-change.dto';
 import { RejectShiftChangeDto } from '../dto/reject-shift-change.dto';
 import { ShiftChangeApprovalFilterDto } from '../dto/shift-change-approval-filter.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guards';
+import { Roles } from '@modules/auth/decorators/roles.decorator';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import { Permissions } from '@modules/auth/decorators/permissions.decorator';
 import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';

@@ -22,36 +22,47 @@ import { RolesGuard } from "@modules/auth/guards/roles.guards";
 
 import { Roles } from "@modules/auth/decorators/roles.decorator";
 
+import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
+
+import { Permissions } from "@modules/auth/decorators/permissions.decorator";
+
+import { PERMISSIONS } from "@modules/permissions/constants/permissions.constants";
+
 @Controller({
   path: "permissions",
   version: "1",
 })
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Roles("SUPER")
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Post()
+  @Permissions(PERMISSIONS.ROLES.MANAGE)
   create(@Body() dto: CreatePermissionDto) {
     return this.permissionsService.create(dto);
   }
 
   @Get()
+  @Permissions(PERMISSIONS.ROLES.MANAGE)
   findAll(@Query() query: QueryPermissionsDto) {
     return this.permissionsService.findAll(query);
   }
 
   @Get(":id")
+  @Permissions(PERMISSIONS.ROLES.MANAGE)
   findOne(@Param("id") id: string) {
     return this.permissionsService.findOne(id);
   }
 
   @Patch(":id")
+  @Permissions(PERMISSIONS.ROLES.MANAGE)
   update(@Param("id") id: string, @Body() body: any) {
     return this.permissionsService.update(id, body);
   }
 
   @Delete(":id")
+  @Permissions(PERMISSIONS.ROLES.MANAGE)
   remove(@Param("id") id: string) {
     return this.permissionsService.remove(id);
   }

@@ -4,5 +4,6 @@ export class OperationalAlertCreatedEvent {
         public readonly departmentId: string,
         public readonly alertType: string,
         public readonly severity: string,
+        public readonly organizationId: string,
     ) { }
 }

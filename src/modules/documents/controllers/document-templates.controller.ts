@@ -13,6 +13,7 @@ import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
+import { Roles } from "@modules/auth/decorators/roles.decorator"
 
 import {
   CreateDocumentTemplateDto,
@@ -25,8 +26,9 @@ import { DocumentTemplatesService } from "../services/document-templates.service
   version: "1",
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
+@Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
 export class DocumentTemplatesController {
-  constructor(private readonly service: DocumentTemplatesService) {}
+  constructor(private readonly service: DocumentTemplatesService) { }
 
   @Get()
   @Permissions("VIEW_DOCUMENT_TEMPLATES")

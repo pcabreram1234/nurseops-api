@@ -5,9 +5,10 @@ import { CreateWebhookLogDto } from '../dto/create-webhook-log.dto';
 import { WebhookLogFilterDto } from '../dto/webhook-log-filter.dto';
 import { ReplayWebhookDto } from '../dto/replay-webhook.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guards';
+import { Roles } from '@modules/auth/decorators/roles.decorator';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import { Permissions } from '@modules/auth/decorators/permissions.decorator';
-import { Roles } from '@modules/auth/decorators/roles.decorator';
 
 @Controller({ path: 'webhook-logs', version: '1' })
 @Roles("SUPER")

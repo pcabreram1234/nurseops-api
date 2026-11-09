@@ -26,35 +26,39 @@ import { OvertimeValidator } from "./validators/overtime.validator";
 
 import { NurseAvailabilityValidator } from "./validators/nurse-availability.validator";
 
+import { ShiftChangeRespondedListener } from "./listeners/shift-change-responded.listener";
+import { ShiftChangeCancelledListener } from "./listeners/shift-change-cancelled.listener";
+import { NotificationsModule } from "@modules/notifications/notifications.module";
+
+import { SchedulesModule } from "@modules/schedules/schedules.module";
+
+import { WorkRulesModule } from "@modules/work-rules/work-rules.module";
+
 @Module({
-  imports: [PrismaModule],
-
+  imports: [
+    PrismaModule,
+    NotificationsModule,
+    SchedulesModule,
+    WorkRulesModule,
+  ],
   controllers: [ShiftChangeRequestsController],
-
   providers: [
     ShiftChangeRequestsService,
-
     ShiftChangeEngineService,
-
     ShiftChangeGateway,
-
     ShiftChangeValidatorService,
-
     ShiftChangeRiskService,
-
     ShiftChangeAIService,
-
     ShiftChangeAuditService,
-
     ShiftChangeNotificationService,
-
     ShiftCompatibilityValidator,
-
     OvertimeValidator,
-
     NurseAvailabilityValidator,
-  ],
 
+    ShiftChangeRespondedListener,
+
+    ShiftChangeCancelledListener,
+  ],
   exports: [ShiftChangeRequestsService],
 })
 export class ShiftChangeRequestsModule {}

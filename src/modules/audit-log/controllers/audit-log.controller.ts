@@ -5,6 +5,7 @@ import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 import { AuditLogService } from "../services/audit-log.service";
 import { AuditLogFilterDto } from "../dto/audit-log-filter.dto";
+import { Roles } from "@modules/auth/decorators/roles.decorator"
 
 /**
  * 📖 Auditoría (AuditLog) — EXCLUSIVAMENTE SOLO LECTURA.
@@ -19,15 +20,17 @@ import { AuditLogFilterDto } from "../dto/audit-log-filter.dto";
 @Controller({ path: "audit-logs", version: "1" })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AuditLogController {
-  constructor(private readonly service: AuditLogService) {}
+  constructor(private readonly service: AuditLogService) { }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN",)
   @Permissions("READ_AUDIT_LOGS")
   findAll(@Query() filters: AuditLogFilterDto, @CurrentUser() user: any) {
     return this.service.findAll(filters, user);
   }
 
   @Get(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN",)
   @Permissions("READ_AUDIT_LOGS")
   findOne(@Param("id") id: string, @CurrentUser() user: any) {
     return this.service.findOne(id, user);

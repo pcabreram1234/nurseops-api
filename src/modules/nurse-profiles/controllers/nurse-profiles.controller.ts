@@ -13,6 +13,10 @@ import { NurseProfilesService } from "../services/nurse-profiles.service";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { RolesGuard } from "@modules/auth/guards/roles.guards";
+
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -29,27 +33,31 @@ import { NurseProfileFilterDto } from "../dto/nurse-profile-filter.dto";
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class NurseProfilesController {
-  constructor(private readonly nurseProfilesService: NurseProfilesService) {}
+  constructor(private readonly nurseProfilesService: NurseProfilesService) { }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("CREATE_NURSE_PROFILE")
   create(@Body() dto: CreateNurseProfileDto, @CurrentUser() user: any) {
     return this.nurseProfilesService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_NURSE_PROFILES")
   findAll(@Query() query: NurseProfileFilterDto, @CurrentUser() user: any) {
     return this.nurseProfilesService.findAll(query, user);
   }
 
   @Get(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_NURSE_PROFILE")
   findOne(@Param("id") id: string, @CurrentUser() user: any) {
     return this.nurseProfilesService.findOne(id, user);
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("UPDATE_NURSE_PROFILE")
   update(@Param("id") id: string, @Body() dto: UpdateNurseProfileDto, @CurrentUser() user: any) {
     return this.nurseProfilesService.update(id, dto, user);

@@ -8,7 +8,7 @@ export class StaffingShortageListener {
     constructor(private readonly detectionService: AlertDetectionService) { }
 
     @OnEvent(ALERT_SYSTEM_LISTENERS.STAFFING_SHORTAGE)
-    async handleShortage(payload: { departmentId: string; missingStaffCount: number }) {
-        await this.detectionService.triggerAutomatedAlert(payload.departmentId, 'STAFFING_SHORTAGE' as any, payload);
+    async handleShortage(payload: { departmentId: string; missingStaffCount: number; organizationId?: string }) {
+        await this.detectionService.triggerAutomatedAlert(payload.departmentId, 'STAFFING_SHORTAGE' as any, payload, payload.organizationId);
     }
 }

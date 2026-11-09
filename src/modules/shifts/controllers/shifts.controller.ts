@@ -14,6 +14,10 @@ import { ShiftsService } from "../services/shifts.service";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { RolesGuard } from "@modules/auth/guards/roles.guards";
+
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -35,24 +39,28 @@ export class ShiftsController {
   constructor(private readonly shiftsService: ShiftsService) {}
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "DEPARTMENT_HEAD")
   @Permissions("CREATE_SHIFT")
   create(@Body() dto: CreateShiftDto, @CurrentUser() user: any) {
     return this.shiftsService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_SHIFTS")
   findAll(@Query() query: ShiftFilterDto, @CurrentUser() user: any) {
     return this.shiftsService.findAll(query, user);
   }
 
   @Get(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_SHIFT")
   findOne(@Param("id") id: string, @CurrentUser() user: any) {
     return this.shiftsService.findOne(id, user);
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "DEPARTMENT_HEAD")
   @Permissions("UPDATE_SHIFT")
   update(
     @Param("id") id: string,
@@ -63,6 +71,7 @@ export class ShiftsController {
   }
 
   @Delete(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN")
   @Permissions("DELETE_SHIFT")
   remove(@Param("id") id: string, @CurrentUser() user: any) {
     return this.shiftsService.remove(id, user);

@@ -8,4 +8,6 @@ export interface WorkRuleResult {
   severity?: "LOW" | "MEDIUM" | "HIGH";
 
   metadata?: Record<string, any>;
+
+  skipped?: boolean;
 }

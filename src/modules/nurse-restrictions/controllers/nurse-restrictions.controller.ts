@@ -27,13 +27,13 @@ import { NurseRestrictionFilterDto } from "../dto/nurse-restriction-filter.dto";
   version: "1",
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
-@Roles("ADMIN", "SUPER")
 export class NurseRestrictionsController {
   constructor(
     private readonly nurseRestrictionsService: NurseRestrictionsService,
   ) { }
 
   @Post("sync")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("CREATE_NURSE_RESTRICTION")
   syncRestrictions(@Body() dto: SyncNurseRestrictionDto, @CurrentUser() user: any) {
     const payload = {
@@ -44,24 +44,28 @@ export class NurseRestrictionsController {
   }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("CREATE_NURSE_RESTRICTION")
   create(@Body() dto: CreateNurseRestrictionDto, @CurrentUser() user: any) {
     return this.nurseRestrictionsService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_NURSE_RESTRICTIONS")
   findAll(@Query() query: NurseRestrictionFilterDto, @CurrentUser() user: any) {
     return this.nurseRestrictionsService.findAll(query, user);
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("UPDATE_NURSE_RESTRICTION")
   update(@Param("id") id: string, @Body() dto: UpdateNurseRestrictionDto, @CurrentUser() user: any) {
     return this.nurseRestrictionsService.update(id, dto, user);
   }
 
   @Delete(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("DELETE_NURSE_RESTRICTION")
   remove(@Param("id") id: string, @CurrentUser() user: any) {
     return this.nurseRestrictionsService.remove(id, user);

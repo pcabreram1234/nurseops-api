@@ -37,17 +37,31 @@ export class NotificationsService {
   }
 
   async findAll(user: any, filters: NotificationFilterDto) {
+    // Determinamos el rol del usuario (ajusta la propiedad según cómo guardes el rol en tu objeto user/jwt)
+    const role = user.role || user.roles?.[0];
+
+    // Construimos la condición base del 'where'
+    const where: any = {
+      ...(filters.unreadOnly && {
+        readedAt: null,
+      }),
+    };
+
+    // Aplicamos la regla según el rol:
+    if (role === "SUPER") {
+      // 1. SUPER: Muestra todas las notificaciones del sistema (sin restricciones de organización ni usuario)
+      // No se agrega organizationId ni userId al where.
+    } else if (role === "SYSTEM" || role === "SYSTEM_ADMIN") {
+      // 2. SYSTEM / SYSTEM_ADMIN: Todas las notificaciones de su propia organización
+      where.organizationId = user.organizationId;
+    } else {
+      // 3. Cualquier otro rol (ej: Enfermeras): Únicamente las notificaciones de su propio userId y su organización
+      where.organizationId = user.organizationId;
+      where.userId = user.sub; // o user.id según cómo almacenes el ID del usuario
+    }
+
     return this.prisma.notification.findMany({
-      where: {
-        organizationId: user.organizationId,
-
-        userId: user.sub,
-
-        ...(filters.unreadOnly && {
-          readedAt: null,
-        }),
-      },
-
+      where,
       orderBy: {
         createdAt: "desc",
       },

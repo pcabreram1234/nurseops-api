@@ -13,6 +13,8 @@ import { NursePreferencesService } from "../services/nurse-preferences.service";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -33,21 +35,24 @@ import { NursePreferenceFilterDto } from "../dto/nurse-preference-filter.dto";
 export class NursePreferencesController {
   constructor(
     private readonly nursePreferencesService: NursePreferencesService,
-  ) {}
+  ) { }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR")
   @Permissions("CREATE_NURSE_PREFERENCE")
   create(@Body() dto: CreateNursePreferenceDto, @CurrentUser() user: any) {
     return this.nursePreferencesService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR")
   @Permissions("VIEW_NURSE_PREFERENCES")
   findAll(@Query() query: NursePreferenceFilterDto, @CurrentUser() user: any) {
     return this.nursePreferencesService.findAll(query, user);
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR")
   @Permissions("UPDATE_NURSE_PREFERENCE")
   update(@Param("id") id: string, @Body() dto: UpdateNursePreferenceDto, @CurrentUser() user: any) {
     return this.nursePreferencesService.update(id, dto, user);

@@ -2,25 +2,43 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma.service';
 import { OperationalAlertFilterDto } from '../dto/operational-alert-filter.dto';
 
+/** Contexto de usuario para aislamiento por organización. */
+export interface UserOrgContext {
+    organizationId?: string;
+    role?: string;
+}
+
 @Injectable()
 export class OperationalAlertsService {
     constructor(private readonly prisma: PrismaService) { }
 
-    /** Where compartido entre findAll y stats. */
-    private buildWhere(filters: OperationalAlertFilterDto) {
-        return {
+    /** Where compartido entre findAll y stats, con aislamiento por organización. */
+    private buildWhere(filters: OperationalAlertFilterDto, userOrg?: UserOrgContext) {
+        const where: any = {
             ...(filters.departmentId && { departmentId: filters.departmentId }),
+            ...(filters.organizationId && { organizationId: filters.organizationId }),
             ...(filters.status && { status: filters.status }),
             ...(filters.severity && { severity: filters.severity }),
             ...(filters.search && {
                 message: { contains: filters.search, mode: 'insensitive' as const },
             }),
         };
+
+        // Aislamiento por organización: usuarios no-SUPER solo ven alertas de su organización
+        if (userOrg && userOrg.role !== 'SUPER') {
+            if (userOrg.organizationId) {
+                where.organizationId = userOrg.organizationId;
+            }
+            // Si no hay organizationId en el contexto, no se aplica filtro adicional
+            // (backward compatible: se mantiene el comportamiento anterior)
+        }
+
+        return where;
     }
 
     /** Agregados por estado y severidad para los indicadores del dashboard. */
-    async stats(filters: OperationalAlertFilterDto) {
-        const where = this.buildWhere(filters);
+    async stats(filters: OperationalAlertFilterDto, userOrg?: UserOrgContext) {
+        const where = this.buildWhere(filters, userOrg);
 
         const [total, byStatus, bySeverity, criticalOpen] = await Promise.all([
             this.prisma.operationalAlert.count({ where }),
@@ -57,11 +75,12 @@ export class OperationalAlertsService {
         };
     }
 
-    async findAll(filters: OperationalAlertFilterDto) {
-        const where = this.buildWhere(filters);
+    async findAll(filters: OperationalAlertFilterDto, userOrg?: UserOrgContext) {
+        const where = this.buildWhere(filters, userOrg);
 
         const include = {
             department: { select: { id: true, name: true } },
+            organization: { select: { id: true, name: true } },
         };
 
         const orderBy = [
@@ -93,12 +112,66 @@ export class OperationalAlertsService {
         return this.prisma.operationalAlert.findMany({ where, include, orderBy });
     }
 
-    async findOne(id: string) {
+    async findOne(id: string, userOrg?: UserOrgContext) {
+        const where: any = { id };
+
+        // Aislamiento: usuarios no-SUPER solo pueden acceder a alertas de su organización
+        if (userOrg && userOrg.role !== 'SUPER') {
+            if (userOrg.organizationId) {
+                where.organizationId = userOrg.organizationId;
+            }
+        }
+
         const alert = await this.prisma.operationalAlert.findUnique({
-            where: { id },
-            include: { department: { select: { id: true, name: true } } },
+            where,
+            include: { department: { select: { id: true, name: true } }, organization: { select: { id: true, name: true } } },
         });
         if (!alert) throw new NotFoundException('Non-existent operational alert.');
         return alert;
+    }
+
+    async create(dto: any, userOrg?: UserOrgContext) {
+        // Derivar organizationId: prioridad al DTO, luego al contexto de usuario
+        let organizationId = dto.organizationId;
+
+        if (!organizationId && userOrg?.organizationId) {
+            organizationId = userOrg.organizationId;
+        }
+
+        // Validar que el departmentId pertenece a la organización (si hay ambos)
+        if (organizationId && dto.departmentId) {
+            const dept = await this.prisma.department.findUnique({
+                where: { id: dto.departmentId },
+                select: { organizationId: true },
+            });
+            if (dept && dept.organizationId !== organizationId) {
+                throw new NotFoundException('The department does not belong to the specified organization.');
+            }
+        }
+
+        return this.prisma.operationalAlert.create({
+            data: {
+                ...dto,
+                ...(organizationId && { organizationId }),
+            },
+            include: {
+                department: { select: { id: true, name: true } },
+                organization: { select: { id: true, name: true } },
+            },
+        });
+    }
+
+    async update(id: string, dto: any, userOrg?: UserOrgContext) {
+        // Verificar que la alerta pertenece a la organización del usuario (si aplica)
+        const current = await this.findOne(id, userOrg);
+
+        return this.prisma.operationalAlert.update({
+            where: { id },
+            data: dto,
+            include: {
+                department: { select: { id: true, name: true } },
+                organization: { select: { id: true, name: true } },
+            },
+        });
     }
 }

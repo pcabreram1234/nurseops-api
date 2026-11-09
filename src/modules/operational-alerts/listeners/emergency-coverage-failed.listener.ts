@@ -8,7 +8,7 @@ export class EmergencyCoverageFailedListener {
     constructor(private readonly detectionService: AlertDetectionService) { }
 
     @OnEvent(ALERT_SYSTEM_LISTENERS.EMERGENCY_COVERAGE_FAILED)
-    async handleEmergencyFailed(payload: { departmentId: string; shiftId: string }) {
-        await this.detectionService.triggerAutomatedAlert(payload.departmentId, 'EMERGENCY_COVERAGE_FAILED' as any, payload);
+    async handleEmergencyFailed(payload: { departmentId: string; shiftId: string; organizationId?: string }) {
+        await this.detectionService.triggerAutomatedAlert(payload.departmentId, 'EMERGENCY_COVERAGE_FAILED' as any, payload, payload.organizationId);
     }
 }

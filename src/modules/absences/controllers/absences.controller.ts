@@ -13,6 +13,8 @@ import { AbsencesService } from "@modules/absences/services/absences.service";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -35,18 +37,21 @@ export class AbsencesController {
 
   @ApiOperation({ summary: "Crear Ausencias", })
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "DEPARTMENT_HEAD", "HR_MANAGER", "NIGHT_SUPERVISOR")
   @Permissions("CREATE_ABSENCE")
   create(@Body() dto: CreateAbsenceDto, @CurrentUser() user: any) {
     return this.absencesService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "DEPARTMENT_HEAD", "HR_MANAGER", "NIGHT_SUPERVISOR")
   @Permissions("VIEW_ABSENCES")
   findAll(@Query() query: AbsenceFilterDto, @CurrentUser() user: any) {
     return this.absencesService.findAll(query, user);
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("UPDATE_ABSENCE")
   update(@Param("id") id: string, @Body() dto: UpdateAbsenceDto, @CurrentUser() user: any) {
     return this.absencesService.update(id, dto, user);

@@ -69,7 +69,7 @@ export class DashboardService {
       this.prisma.operationalAlert.count({
         where: {
           status: { in: ['OPEN', 'IN_PROGRESS', 'ESCALATED'] },
-          ...(orgFilter.organizationId ? { department: { organizationId: orgFilter.organizationId } } : {}),
+          ...(orgFilter.organizationId ? { organizationId: orgFilter.organizationId } : {}),
           ...(filters?.departmentId ? { departmentId: filters.departmentId } : {}),
         },
       }),
@@ -77,7 +77,7 @@ export class DashboardService {
         where: {
           status: { in: ['OPEN', 'IN_PROGRESS', 'ESCALATED'] },
           severity: { in: ['CRITICAL', 'URGENT'] },
-          ...(orgFilter.organizationId ? { department: { organizationId: orgFilter.organizationId } } : {}),
+          ...(orgFilter.organizationId ? { organizationId: orgFilter.organizationId } : {}),
           ...(filters?.departmentId ? { departmentId: filters.departmentId } : {}),
         },
       }),
@@ -152,7 +152,7 @@ export class DashboardService {
     const recentAlerts = await this.prisma.operationalAlert.findMany({
       where: {
         status: { in: ['OPEN', 'IN_PROGRESS', 'ESCALATED'] },
-        ...(orgFilter.organizationId ? { department: { organizationId: orgFilter.organizationId } } : {}),
+        ...(orgFilter.organizationId ? { organizationId: orgFilter.organizationId } : {}),
         ...(filters?.departmentId ? { departmentId: filters.departmentId } : {}),
       },
       take: 10,

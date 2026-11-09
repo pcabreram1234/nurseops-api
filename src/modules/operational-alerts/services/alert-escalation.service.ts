@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@infra/database/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ALERT_EVENTS, ALERT_MAX_UNRESOLVED_TIME_MS } from '../constants/operational-alerts.constants';
 import { OperationalAlertEscalatedEvent } from '../events/operational-alert-escalated.event';
 import { AlertNotificationService } from './alert-notification.service';
 import { AlertChannel } from '../enums/alert-channel.enum';
+import { UserOrgContext } from './operational-alerts.service';
 
 @Injectable()
 export class AlertEscalationService {
@@ -16,8 +17,17 @@ export class AlertEscalationService {
         private readonly notification: AlertNotificationService,
     ) { }
 
-    async escalateToNextTier(alertId: string, reason: string): Promise<void> {
-        const alert = await this.prisma.operationalAlert.findUnique({ where: { id: alertId } });
+    async escalateToNextTier(alertId: string, reason: string, userOrg?: UserOrgContext): Promise<void> {
+        const where: any = { id: alertId };
+
+        // Aislamiento: usuarios no-SUPER solo pueden escalar alertas de su organización
+        if (userOrg && userOrg.role !== 'SUPER') {
+            if (userOrg.organizationId) {
+                where.organizationId = userOrg.organizationId;
+            }
+        }
+
+        const alert = await this.prisma.operationalAlert.findUnique({ where });
         if (!alert || alert.status === 'RESOLVED') return;
 
         this.logger.warn(`[AUTOMATIC SCALING]: Alert ${alertId} wasn't treated in time. (Raising rank).`);
@@ -36,11 +46,17 @@ export class AlertEscalationService {
      * Evalúa el tiempo de estancamiento de una alerta específica en base a su fecha de creación.
      * Si supera el límite permitido sin resolución, inicia el escalado de rango clínico.
      */
-    async aggregateOverloadedTime(alertId: string): Promise<void> {
+    async aggregateOverloadedTime(alertId: string, userOrg?: UserOrgContext): Promise<void> {
         // Buscamos la alerta junto con la fecha de creación (createdAt viene por defecto o mapeada en Prisma)
-        const alert = await this.prisma.operationalAlert.findUnique({ 
-            where: { id: alertId } 
-        });
+        const where: any = { id: alertId };
+
+        if (userOrg && userOrg.role !== 'SUPER') {
+            if (userOrg.organizationId) {
+                where.organizationId = userOrg.organizationId;
+            }
+        }
+
+        const alert = await this.prisma.operationalAlert.findUnique({ where });
 
         if (!alert || alert.status === 'RESOLVED' || alert.severity === 'CRITICAL') {
             return;
@@ -56,7 +72,7 @@ export class AlertEscalationService {
         // Comprobamos si el tiempo estancado supera el umbral (e.g., 30 minutos)
         if (timeElapsedMs >= ALERT_MAX_UNRESOLVED_TIME_MS) {
             const reason = `Alert exceeded the maximum unresolved limit of ${ALERT_MAX_UNRESOLVED_TIME_MS / 1000 / 60} minutes in the clinical floor.`;
-            await this.escalateToNextTier(alertId, reason);
+            await this.escalateToNextTier(alertId, reason, userOrg);
         }
     }
 }

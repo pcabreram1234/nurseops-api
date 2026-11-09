@@ -13,18 +13,22 @@ import { NotificationTemplatesService } from "../services/notification-templates
 import { CreateNotificationTemplateDto } from "../dto/create-notification-template.dto";
 import { UpdateNotificationTemplateDto } from "../dto/update-notification-template.dto";
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
+import { RolesGuard } from "@modules/auth/guards/roles.guards";
+import { Roles } from "@modules/auth/decorators/roles.decorator";
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 
 
 @Controller("notification-templates",)
 @UseGuards(JwtAuthGuard, PermissionsGuard)
+@Roles("SUPER", "SYSTEM_ADMIN")
 export class NotificationTemplatesController {
     constructor(
         private readonly service: NotificationTemplatesService,
     ) { }
 
     @Post()
+
     @Permissions("CREATE_NOTIFICATION_TEMPLATE")
     create(@Body() dto: CreateNotificationTemplateDto,
     ) {

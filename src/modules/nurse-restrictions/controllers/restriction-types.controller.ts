@@ -17,15 +17,18 @@ import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 
+import { Roles } from "@modules/auth/decorators/roles.decorator"
+
 @Controller({
   path: "restriction-types",
   version: "1",
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
+@Roles("SUPER")
 export class RestrictionTypesController {
   constructor(
     private readonly restrictionTypesService: RestrictionTypesService,
-  ) {}
+  ) { }
 
   @Post()
   @Permissions("CREATE_RESTRICTION_TYPE")

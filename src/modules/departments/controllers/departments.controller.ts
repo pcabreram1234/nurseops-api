@@ -14,6 +14,8 @@ import { DepartmentsService } from "../services/departments.service";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -43,6 +45,7 @@ export class DepartmentsController {
   */
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("CREATE_DEPARTMENT")
   create(@Body() dto: CreateDepartmentDto, @CurrentUser() user: any) {
     return this.departmentsService.create(dto, user);
@@ -79,6 +82,7 @@ export class DepartmentsController {
   */
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("UPDATE_DEPARTMENT")
   update(@Param("id") id: string, @Body() dto: UpdateDepartmentDto, @CurrentUser() user: any,) {
     return this.departmentsService.update(id, dto, user);
@@ -91,6 +95,7 @@ export class DepartmentsController {
   */
 
   @Delete(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("DELETE_DEPARTMENT")
   remove(@Param("id") id: string, @CurrentUser() user: any) {
     return this.departmentsService.remove(id, user);
@@ -103,6 +108,7 @@ export class DepartmentsController {
   */
 
   @Patch(":id/assign-nurses")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("ASSIGN_NURSES_DEPARTMENT")
   assignNurses(@Param("id") id: string, @Body() dto: AssignNursesDto, @CurrentUser() user: any,
   ) {

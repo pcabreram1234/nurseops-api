@@ -6,13 +6,18 @@ import { OperationalAlertyTypes } from '@prisma/client';
 export class AlertDuplicationValidator {
     constructor(private readonly prisma: PrismaService) { }
 
-    async checkActiveDuplicate(departmentId: string, type: OperationalAlertyTypes): Promise<void> {
+    async checkActiveDuplicate(departmentId: string, type: OperationalAlertyTypes, organizationId?: string): Promise<void> {
+        const where: any = {
+            departmentId,
+            alertType: type,
+            status: 'IN_PROGRESS',
+        };
+        if (organizationId) {
+            where.organizationId = organizationId;
+        }
+
         const existing = await this.prisma.operationalAlert.findFirst({
-            where: {
-                departmentId,
-                alertType: type,
-                status: 'IN_PROGRESS',
-            },
+            where,
         });
 
         if (existing) {

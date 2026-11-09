@@ -8,6 +8,10 @@ export class OperationalAlertFilterDto {
     departmentId?: string;
 
     @IsOptional()
+    @IsString()
+    organizationId?: string;
+
+    @IsOptional()
     @IsEnum(OperationalAlertStatus)
     status?: OperationalAlertStatus;
 

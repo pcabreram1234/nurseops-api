@@ -5,11 +5,13 @@ import { CreateModuleDto } from '../dto/create-module.dto';
 import { UpdateModuleDto } from '../dto/update-module.dto';
 import { ModuleFilterDto } from '../dto/module-filter.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { Roles } from '@modules/auth/decorators/roles.decorator';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import { Permissions } from '@modules/auth/decorators/permissions.decorator';
 
 @Controller({ path: 'modules', version: '1' })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
+@Roles("SUPER")
 export class ModulesController {
     constructor(
         private readonly modulesService: ModulesService,

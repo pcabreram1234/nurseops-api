@@ -45,6 +45,7 @@ export class ShiftChangeDocumentsController {
     constructor(private readonly service: ShiftChangeDocumentsService) { }
 
     @Post()
+    @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
     @Permissions("CREATE_SHIFT_CHANGE_DOCUMENT")
     create(@Body() dto: CreateShiftChangeDocumentDto) {
         return this.service.create(dto);
@@ -58,30 +59,35 @@ export class ShiftChangeDocumentsController {
     }
 
     @Get()
+    @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
     @Permissions("VIEW_ALL_SHIFT_CHANGE_DOCUMENT")
     findAll(@Query() filters: ShiftChangeDocumentFilterDto, @CurrentUser() user: any,) {
         return this.service.findAll(user);
     }
 
     @Get(":id")
+    @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
     @Permissions("VIEW_SHIFT_CHANGE_DOCUMENT")
     findOne(@Param("id") id: string, @CurrentUser() user: any,) {
         return this.service.findOne(id, user);
     }
 
     @Patch(":id")
+    @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
     @Permissions("UPDATE_SHIFT_CHANGE_DOCUMENT")
     update(@Param("id") id: string, @Body() dto: UpdateShiftChangeDocumentDto,) {
         return this.service.update(id, dto);
     }
 
     @Patch(":id/verify")
+    @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
     @Permissions("VERIFY_SHIFT_CHANGE_DOCUMENT")
     verify(@Param("id") id: string, @Body() dto: VerifyShiftChangeDocumentDto, @CurrentUser() user: any,) {
         return this.service.verify(id, dto, user);
     }
 
     @Delete(":id")
+    @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
     @Permissions("DELETE_SHIFT_CHANGE_DOCUMENT")
     remove(@Param("id") id: string, @CurrentUser() user: any) {
         return this.service.softDelete(id, user);

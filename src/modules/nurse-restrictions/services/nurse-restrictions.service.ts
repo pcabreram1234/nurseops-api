@@ -21,8 +21,24 @@ export class NurseRestrictionsService {
   }
 
   async findAll(query: any, user: any) {
+    const userRole = user.role?.toUpperCase();
+
+    // Definimos la condición de organización según el rol
+    let organizationCondition = {};
+    if (userRole === "SUPER") {
+      organizationCondition = {}; // Sin restricciones de organización
+    } else if (userRole === "SYSTEM" || userRole === "SYSTEM_ADMIN" || userRole === "SUPERVISOR") {
+      organizationCondition = { organizationId: user.organizationId };
+    } else {
+      // Para roles estándar, filtramos por su organización (y opcionalmente si es nurse, sus propias restricciones)
+      organizationCondition = {
+        organizationId: user.organizationId,
+        nurseId: user.sub
+      };
+    }
+
     const where = {
-      organizationId: user.organizationId,
+      ...organizationCondition,
       ...(query.nurseId && { nurseId: query.nurseId }),
       ...(query.restrictionTypeId && { restrictionTypeId: query.restrictionTypeId }),
       ...(query.search && {

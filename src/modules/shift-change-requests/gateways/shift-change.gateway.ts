@@ -10,6 +10,18 @@ export class ShiftChangeGateway {
   server!: Server;
 
   emitApproved(payload: any) {
-    this.server.emit("shift-change-approved", payload);
+    this.server.emit("shift-change.approved", payload);
+  }
+
+  emitCreated(payload: any) {
+    this.server.emit("shift-change.created", payload);
+  }
+
+  emitResponded(payload: any) {
+    this.server.emit("shift-change.responded", payload);
+  }
+
+  emitCancelled(payload: any) {
+    this.server.emit("shift-change.cancelled", payload);
   }
 }

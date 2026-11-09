@@ -38,6 +38,7 @@ import { DepartmentSpecialitiesModule } from "@modules/department_specialities/d
 import { ShiftChangeApprovalsModule } from "@modules/shift-change-approvals/shift-change-approvals.module";
 import { ShiftChangeRequestsModule } from "@modules/shift-change-requests/shift-change-requests.module";
 import { ShiftChangeDocumentsModule } from "@modules/shift-change-documents/shift-change-documents.module";
+import { ShiftChangePoliciesModule } from "@modules/shift-change-policies/shift-change-policies.module";
 import { NotificationTypesModule } from "@modules/notification-types/notification-types.module";
 import { NotificationTemplatesModule } from "@modules/notification-templates/notification-templates.module";
 import { ModulesModule } from "@modules/modules/modules.module";
@@ -107,6 +108,7 @@ import { DocumentsModule } from "@modules/documents/documents.module";
     ShiftChangeApprovalsModule,
     ShiftChangeRequestsModule,
     ShiftChangeDocumentsModule,
+    ShiftChangePoliciesModule,
     NotificationTypesModule,
     NotificationTemplatesModule,
     ModulesModule,

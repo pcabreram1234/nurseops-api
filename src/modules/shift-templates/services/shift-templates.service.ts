@@ -84,7 +84,7 @@ export class ShiftTemplatesService {
           select: { name: true }
         }
       },
-      orderBy: [{ branch: { name: "asc" } }, { name: "asc" }],
+      orderBy: [{ branch: { name: "asc" } }, { type: "asc" }],
     });
   }
 

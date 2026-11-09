@@ -1,40 +1,22 @@
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from "class-validator";
-
-import { Type } from "class-transformer";
-
-import { RequestStatus } from "@prisma/client";
+import { IsOptional, IsString, IsEnum, IsNumber } from "class-validator";
+import { ShiftChangeOperationType } from "@prisma/client";
 
 export class ShiftChangeFilterDto {
   @IsOptional()
-  @IsEnum(RequestStatus)
-  status?: RequestStatus;
+  @IsString()
+  status?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   requesterId?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   receiverId?: string;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 20;
+  @IsEnum(ShiftChangeOperationType)
+  operationType?: ShiftChangeOperationType;
 
   @IsOptional()
   @IsString()
@@ -42,9 +24,25 @@ export class ShiftChangeFilterDto {
 
   @IsOptional()
   @IsString()
-  sortBy?: string = "createdAt";
+  startDate?: string;
 
   @IsOptional()
   @IsString()
-  sortOrder?: "asc" | "desc" = "desc";
+  endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
+
+  @IsOptional()
+  @IsString()
+  page?: string;
+
+  @IsOptional()
+  @IsNumber()
+  limit?: number;
 }

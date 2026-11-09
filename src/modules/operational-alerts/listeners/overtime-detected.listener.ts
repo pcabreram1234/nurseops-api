@@ -8,9 +8,9 @@ export class OvertimeDetectedListener {
     constructor(private readonly detectionService: AlertDetectionService) { }
 
     @OnEvent(ALERT_SYSTEM_LISTENERS.OVERTIME_DETECTED)
-    async handleOvertimeDetected(payload: { departmentId: string; nurseId: string; hours: number }) {
+    async handleOvertimeDetected(payload: { departmentId: string; nurseId: string; hours: number; organizationId?: string }) {
         if (payload.hours > 12) {
-            await this.detectionService.triggerAutomatedAlert(payload.departmentId, 'OVERTIME_WARNING' as any, payload);
+            await this.detectionService.triggerAutomatedAlert(payload.departmentId, 'OVERTIME_WARNING' as any, payload, payload.organizationId);
         }
     }
 }

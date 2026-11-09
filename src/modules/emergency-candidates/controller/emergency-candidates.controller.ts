@@ -13,6 +13,10 @@ import { EmergencyCandidatesService } from "@modules/emergency-candidates/servic
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { RolesGuard } from "@modules/auth/guards/roles.guards";
+
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -31,15 +35,17 @@ import { UpdateEmergencyCandidateDto } from "../dto/update-emergency-candidate.d
 export class EmergencyCandidatesController {
   constructor(
     private readonly emergencyCandidatesService: EmergencyCandidatesService,
-  ) {}
+  ) { }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("CREATE_EMERGENCY_CANDIDATE")
   create(@Body() dto: CreateEmergencyCandidateDto, @CurrentUser() user: any) {
     return this.emergencyCandidatesService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_EMERGENCY_CANDIDATES")
   findAll(
     @Query() query: EmergencyCandidateFilterDto,
@@ -49,6 +55,7 @@ export class EmergencyCandidatesController {
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("UPDATE_EMERGENCY_CANDIDATE")
   update(
     @Param("id") id: string,

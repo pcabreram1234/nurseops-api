@@ -1,4 +1,5 @@
 import { IsBoolean, IsOptional, IsString } from "class-validator";
+import { ShiftChangeOperationType } from "@prisma/client";
 
 export class CreateShiftChangeRequestDto {
   @IsString()
@@ -9,11 +10,11 @@ export class CreateShiftChangeRequestDto {
   receiverId?: string;
 
   @IsString()
-  sourceShiftId!: string;
+  sourceScheduleEntryId!: string;
 
   @IsOptional()
   @IsString()
-  targetShiftId?: string;
+  targetScheduleEntryId?: string;
 
   @IsOptional()
   @IsString()
@@ -22,4 +23,8 @@ export class CreateShiftChangeRequestDto {
   @IsOptional()
   @IsBoolean()
   emergencyRequest?: boolean;
+
+  @IsOptional()
+  @IsString()
+  operationType!: ShiftChangeOperationType;
 }

@@ -29,7 +29,7 @@ import { AssignRuleDto } from "../dto/assign-rule.dto";
   version: "1",
 })
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN", "SUPER")
+@Roles("SUPER")
 export class RuleGroupsController {
   constructor(
     private readonly service: RuleGroupsService,

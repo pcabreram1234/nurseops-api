@@ -13,6 +13,10 @@ import { LeavesService } from "@modules/leaves/services/leaves.service";
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { RolesGuard } from "@modules/auth/guards/roles.guards";
+
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -29,21 +33,24 @@ import { LeaveFilterDto } from "../dto/leave-filter.dto";
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class LeavesController {
-  constructor(private readonly leavesService: LeavesService) {}
+  constructor(private readonly leavesService: LeavesService) { }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("CREATE_LEAVE")
   create(@Body() dto: CreateLeaveDto, @CurrentUser() user: any) {
     return this.leavesService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("VIEW_LEAVES")
   findAll(@Query() query: LeaveFilterDto, @CurrentUser() user: any) {
     return this.leavesService.findAll(query, user);
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "SUPERVISOR", "NIGHT_SUPERVISOR", "NURSE_SENIOR", "NURSE_JUNIOR", "TEMP_NURSE")
   @Permissions("UPDATE_LEAVE")
   update(@Param("id") id: string, @Body() dto: UpdateLeaveDto, @CurrentUser() user: any) {
     return this.leavesService.update(id, dto, user);

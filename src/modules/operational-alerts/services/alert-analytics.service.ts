@@ -5,9 +5,14 @@ import { PrismaService } from '@infra/database/prisma.service';
 export class AlertAnalyticsService {
     constructor(private readonly prisma: PrismaService) { }
 
-    async getMetricsByDepartment(departmentId: string) {
+    async getMetricsByDepartment(departmentId: string, organizationId?: string) {
+        const where: any = { departmentId };
+        if (organizationId) {
+            where.organizationId = organizationId;
+        }
+
         const records = await this.prisma.operationalAlert.findMany({
-            where: { departmentId },
+            where,
         });
 
         const active = records.filter((r) => r.status === 'IN_PROGRESS').length;

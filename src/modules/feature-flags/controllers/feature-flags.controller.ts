@@ -5,11 +5,14 @@ import { CreateFeatureFlagDto } from '../dto/create-feature-flag.dto';
 import { FeatureFlagFilterDto } from '../dto/feature-flag-filter.dto';
 import { ToggleFeatureFlagDto } from '../dto/toggle-feature-flag.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guards';
+import { Roles } from '@modules/auth/decorators/roles.decorator';
 import { PermissionsGuard } from '@modules/auth/guards/permissions.guard';
 import { Permissions } from '@modules/auth/decorators/permissions.decorator';
 
 @Controller({ path: 'feature-flags', version: '1' })
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Roles("SUPER", "SYSTEM_ADMIN")
 export class FeatureFlagsController {
     constructor(
         private readonly flagsService: FeatureFlagsService,
@@ -17,26 +20,27 @@ export class FeatureFlagsController {
     ) { }
 
     @Post()
-    @Permissions('MANAGE_FEATURE_FLAGS')
+
+    @Permissions("MANAGE_FEATURE_FLAGS")
     create(@Body() dto: CreateFeatureFlagDto) {
         return this.flagsService.create(dto);
     }
 
     @Get()
-    @Permissions('VIEW_FEATURE_FLAGS')
+    @Permissions("VIEW_FEATURE_FLAGS")
     findAll(@Query() filters: FeatureFlagFilterDto) {
         return this.flagsService.findAll(filters);
     }
 
-    @Get('analytics')
-    @Permissions('VIEW_FEATURE_FLAGS')
+    @Get("analytics")
+    @Permissions("VIEW_FEATURE_FLAGS")
     getAnalytics() {
         return this.analyticsService.getSummaryMetrics();
     }
 
-    @Patch(':id/toggle')
-    @Permissions('MANAGE_FEATURE_FLAGS')
-    toggle(@Param('id') id: string, @Body() dto: ToggleFeatureFlagDto, @Request() req: any) {
+    @Patch(":id/toggle")
+    @Permissions("MANAGE_FEATURE_FLAGS")
+    toggle(@Param("id") id: string, @Body() dto: ToggleFeatureFlagDto, @Request() req: any) {
         const operatorId = req.user?.id;
         return this.flagsService.toggle(id, dto, operatorId);
     }

@@ -20,6 +20,8 @@ import { Permissions } from "@modules/auth/decorators/permissions.decorator";
 
 import { CurrentUser } from "@modules/auth/decorators/current-user.decorator";
 
+import { Roles } from "@modules/auth/decorators/roles.decorator"
+
 import { CreateBranchDto } from "../dto/create-branch.dto";
 import { UpdateBranchDto } from "../dto/update-branch.dto";
 import { BranchFilterDto } from "../dto/branch-filter.dto";
@@ -30,9 +32,10 @@ import { BranchFilterDto } from "../dto/branch-filter.dto";
 })
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class BranchesController {
-  constructor(private readonly branchesService: BranchesService) {}
+  constructor(private readonly branchesService: BranchesService) { }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER")
   @Permissions("CREATE_BRANCH")
   create(@Body() dto: CreateBranchDto, @CurrentUser() user: any) {
     return this.branchesService.create(dto, user);
