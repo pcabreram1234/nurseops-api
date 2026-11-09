@@ -111,6 +111,7 @@ export class ScheduleCronService {
                         await this.prisma.operationalAlert.create({
                             data: {
                                 departmentId: dept.id,
+                                organizationId: dept.organizationId,
                                 message: `The Automatic Job attempted to regenerate the schedule for ${targetMonth}/${targetYear} at branch ${branchId}, but it was blocked to protect the existing version.`,
                                 alertType: OperationalAlertyTypes.SYSTEM_WARNING,
                                 severity: ActivitySeverity.MEDIUM,

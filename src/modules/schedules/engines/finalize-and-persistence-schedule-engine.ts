@@ -102,7 +102,7 @@ export async function finalizeAndPersistSchedule(
                     shiftInstancesMap.set(shiftKey, {
                         id: shiftInstanceId,
                         organizationId: organizationId,
-                        name: slot.shiftTemplateId,
+                        name: slot.shiftInfo.name || `Turno ${slot.shiftTemplateId}`,
                         code: uniqueShiftCode, // 🔥 AHORA SÍ ES 100% ÚNICO GLOBALMENTE
                         type: slot.shiftInfo.type as ShiftType,
                         startTime: new Date(slot.shiftInfo.startTime),
@@ -159,6 +159,7 @@ export async function finalizeAndPersistSchedule(
 
                 const alertsToInsert = conflictReport.alerts.map((alert: any) => ({
                     departmentId: departmentId,
+                    organizationId: organizationId,
                     message: alert.message,
                     severity: alert.severity || (alert.type === 'NO_NIGHT_COVERAGE' ? 'CRITICAL' : 'HIGH'),
                     alertType: alertTypeMap[alert.type] ?? OperationalAlertyTypes.STAFF_SHORTAGE
@@ -181,7 +182,7 @@ export async function finalizeAndPersistSchedule(
                     slotsCovered: coveredSlots,
                     coveragePercentage: coveragePercentage,
                     startedAt: new Date(engineStartTime),
-                    fineshedAt: new Date(Date.now()),
+                    finishedAt: new Date(Date.now()),
                     result: {
                         "status": conflictReport.hasConflicts ? "SUCCESS_WITH_WARNINGS" : "SUCCESS",
                         "fairness_score": engineMetrics?.fairnessScore ?? 100, // Por defecto 100 si no se calcula

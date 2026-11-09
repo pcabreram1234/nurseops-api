@@ -39,11 +39,13 @@ export function buildDemandGrid(
             }
 
             const currentShiftInfo = {
-                type: shift.name, // Ej: 'Noche', 'Mañana' (ajusta según tu DB)
-                durationHours: (shift as any).durationHours || 8, // Ajusta al campo real de tu DB
-                isNightShift: (shift as any).is_night_shift || shift.name.toLowerCase().includes('NIGHT'),
-                startTime: currentShiftStartTime, // Ajusta al campo real de tu DB
-                endTime: currentShiftEndtime    // Ajusta al campo real de tu DB
+                id: shift.id,
+                type: shift.type, // PreferredShift enum (MORNING, AFTERNOON, NIGHT, etc.)
+                name: shift.name ?? undefined, // Nombre en idioma del usuario (mañana, tarde, noche)
+                durationHours: (shift as any).durationHours || 8,
+                isNightShift: (shift as any).is_night_shift || shift.type.toString().toLowerCase().includes('NIGHT'),
+                startTime: currentShiftStartTime,
+                endTime: currentShiftEndtime
             };
 
             // console.log(specialityRequirements);

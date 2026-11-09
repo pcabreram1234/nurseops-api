@@ -31,7 +31,7 @@ export function generateConflictReport(
                 departmentId,
                 type: alertType,
                 date: slot.date,
-                message: `No se encontró personal disponible para el turno ${shiftInfo?.name}.`
+                message: `No se encontró personal disponible para el turno ${shiftInfo?.name || shiftInfo?.type}.`
             });
         }
     }
