@@ -7,11 +7,30 @@ import {
 import { PrismaService } from "@infra/database/prisma.service"; // Ajusta la ruta según tu arquitectura
 import { CreateOrganizationDto } from "../dto/create-organization.dto"; // Ajusta tus rutas de DTOs
 import { UpdateOrganizationDto } from "../dto/update-organization.dto";
+import { PaginationDto } from "../dto/pagination.dto";
+
+export interface UserOrgContext {
+  organizationId?: string;
+  role?: string;
+}
 
 @Injectable()
 export class OrganizationsService {
   // Inyectamos el cliente de Prisma (que en Prisma 7 usa el PgAdapter internamente)
   constructor(private readonly prisma: PrismaService) { }
+
+  private buildWhere(userOrg?: UserOrgContext) {
+    const where: any = {};
+
+    // Aislamiento: solo SUPER ve todas las organizaciones; el resto solo su propia org
+    if (userOrg && userOrg.role !== 'SUPER') {
+      if (userOrg.organizationId) {
+        where.id = userOrg.organizationId;
+      }
+    }
+
+    return where;
+  }
 
   /**
    * Crea una nueva organización y su configuración obligatoria en una sola transacción.
@@ -73,46 +92,60 @@ export class OrganizationsService {
   }
 
   /**
-   * Obtiene todas las organizaciones registradas con sus configuraciones.
+   * Obtiene todas las organizaciones registradas con sus configuraciones y paginación.
    */
-  async findAll(user: any) {
-    const isSuperAdmin = user.role === "SUPER";
+  async findAll(query: PaginationDto, userOrg?: UserOrgContext) {
+    const where = this.buildWhere(userOrg);
 
-    return this.prisma.organization.findMany({
-      where: isSuperAdmin ? {} : {
-        id: user.organizationId,
-      },
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(500, Math.max(1, Number(query.limit) || 25));
 
-      include: {
-        settings: true,
-        _count: {
-          select: {
-            branches: true,
-
-            users: true,
+    const [data, total] = await Promise.all([
+      this.prisma.organization.findMany({
+        where,
+        include: {
+          settings: true,
+          _count: {
+            select: {
+              branches: true,
+              users: true,
+            },
           },
         },
-      },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.organization.count({ where }),
+    ]);
 
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    return {
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
-
 
   /**
    * Busca una organización por su ID. Lanza 404 si no existe.
+   * Aplica aislamiento por organización para roles no-SUPER.
    */
-  async findOne(id: string, user: any) {
-    const isSuperAdmin = user.role === "SUPER";
+  async findOne(id: string, userOrg?: UserOrgContext) {
+    const where: any = { id };
+
+    // Aislamiento: solo SUPER puede acceder a cualquier organización; el resto solo su propia org
+    if (userOrg && userOrg.role !== 'SUPER') {
+      if (userOrg.organizationId) {
+        where.id = userOrg.organizationId;
+      }
+    }
+
     const organization = await this.prisma.organization.findUnique({
-      where: isSuperAdmin ? { id: id } : {
-        id: user.organizationId,
-      },
+      where,
       include: {
         settings: true,
-        branches: true, // Útil para los Supervisores/Admins que consuman este endpoint
+        branches: true,
       },
     });
 
@@ -128,9 +161,9 @@ export class OrganizationsService {
   /**
    * Actualiza los datos de la organización.
    */
-  async update(id: string, updateOrganizationDto: UpdateOrganizationDto, user: any) {
-    // Verificar primero si existe
-    await this.findOne(id, user);
+  async update(id: string, updateOrganizationDto: UpdateOrganizationDto, userOrg?: UserOrgContext) {
+    // Verificar primero si existe y que el usuario tiene acceso
+    await this.findOne(id, userOrg);
 
     // Si intentan actualizar el código, verificar que no choque con otro existente
     if (updateOrganizationDto.code) {
@@ -160,10 +193,10 @@ export class OrganizationsService {
    * FLUJO EN CASCADA: si la organización tiene dependencias operativas
    * (departamentos, personal, usuarios o historial), se bloquea el borrado
    * físico y se recomienda la DESACTIVACIÓN, que conserva el historial y
-   * la auditoría intactos (el AuditInterceptor registra ambas acciones).
+   * la auditoría intactas.
    */
-  async remove(id: string, user: any) {
-    const organization = await this.findOne(id, user);
+  async remove(id: string, userOrg?: UserOrgContext) {
+    const organization = await this.findOne(id, userOrg);
 
     const [departments, nurses, users] = await Promise.all([
       this.prisma.department.count({ where: { organizationId: id } }),
