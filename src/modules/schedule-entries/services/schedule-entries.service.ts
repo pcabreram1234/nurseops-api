@@ -3,7 +3,14 @@ import { ActivityLogType, OperationalAlertyTypes, PriorityTypes, ScheduleEntrySt
 import { PrismaService } from "@infra/database/prisma.service";
 import { ScheduleValidationService } from "@modules/schedules/services/schedule-validation.service";
 import { SingleValidationResult } from "@modules/schedules/interfaces/single-validation-result.interface";
+import { ScheduleEntryFilterDto } from "../dto/schedule-entry-filter.dto";
 
+export interface UserOrgContext {
+  organizationId?: string;
+  role?: string;
+  id?: string;
+  sub?: string;
+}
 
 @Injectable()
 export class ScheduleEntriesService {
@@ -12,18 +19,18 @@ export class ScheduleEntriesService {
     private readonly validationService: ScheduleValidationService
   ) { }
 
-  async create(dto: any, user: any) {
+  async create(dto: any, userOrg: UserOrgContext) {
     const { shiftTemplateId, shiftId, scheduleId, nurseId, assignedById, date, ...rest } = dto;
     const entryDate = date && !date.includes("T") ? date + "T00:00:00.000Z" : date;
     return this.prisma.scheduleEntry.create({
       data: {
         ...rest,
         date: entryDate,
-        organization: { connect: { id: user.organizationId } },
+        organization: { connect: { id: userOrg.organizationId } },
         shiftTemplate: { connect: { id: shiftTemplateId } },
         shift: { connect: { id: shiftId } },
         schedule: { connect: { id: scheduleId } },
-        assignedBy: { connect: { id: assignedById || user.id || user.sub } },
+        assignedBy: { connect: { id: assignedById || userOrg.id || userOrg.sub } },
         ...(nurseId && nurseId !== "" ? { nurse: { connect: { id: nurseId } } } : {}),
       },
     });
@@ -48,7 +55,7 @@ export class ScheduleEntriesService {
   }
 
   /** Construye el where compartido entre findAll y stats. */
-  private buildWhere(query: any, user: any): any {
+  private buildWhere(query: ScheduleEntryFilterDto, userOrg?: UserOrgContext): any {
     const startDate = query.startDate
       ? this.parseDateBoundary(query.startDate, false)
       : undefined;
@@ -61,7 +68,9 @@ export class ScheduleEntriesService {
     };
 
     return {
-      organizationId: user.organizationId,
+      ...(userOrg && userOrg.role !== 'SUPER' && userOrg.organizationId
+        ? { organizationId: userOrg.organizationId }
+        : {}),
       ...(query.scheduleId && { scheduleId: query.scheduleId }),
       ...(query.nurseId && { nurseId: query.nurseId }),
       ...(query.shiftId && { shiftId: query.shiftId }),
@@ -92,8 +101,8 @@ export class ScheduleEntriesService {
    * Agregados de cobertura (totales por estado, emergencias y por plantilla)
    * para mantener los indicadores precisos cuando la lista va paginada.
    */
-  async stats(query: any, user: any) {
-    const where = this.buildWhere(query, user);
+  async stats(query: ScheduleEntryFilterDto, userOrg?: UserOrgContext) {
+    const where = this.buildWhere(query, userOrg);
 
     const [byStatus, total, emergencies, totalsByTemplate, assignedByTemplate] = await Promise.all([
       this.prisma.scheduleEntry.groupBy({
@@ -201,8 +210,8 @@ export class ScheduleEntriesService {
     };
   }
 
-  async findAll(query: any, user: any) {
-    const where = this.buildWhere(query, user);
+  async findAll(query: ScheduleEntryFilterDto, userOrg?: UserOrgContext) {
+    const where = this.buildWhere(query, userOrg);
 
     const select = {
       id: true,
@@ -280,14 +289,18 @@ export class ScheduleEntriesService {
     });
   }
 
-  async findOne(id: string, user: any) {
+  async findOne(id: string, userOrg?: UserOrgContext) {
+    const where: any = { id };
+
+    // Aislamiento: solo SUPER puede acceder a cualquier entry; el resto solo su propia organización
+    if (userOrg && userOrg.role !== 'SUPER') {
+      if (userOrg.organizationId) {
+        where.organizationId = userOrg.organizationId;
+      }
+    }
+
     const entry = await this.prisma.scheduleEntry.findFirst({
-      where: {
-        id,
-        nurse: {
-          organizationId: user.organizationId,
-        },
-      },
+      where,
       include: {
         nurse: {
           include: {
@@ -319,7 +332,7 @@ export class ScheduleEntriesService {
     return entry;
   }
 
-  async update(id: string, dto: any, user: any) {
+  async update(id: string, dto: any, userOrg?: UserOrgContext) {
 
     // 1. Obtener el estado actual del turno ANTES de ser modificado (Para auditoría)
     // 🐛 FIX: Buscar por `id` (el ID del ScheduleEntry), no por `shiftId`
@@ -375,7 +388,7 @@ export class ScheduleEntriesService {
       // B. TABLA 1: Insertar en ActivityLog (Auditoría del Sistema)
       await tx.activityLog.create({
         data: {
-          userId: user.id, // El administrador/supervisor que logueó la petición
+          userId: userOrg!.id!, // El administrador/supervisor que logueó la petición
           action: ActivityLogType.SHIFT_MODIFIED, // Ajusta según tus enums de ActivityLogType
           details: {
             entryId: id,
@@ -401,6 +414,7 @@ export class ScheduleEntriesService {
         await tx.operationalAlert?.create({
           data: {
             departmentId: dto.departmentId,
+            organizationId: userOrg!.organizationId!,
             severity: PriorityTypes.HIGH,
             alertType: OperationalAlertyTypes.RULE_VIOLATION,
             message: `Supervisor ignored restrictions: ${warnings.join(' | ')}`,
@@ -416,17 +430,18 @@ export class ScheduleEntriesService {
   }
 
 
-  async remove(id: string, user: any) {
-    console.log(user)
+  async remove(id: string, userOrg?: UserOrgContext) {
+    const where: any = { id };
 
-    const isSuperAdmin = user.role === "SUPER";
+    // Aislamiento: solo SUPER puede eliminar cualquier entry; el resto solo su propia organización
+    if (userOrg && userOrg.role !== 'SUPER') {
+      if (userOrg.organizationId) {
+        where.organizationId = userOrg.organizationId;
+      }
+    }
 
-    // 1. Verificación Multi-tenant de Seguridad
-    // Confirmamos que el turno existe y pertenece a la organización del usuario
     const currentEntry = await this.prisma.scheduleEntry.findFirst({
-      where: isSuperAdmin ? {
-        id,
-      } : { organizationId: user.organizationId, id },
+      where,
       include: {
         nurse: {
           select: { user: { select: { firstName: true, lastName: true } } }
@@ -452,7 +467,7 @@ export class ScheduleEntriesService {
       // C. Registrar en la bitácora de auditoría (ActivityLog)
       await tx.activityLog.create({
         data: {
-          userId: user.sub, // El administrador que presionó el botón "Borrar"
+          userId: userOrg!.sub!, // El administrador que presionó el botón "Borrar"
           action: ActivityLogType.SHIFT_DELETED, // El tipo de acción en tu Enum
           details: {
             entryId: id,
@@ -473,7 +488,7 @@ export class ScheduleEntriesService {
 
   // 📄 Dentro de tu schedule-entries.service.ts (NestJS Backend)
 
-  async createBulk(dto: any, user: any) {
+  async createBulk(dto: any, userOrg: UserOrgContext) {
     const { date, entries } = dto;
 
     if (!entries || entries.length === 0) {
@@ -529,8 +544,8 @@ export class ScheduleEntriesService {
         notes: entry.notes || null,
         shiftTemplateId: entry.shiftTemplateId, // 🐛 FIX: usar el template de CADA fila, no solo el primero
         scheduleId: dto.scheduleId,
-        assignedById: user.id,
-        organizationId: user.organizationId
+        assignedById: userOrg.id,
+        organizationId: userOrg.organizationId
       });
     }
 
@@ -551,7 +566,7 @@ export class ScheduleEntriesService {
       // B. Guardar historial masivo en la tabla de Auditoría (ActivityLog)
       await tx.activityLog.create({
         data: {
-          userId: user.id, // El administrador que aprobó el bloque
+          userId: userOrg.id!, // El administrador que aprobó el bloque
           action: ActivityLogType.SHIFT_APPROVED, // Usamos tu enum del schema.prisma
           details: {
             message: `Creación masiva exitosa de ${createdEntries.length} turnos en el calendario.`,
@@ -569,7 +584,8 @@ export class ScheduleEntriesService {
 
           await tx.operationalAlert?.create({
             data: {
-              departmentId: targetShift?.departmentId || user.departmentId,
+              departmentId: targetShift?.departmentId ?? "",
+              organizationId: userOrg.organizationId!,
               severity: PriorityTypes.HIGH, // O MEDIUM según tus enums
               alertType: OperationalAlertyTypes.RULE_VIOLATION,
               message: `Restricciones ignoradas en asignación masiva: ${alert.messages.join(' | ')}`,
