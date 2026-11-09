@@ -1,27 +1,49 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 
 import { PrismaService } from "@infra/database/prisma.service";
+import { CreateOptimizationScoreDto } from "../dto/create-optimization-score.dto";
+import { UpdateOptimizationScoreDto } from "../dto/update-optimization-score.dto";
+import { OptimizationScoreFilterDto } from "../dto/optimization-score-filter.dto";
+
+export interface UserOrgContext {
+  organizationId?: string;
+  role?: string;
+}
 
 @Injectable()
 export class OptimizationScoresService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: any, user: any) {
+  private buildWhere(query: OptimizationScoreFilterDto, userOrg?: UserOrgContext) {
+    const where: any = {
+      ...(query.nurseId && { nurseId: query.nurseId }),
+    };
+
+    // Aislamiento por organización: usuarios no-SUPER ni SYSTEM_ADMIN solo ven scores de su organización
+    if (userOrg && userOrg.role !== 'SUPER') {
+      if (userOrg.organizationId) {
+        where.organizationId = userOrg.organizationId;
+      }
+    }
+
+    return where;
+  }
+
+  async create(dto: CreateOptimizationScoreDto, userOrg: UserOrgContext) {
+    const organizationId = userOrg.organizationId;
+    if (!organizationId) {
+      throw new NotFoundException("Usuario sin organización asociada");
+    }
     return this.prisma.optimizationScore.create({
       data: {
         ...dto,
-        organizationId: user.organizationId,
+        organizationId,
       },
     });
   }
 
-  async findAll(query: any, user: any) {
-    const where = {
-      organizationId: user.organizationId,
-      ...(query.nurseId && {
-        nurseId: query.nurseId,
-      }),
-    };
+  async findAll(query: OptimizationScoreFilterDto, userOrg?: UserOrgContext) {
+    const where = this.buildWhere(query, userOrg);
 
     const include = {
       nurse: true,
@@ -56,12 +78,19 @@ export class OptimizationScoresService {
     });
   }
 
-  async findOne(id: string, user: any) {
+  async findOne(id: string, userOrg?: UserOrgContext) {
+    const where: any = { id };
+
+    // Aislamiento: usuarios no-SUPER ni SYSTEM_ADMIN solo pueden acceder a scores de su organización
+    if (userOrg && userOrg.role !== 'SUPER') {
+      if (userOrg.organizationId) {
+        where.organizationId = userOrg.organizationId;
+      }
+    }
+
     const score = await this.prisma.optimizationScore.findFirst({
-      where: {
-        id,
-        organizationId: user.organizationId,
-      },
+      where,
+      include: { nurse: true },
     });
 
     if (!score) {
@@ -71,13 +100,11 @@ export class OptimizationScoresService {
     return score;
   }
 
-  async update(id: string, dto: any, user: any) {
-    await this.findOne(id, user);
+  async update(id: string, dto: UpdateOptimizationScoreDto, userOrg?: UserOrgContext) {
+    await this.findOne(id, userOrg);
 
     return this.prisma.optimizationScore.update({
-      where: {
-        id,
-      },
+      where: { id },
       data: dto,
     });
   }

@@ -13,6 +13,8 @@ import { OptimizationScoresService } from "../services/optimization-scores.servi
 
 import { JwtAuthGuard } from "@modules/auth/guards/jwt-auth.guard";
 
+import { Roles } from "@modules/auth/decorators/roles.decorator";
+
 import { PermissionsGuard } from "@modules/auth/guards/permissions.guard";
 
 import { Permissions } from "@modules/auth/decorators/permissions.decorator";
@@ -33,21 +35,24 @@ import { OptimizationScoreFilterDto } from "../dto/optimization-score-filter.dto
 export class OptimizationScoresController {
   constructor(
     private readonly optimizationScoresService: OptimizationScoresService,
-  ) {}
+  ) { }
 
   @Post()
+  @Roles("SUPER", "SYSTEM_ADMIN")
   @Permissions("CREATE_OPTIMIZATION_SCORE")
   create(@Body() dto: CreateOptimizationScoreDto, @CurrentUser() user: any) {
     return this.optimizationScoresService.create(dto, user);
   }
 
   @Get()
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "NIGTH_SUPERVISOR", "SUPVERVISOR")
   @Permissions("VIEW_OPTIMIZATION_SCORES")
   findAll(@Query() query: OptimizationScoreFilterDto, @CurrentUser() user: any) {
     return this.optimizationScoresService.findAll(query, user);
   }
 
   @Patch(":id")
+  @Roles("SUPER", "SYSTEM_ADMIN", "HR_MANAGER", "NIGTH_SUPERVISOR", "SUPVERVISOR")
   @Permissions("UPDATE_OPTIMIZATION_SCORE")
   update(@Param("id") id: string, @Body() dto: UpdateOptimizationScoreDto, @CurrentUser() user: any) {
     return this.optimizationScoresService.update(id, dto, user);
