@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@infra/database/prisma.service";
 import { ScheduleStatus, ActivityLogType } from "@prisma/client";
@@ -12,22 +13,105 @@ import {
   assertDepartmentServesBranch,
 } from "@common/utils/branch-scope";
 import { runScheduleEngine } from "../engines/run-schedule-engine";
+import { PaginationDto } from "../dto/pagination.dto";
+
+export interface UserOrgContext {
+  organizationId?: string;
+  departmentId?: string;
+  role?: string;
+  id?: string;
+  sub?: string;
+}
+
+/**
+ * Resuelve el departmentId del usuario a partir del JWT.
+ */
+async function resolveUserDepartmentId(prisma: PrismaService, userOrg: UserOrgContext): Promise<string | undefined> {
+  if (userOrg.departmentId) {
+    return userOrg.departmentId;
+  }
+  const userId = userOrg.id || userOrg.sub;
+  if (!userId) return undefined;
+
+  const nurse = await prisma.nurse.findFirst({
+    where: { userId },
+    select: { departmentId: true },
+  });
+  return nurse?.departmentId;
+}
+
+/**
+ * Verifica si el usuario puede crear/operar sobre un departamento dado.
+ * - SUPER: sin restricciones.
+ * - HR_MANAGER / SYSTEM_ADMIN: cualquier departamento de su organización.
+ * - HEAD_DEPARTMENT / SUPERVISOR: solo su propio departamento.
+ */
+function checkDepartmentPermission(departmentId: string, departmentOrgId: string | undefined, userOrg: UserOrgContext): void {
+  if (!userOrg) {
+    throw new ForbiddenException("Contexto de usuario no disponible.");
+  }
+
+  if (userOrg.role === "SUPER") return;
+
+  if (departmentOrgId && userOrg.organizationId && departmentOrgId !== userOrg.organizationId) {
+    throw new ForbiddenException("El departamento no pertenece a su organización.");
+  }
+
+  if (["HR_MANAGER", "SYSTEM_ADMIN"].includes(userOrg.role!)) {
+    return;
+  }
+
+  if (["HEAD_DEPARTMENT", "NIGHT_SUPERVISOR", "SUPERVISOR"].includes(userOrg.role!)) {
+    if (!userOrg.departmentId || departmentId !== userOrg.departmentId) {
+      throw new ForbiddenException("Solo puede operar sobre su propio departamento.");
+    }
+    return;
+  }
+
+  throw new ForbiddenException("Su rol no tiene permiso para operar sobre este departamento.");
+}
 
 @Injectable()
 export class SchedulesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
-  /*
-  |--------------------------------------------------------------------------
-  | CREATE
-  |--------------------------------------------------------------------------
-  */
+  private buildWhere(userOrg?: UserOrgContext) {
+    const where: any = {};
 
-  async create(dto: any, user?: any) {
-    const organizationId = user?.organizationId || dto.organizationId;
+    if (userOrg && userOrg.role !== 'SUPER') {
+      if (userOrg.organizationId) {
+        where.organizationId = userOrg.organizationId;
+      }
+    }
+
+    return where;
+  }
+
+  async create(dto: any, userOrg?: UserOrgContext) {
+    // Resolver departmentId del usuario para validación de permisos
+    const userDeptId = await resolveUserDepartmentId(this.prisma, userOrg ?? {});
+    const userCtx = {
+      ...userOrg,
+      departmentId: userDeptId || userOrg?.departmentId,
+    };
+
+    // Validar que el departamento del DTO exista y pertenezca a la org del usuario
+    const targetDept = await this.prisma.department.findUnique({
+      where: { id: dto.departmentId },
+      select: { organizationId: true },
+    });
+
+    if (!targetDept) {
+      throw new NotFoundException(`Department with id ${dto.departmentId} not found.`);
+    }
+
+    // Verificar permisos según rol
+    checkDepartmentPermission(dto.departmentId, targetDept.organizationId, userCtx);
+
+    const organizationId = userCtx.organizationId || targetDept.organizationId || dto.organizationId;
 
     if (!organizationId) {
       throw new BadRequestException("organizationId is required.");
@@ -69,16 +153,12 @@ export class SchedulesService {
     });
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | FIND ALL
-  |--------------------------------------------------------------------------
-  */
+  async findAll(query: any, userOrg?: UserOrgContext) {
+    const where = this.buildWhere(userOrg);
 
-  async findAll(query: any, user: any) {
     return this.prisma.schedule.findMany({
       where: {
-        organizationId: user.organizationId,
+        ...where,
 
         ...(query.departmentId && {
           departmentId: query.departmentId,
@@ -113,19 +193,14 @@ export class SchedulesService {
     });
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | FIND ONE
-  |--------------------------------------------------------------------------
-  */
+  async findOne(id: string, userOrg?: UserOrgContext) {
+    const where: any = {
+      id,
+      ...this.buildWhere(userOrg),
+    };
 
-  async findOne(id: string, user: any) {
     const schedule = await this.prisma.schedule.findFirst({
-      where: {
-        id,
-
-        organizationId: user.organizationId,
-      },
+      where,
 
       include: {
         department: {
@@ -155,14 +230,8 @@ export class SchedulesService {
     return schedule;
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | UPDATE
-  |--------------------------------------------------------------------------
-  */
-
-  async update(id: string, dto: any, user: any) {
-    const current = await this.findOne(id, user);
+  async update(id: string, dto: any, userOrg?: UserOrgContext) {
+    const current = await this.findOne(id, userOrg);
 
     const departmentId = dto.departmentId ?? current.departmentId;
 
@@ -191,8 +260,6 @@ export class SchedulesService {
         },
       });
 
-      // Keep the denormalized branch of existing entries consistent with the
-      // schedule branch (the database trigger enforces it per row).
       if (branchId !== current.branchId) {
         await tx.scheduleEntry.updateMany({
           where: { scheduleId: id },
@@ -204,14 +271,8 @@ export class SchedulesService {
     });
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | DELETE
-  |--------------------------------------------------------------------------
-  */
-
-  async remove(id: string, user: any) {
-    await this.findOne(id, user);
+  async remove(id: string, userOrg?: UserOrgContext) {
+    await this.findOne(id, userOrg);
 
     return this.prisma.schedule.delete({
       where: {
@@ -220,14 +281,8 @@ export class SchedulesService {
     });
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | PUBLISH
-  |--------------------------------------------------------------------------
-  */
-
-  async publish(id: string, user: any) {
-    await this.findOne(id, user);
+  async publish(id: string, userOrg?: UserOrgContext) {
+    await this.findOne(id, userOrg);
 
     return this.prisma.schedule.update({
       where: {
@@ -239,34 +294,37 @@ export class SchedulesService {
 
         publishedAt: new Date(),
 
-        publishedById: user.sub,
+        publishedById: userOrg!.sub!,
       },
     });
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | GENERATE
-  |--------------------------------------------------------------------------
-  */
+  async generateAutomated(dto: any, userOrg?: UserOrgContext) {
+    // Resolver departmentId del usuario para validación de permisos
+    const userDeptId = await resolveUserDepartmentId(this.prisma, userOrg ?? {});
+    const userCtx = {
+      ...userOrg,
+      departmentId: userDeptId || userOrg?.departmentId,
+    };
 
-  /*
-  |--------------------------------------------------------------------------
-  | GENERATE AUTOMATED (Engine Integrator)
-  |--------------------------------------------------------------------------
-  */
-  async generateAutomated(dto: any, user: any) {
     const { departmentId, month, year } = dto;
-    const systemBotId = user.id || user.sub;
-    const organizationId = user.organizationId || dto.organizationId;
 
-    /*
-    |--------------------------------------------------------------------------
-    | VALIDACIONES PREVENTIVAS CRÍTICAS (Fail-Fast)
-    |--------------------------------------------------------------------------
-    */
+    // Validar que el departamento exista y que el usuario tenga permisos
+    const targetDept = await this.prisma.department.findUnique({
+      where: { id: departmentId },
+      select: { organizationId: true },
+    });
 
-    // 1. Resolver la sede del horario y verificar que el departamento opere en ella.
+    if (!targetDept) {
+      throw new NotFoundException(`Department with id ${departmentId} not found.`);
+    }
+
+    // Verificar permisos según rol
+    checkDepartmentPermission(departmentId, targetDept.organizationId, userCtx);
+
+    const systemBotId = userCtx!.id || userCtx!.sub || "system-bot";
+    const organizationId = userCtx?.organizationId || targetDept.organizationId || dto.organizationId;
+
     const branchId = await resolveDepartmentBranch(
       this.prisma,
       departmentId,
@@ -289,8 +347,6 @@ export class SchedulesService {
       );
     }
 
-    // Las plantillas se comparten por sede. Una plantilla puede ser de toda la
-    // sede (departmentId null) o estar acotada a un departamento concreto.
     const branchShiftTemplates = await this.prisma.shiftTemplate.findMany({
       where: {
         organizationId: department.organizationId,
@@ -306,7 +362,6 @@ export class SchedulesService {
       );
     }
 
-    // 2. Buscar si ya existe algún registro de calendario para este periodo exacto
     const existingSchedule = await this.prisma.schedule.findFirst({
       where: {
         departmentId,
@@ -317,30 +372,23 @@ export class SchedulesService {
     });
 
     if (existingSchedule) {
-      // SITUACIÓN A: El horario ya está publicado y es inmutable
       if (existingSchedule.status === ScheduleStatus.PUBLISHED) {
         throw new ConflictException(
           `Acción Bloqueada: El horario para el periodo ${month}/${year} ya se encuentra PUBLICADO de forma oficial. No se permite volver a ejecutar el motor de reglas sobre un cuadrante activo para proteger la consistencia del personal.`,
         );
       }
 
-      // SITUACIÓN B: El motor ya está corriendo en segundo plano para este depto
       if (existingSchedule.status === ScheduleStatus.GENERATING) {
         throw new BadRequestException(
           `Process in Progress: The optimization engine is currently calculating allocations for the period ${month}/${year}. Please wait for the current process to complete.`,
         );
       }
 
-      // SITUACIÓN C: Existe un BORRADOR (DRAFT) previo.
-      // Para evitar acumular basura transaccional, procedemos a limpiar las asignaciones viejas
-      // de este borrador antes de lanzar el motor de optimización nuevamente.
       await this.prisma.$transaction(async (tx) => {
-        // Eliminamos las entradas del borrador anterior
         await tx.scheduleEntry.deleteMany({
           where: { scheduleId: existingSchedule.id },
         });
 
-        // Cambiamos temporalmente el estado para indicar reinicio
         await tx.schedule.update({
           where: { id: existingSchedule.id },
           data: {
@@ -351,16 +399,9 @@ export class SchedulesService {
       });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | EJECUCIÓN DEL SCHEDULE ENGINE
-    |--------------------------------------------------------------------------
-    */
     try {
-      // Determinamos la fecha objetivo estructurada (Día 1 del mes a procesar)
       const targetDate = new Date(year, month - 1, 1);
 
-      // Invocamos tu motor de asignaciones óptimas
       const result = await runScheduleEngine(
         this.prisma,
         department.organizationId,
@@ -373,8 +414,6 @@ export class SchedulesService {
       );
 
       if (!result.success) {
-        // Si el motor falló internamente (ej: falta de personal para cubrir la demanda)
-        // Revertimos el estado del cronograma si existía
         if (existingSchedule) {
           await this.prisma.schedule.update({
             where: { id: existingSchedule.id },
@@ -387,15 +426,10 @@ export class SchedulesService {
         );
       }
 
-      /*
-      |--------------------------------------------------------------------------
-      | AUDITORÍA DE GENERACIÓN SUCCESSFUL
-      |--------------------------------------------------------------------------
-      */
       await this.prisma.activityLog.create({
         data: {
           userId: systemBotId,
-          action: ActivityLogType.ENGINE_EXECUTED, // O introduce un enum como ENGINE_EXECUTED si dispones de él
+          action: ActivityLogType.ENGINE_EXECUTED,
           details: {
             message: `Engine triggered manually. Quadrant successfully auto-generated for the period ${month}/${year}.`,
             departmentId,
@@ -411,7 +445,6 @@ export class SchedulesService {
         scheduleId: result.scheduleId,
       };
     } catch (error: any) {
-      // Si es una excepción controlada de NestJS la relanzamos directamente
       if (
         error instanceof BadRequestException ||
         error instanceof ConflictException ||
@@ -419,7 +452,6 @@ export class SchedulesService {
       ) {
         throw error;
       }
-      // Cualquier otro error imprevisto del motor de base de datos o de sintaxis
       throw new BadRequestException(
         `Critical simulation error: An unexpected problem occurred while compiling the engine. Details: ${error.message}`,
       );
