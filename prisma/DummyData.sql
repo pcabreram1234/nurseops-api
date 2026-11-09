@@ -123,7 +123,7 @@ INSERT INTO "department_specialties" ("departmentId", "specialityId", "required"
 INSERT INTO "roles" ("id", "name", "organizationId") VALUES
 ('SUPER', 'SUPER USUARIO', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
 ('CRON','USUARIO PARA EJECUCIONES DE JOBS','e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
-('role-01', 'SUPERVISOR_GENERAL', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
+('role-01', 'SUPERVISOR', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
 ('role-02', 'NURSE_SENIOR', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
 ('role-03', 'NURSE_JUNIOR', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),
 ('role-04', 'HR_MANAGER', 'e3772e1f-17b5-47e6-b0c5-077d0432f7ca'),

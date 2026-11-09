@@ -438,7 +438,7 @@ const DEPARTMENT_SPECIALTIES = [
 const ROLES = [
   { id: "SUPER", name: "SUPER" },
   { id: "CRON", name: "USUARIO PARA EJECUCIONES DE JOBS" },
-  { id: "role-01", name: "SUPERVISOR_GENERAL" },
+  { id: "role-01", name: "SUPERVISOR" },
   { id: "role-02", name: "NURSE_SENIOR" },
   { id: "role-03", name: "NURSE_JUNIOR" },
   { id: "role-04", name: "HR_MANAGER" },

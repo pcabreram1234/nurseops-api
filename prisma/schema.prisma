@@ -75,6 +75,7 @@ model Organization {
   integrations              Integration[]
   notifications             Notification[]
   schedules                 Schedule[]
+  operationalAlerts         OperationalAlert[]
   auditLogs                 AuditLog[]
   nurses                    Nurse[]
   emergencyCoverages        EmergencyCoverages[]
@@ -93,6 +94,7 @@ model Organization {
   shiftChangeRequests       ShiftChangeRequest[]
   shiftChangeApprovals      ShiftChangeApprovals[]
   shiftChangeDocuments      ShiftChangeDocument[]
+  shiftChangePolicies       ShiftChangePolicy[]
   notificationTypes         NotificationType[]
   notificationTemplates     NotificationTemplates[]
   vacationRegimes           VacationRegime[]
@@ -103,6 +105,7 @@ model Organization {
   nurseVacationProfiles     NurseVacationProfile[]
   vacationBalances          VacationBalance[]
   vacationTransactions      VacationTransaction[]
+  optmizationRuns           OptimizationRun[]
 
   @@map("organizations")
 }
@@ -214,6 +217,7 @@ model Department {
   optimizationRuns         OptimizationRun[]
   leaves                   Leave[]
   vacations                Vacation[]
+  shiftChangePolicies      ShiftChangePolicy[]
 
   @@unique([organizationId, code])
   @@map("departments")
@@ -267,7 +271,7 @@ model DepartmentConfiguration {
   allow_double_shift      Boolean
   // Restricción operativa configurable por departamento:
   // máximo de enfermeras simultáneas (mismo día + mismo turno). Null = sin límite.
-  maxSimultaneousNurses    Int?
+  maxSimultaneousNurses   Int?
   createdAt               DateTime     @default(now())
   updatedAt               DateTime     @default(now()) @updatedAt
 
@@ -275,16 +279,21 @@ model DepartmentConfiguration {
 }
 
 model OperationalAlert {
-  id           String                 @id @default(uuid())
-  departmentId String
-  message      String
-  department   Department             @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  alertType    OperationalAlertyTypes
-  severity     PriorityTypes
-  status       OperationalAlertStatus @default(IN_PROGRESS)
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @default(now()) @updatedAt
+  id             String                 @id @default(uuid())
+  organizationId String
+  departmentId   String
+  message        String
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department     Department             @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  alertType      OperationalAlertyTypes
+  severity       PriorityTypes
+  status         OperationalAlertStatus @default(IN_PROGRESS)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @default(now()) @updatedAt
 
+  @@index([organizationId])
+  @@index([departmentId])
+  @@index([organizationId, departmentId])
   @@map("operational_alerts")
 }
 
@@ -371,19 +380,23 @@ enum ScheduleStatus {
 }
 
 model OptimizationRun {
-  id                  String     @id @default(uuid())
+  id                  String        @id @default(uuid())
+  organizationId      String
   scheduleId          String
-  schedule            Schedule   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  schedule            Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   startedAt           DateTime
-  fineshedAt          DateTime
+  finishedAt          DateTime
   departmentId        String
-  department          Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  department          Department    @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   executionTimeMs     Decimal
   totalSlotsProcessed Int
   slotsCovered        Int
   coveragePercentage  Decimal
   result              Json
+  organization        Organization @relation(fields: [organizationId], references: [id])
 
+  @@index([organizationId])
+  @@index([organizationId, scheduleId])
   @@map("optimization_runs")
 }
 
@@ -406,11 +419,15 @@ model ScheduleEntry {
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @default(now()) @updatedAt
   organizationId      String
-  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   nurseId             String?
   nurse               Nurse?              @relation(fields: [nurseId], references: [id], onDelete: Cascade)
   branchId            String?
   branch              Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  // Relaciones opuestas para solicitudes de cambio de turno
+  sourceChangeRequests ShiftChangeRequest[] @relation("SourceScheduleEntry")
+  targetChangeRequests ShiftChangeRequest[] @relation("TargetScheduleEntry")
 
   @@index([branchId])
   @@map("schedule_entries")
@@ -1130,6 +1147,7 @@ model Branch {
   emergencyCoverages  EmergencyCoverages[]
   documentTemplates   DocumentTemplate[]
   generatedDocuments  GeneratedDocument[]
+  shiftChangePolicies ShiftChangePolicy[]
 
   @@unique([organizationId, name])
   @@map("branches")
@@ -1204,38 +1222,38 @@ enum DocumentActionType {
 }
 
 model DocumentTemplate {
-  id                String                 @id @default(uuid())
-  organizationId    String
-  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  branchId          String?
-  branch            Branch?                @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  code              String
-  name              String
-  description       String?
-  documentType      String // VACATION_RECEIPT, ABSENCE_CERTIFICATE, SCHEDULE_REPORT, ...
-  format            DocumentTemplateFormat @default(PDF)
-  header            Json? // título, datos institucionales, colores
-  body              String // plantilla con campos dinámicos {{campo}}
-  footer            Json?
-  logoPath          String? // ruta/URL del logotipo institucional
-  fields            Json? // definición de campos dinámicos disponibles
-  numberingPrefix   String? // prefijo de numeración correlativa, ej: VAC-
-  numberingDigits   Int? // dígitos de la numeración correlativa
-  nextSequence      Int                    @default(1)
-  signatureBlocks   Json? // espacios de firma y aprobaciones
-  isDefault         Boolean                @default(false)
-  status            DocumentTemplateStatus @default(DRAFT)
-  version           Int                    @default(1)
-  effectiveFrom     DateTime               @default(now())
-  effectiveTo       DateTime?
-  supersedesTemplateId String? @unique
-  supersedesTemplate  DocumentTemplate?   @relation("TemplateSupersede", fields: [supersedesTemplateId], references: [id])
-  supersededByTemplate DocumentTemplate?  @relation("TemplateSupersede")
-  retentionDays     Int? // retención/archivo del documento generado (días)
-  createdById       String?
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @default(now()) @updatedAt
-  documents         GeneratedDocument[]
+  id                   String                 @id @default(uuid())
+  organizationId       String
+  organization         Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId             String?
+  branch               Branch?                @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  code                 String
+  name                 String
+  description          String?
+  documentType         String // VACATION_RECEIPT, ABSENCE_CERTIFICATE, SCHEDULE_REPORT, ...
+  format               DocumentTemplateFormat @default(PDF)
+  header               Json? // título, datos institucionales, colores
+  body                 String // plantilla con campos dinámicos {{campo}}
+  footer               Json?
+  logoPath             String? // ruta/URL del logotipo institucional
+  fields               Json? // definición de campos dinámicos disponibles
+  numberingPrefix      String? // prefijo de numeración correlativa, ej: VAC-
+  numberingDigits      Int? // dígitos de la numeración correlativa
+  nextSequence         Int                    @default(1)
+  signatureBlocks      Json? // espacios de firma y aprobaciones
+  isDefault            Boolean                @default(false)
+  status               DocumentTemplateStatus @default(DRAFT)
+  version              Int                    @default(1)
+  effectiveFrom        DateTime               @default(now())
+  effectiveTo          DateTime?
+  supersedesTemplateId String?                @unique
+  supersedesTemplate   DocumentTemplate?      @relation("TemplateSupersede", fields: [supersedesTemplateId], references: [id])
+  supersededByTemplate DocumentTemplate?      @relation("TemplateSupersede")
+  retentionDays        Int? // retención/archivo del documento generado (días)
+  createdById          String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @default(now()) @updatedAt
+  documents            GeneratedDocument[]
 
   @@unique([organizationId, code, version])
   @@index([organizationId, documentType, status])
@@ -1243,36 +1261,36 @@ model DocumentTemplate {
 }
 
 model GeneratedDocument {
-  id                 String                  @id @default(uuid())
-  organizationId     String
-  organization       Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  branchId           String?
-  branch             Branch?                 @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  templateId         String
-  template           DocumentTemplate        @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  templateVersion    Int // versión de la plantilla usada al generar (inmutable histórica)
-  documentType       String
-  documentNumber     String? // número correlativo asignado
-  title              String
-  status             GeneratedDocumentStatus @default(GENERATED)
-  filePath           String // ruta de almacenamiento de la copia emitida
-  mimeType           String                  @default("application/pdf")
-  sizeBytes          Int?
-  employeeId         String? // enfermera relacionada (si aplica)
-  employee           Nurse?                  @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  vacationId         String?
-  vacation           Vacation?               @relation(fields: [vacationId], references: [id], onDelete: SetNull)
-  metadata           Json? // datos congelados usados al generar
-  generatedById      String?
-  retentionUntil     DateTime?
-  substitutedById    String? @unique // documento que lo sustituyó
-  substitutedBy      GeneratedDocument?      @relation("DocumentSubstitution", fields: [substitutedById], references: [id])
-  substitutes        GeneratedDocument?      @relation("DocumentSubstitution")
-  voidReason         String?
-  voidedAt           DateTime?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @default(now()) @updatedAt
-  actions            DocumentAction[]
+  id              String                  @id @default(uuid())
+  organizationId  String
+  organization    Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId        String?
+  branch          Branch?                 @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  templateId      String
+  template        DocumentTemplate        @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  templateVersion Int // versión de la plantilla usada al generar (inmutable histórica)
+  documentType    String
+  documentNumber  String? // número correlativo asignado
+  title           String
+  status          GeneratedDocumentStatus @default(GENERATED)
+  filePath        String // ruta de almacenamiento de la copia emitida
+  mimeType        String                  @default("application/pdf")
+  sizeBytes       Int?
+  employeeId      String? // enfermera relacionada (si aplica)
+  employee        Nurse?                  @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  vacationId      String?
+  vacation        Vacation?               @relation(fields: [vacationId], references: [id], onDelete: SetNull)
+  metadata        Json? // datos congelados usados al generar
+  generatedById   String?
+  retentionUntil  DateTime?
+  substitutedById String?                 @unique // documento que lo sustituyó
+  substitutedBy   GeneratedDocument?      @relation("DocumentSubstitution", fields: [substitutedById], references: [id])
+  substitutes     GeneratedDocument?      @relation("DocumentSubstitution")
+  voidReason      String?
+  voidedAt        DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @default(now()) @updatedAt
+  actions         DocumentAction[]
 
   @@index([organizationId, documentType, status])
   @@index([employeeId])
@@ -1281,13 +1299,13 @@ model GeneratedDocument {
 }
 
 model DocumentAction {
-  id          String            @id @default(uuid())
-  documentId  String
-  document    GeneratedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  action      DocumentActionType
-  userId      String?
-  details     Json?
-  createdAt   DateTime          @default(now())
+  id         String             @id @default(uuid())
+  documentId String
+  document   GeneratedDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  action     DocumentActionType
+  userId     String?
+  details    Json?
+  createdAt  DateTime           @default(now())
 
   @@index([documentId, createdAt])
   @@map("document_actions")
@@ -1507,16 +1525,18 @@ model User {
   pushTokens   Json?
   createdAt    DateTime        @default(now())
 
-  requestedApprovals   ShiftChangeApprovals[] @relation("ApprovalRequester")
-  processedApprovals   ShiftChangeApprovals[] @relation("ApprovalApprover")
-  shiftChangeDocuments ShiftChangeDocument[]  @relation("UserDocuments")
-  auditLogId           String?
-  scheduleEntries      ScheduleEntry[]
-  nurseRestrictions    NurseRestriction[]
-  vacations            Vacation[]
-  schedules            Schedule[]
-  scheduleVersions     ScheduleVersion[]
-  uploadDocuments      ShiftChangeDocument[]  @relation("UploadedDocuments")
+  requestedApprovals      ShiftChangeApprovals[]   @relation("ApprovalRequester")
+  processedApprovals      ShiftChangeApprovals[]   @relation("ApprovalApprover")
+  shiftChangeDocuments    ShiftChangeDocument[]    @relation("UserDocuments")
+  shiftChangeResponses    ShiftChangeResponse[]
+  shiftChangeApplications ShiftChangeApplication[]
+  auditLogId              String?
+  scheduleEntries         ScheduleEntry[]
+  nurseRestrictions       NurseRestriction[]
+  vacations               Vacation[]
+  schedules               Schedule[]
+  scheduleVersions        ScheduleVersion[]
+  uploadDocuments         ShiftChangeDocument[]    @relation("UploadedDocuments")
 
   @@index([branchId])
   @@map("users")
@@ -1562,6 +1582,7 @@ enum ActionAuditLogTypes {
   ASSIGN_SHIFT
   CANCEL_SHIFT
   AUTO_GENERATE
+  SHIFT_CHANGE_CREATED
 }
 
 model Module {
@@ -1753,7 +1774,8 @@ model ShiftTemplate {
   branch          Branch          @relation(fields: [branchId], references: [id], onDelete: Restrict)
   departmentId    String?
   department      Department?     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  name            PreferredShift
+  type            PreferredShift
+  name            String?
   minimum_staff   Int             @default(1)
   durationHours   Int
   isNightShift    Boolean
@@ -1779,11 +1801,18 @@ model ShiftTemplate {
 // FLUJO OPERACIONAL: SOLICITUDES DE CAMBIO
 // ==========================================
 
+enum ShiftChangeOperationType {
+  SWAP
+  TRANSFER
+  COVERAGE
+}
+
 model ShiftChangeRequest {
-  id             String        @id @default(uuid())
-  status         RequestStatus @default(AWAITING_OTHER_NURSE)
+  id             String                   @id @default(uuid())
+  status         RequestStatus            @default(AWAITING_OTHER_NURSE)
+  operationType  ShiftChangeOperationType @default(SWAP)
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Quién pide el cambio y a quién
   requesterId String
@@ -1791,7 +1820,13 @@ model ShiftChangeRequest {
   receiverId  String?
   receiver    User?   @relation("ReceiverNurse", fields: [receiverId], references: [id])
 
-  // Turnos involucrados
+  // Asignaciones de turno involucradas (ScheduleEntry)
+  sourceScheduleEntryId String
+  sourceScheduleEntry   ScheduleEntry  @relation("SourceScheduleEntry", fields: [sourceScheduleEntryId], references: [id], onDelete: Cascade)
+  targetScheduleEntryId String?
+  targetScheduleEntry   ScheduleEntry? @relation("TargetScheduleEntry", fields: [targetScheduleEntryId], references: [id], onDelete: SetNull)
+
+  // Turnos (Shift) para referencia rápida y compatibilidad histórica
   sourceShiftId String
   sourceShift   Shift   @relation("SourceShift", fields: [sourceShiftId], references: [id], onDelete: Cascade)
   targetShiftId String?
@@ -1810,12 +1845,85 @@ model ShiftChangeRequest {
   rejectedAt       DateTime?
 
   reason               String?
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @default(now()) @updatedAt
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @default(now()) @updatedAt
   shiftChangeApprovals ShiftChangeApprovals[]
   shiftChangeDocuments ShiftChangeDocument[]
+  responses            ShiftChangeResponse[]
+  applications         ShiftChangeApplication[]
 
   @@map("shift_change_requests")
+}
+
+model ShiftChangeResponse {
+  id                   String               @id @default(uuid())
+  shiftChangeRequestId String
+  shiftChangeRequest   ShiftChangeRequest   @relation(fields: [shiftChangeRequestId], references: [id], onDelete: Cascade)
+  nurseId              String
+  nurse                User                 @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  decision             ChangeApprovalsTypes @default(PENDING)
+  respondedAt          DateTime?
+  comments             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("shift_change_responses")
+}
+
+model ShiftChangeApplication {
+  id                   String             @id @default(uuid())
+  shiftChangeRequestId String
+  shiftChangeRequest   ShiftChangeRequest @relation(fields: [shiftChangeRequestId], references: [id], onDelete: Cascade)
+  nurseId              String
+  nurse                User               @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  status               ApplicationStatus  @default(PENDING)
+  appliedAt            DateTime           @default(now())
+  selectedAt           DateTime?
+  rejectedAt           DateTime?
+  comments             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("shift_change_applications")
+}
+
+enum ApplicationStatus {
+  PENDING
+  SELECTED
+  REJECTED
+  WITHDRAWN
+}
+
+model ShiftChangePolicy {
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId       String?
+  branch         Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  departmentId   String?
+  department     Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  enabled                   Boolean  @default(true)
+  allowSwap                 Boolean  @default(true)
+  allowTransfer             Boolean  @default(true)
+  allowCoverage             Boolean  @default(true)
+  allowCrossDepartment      Boolean  @default(false)
+  allowCrossBranch          Boolean  @default(false)
+  requireJustification      Boolean  @default(true)
+  requireDocument           Boolean  @default(false)
+  requireSupervisorApproval Boolean  @default(true)
+  requireHrApproval         Boolean  @default(false)
+  minAdvanceHours           Int      @default(24) // horas mínimas de anticipación
+  maxAdvanceDays            Int      @default(90) // días máximos de anticipación
+  autoExpireHours           Int      @default(48) // horas para expiración automática de respuesta
+  maxSimultaneousRequests   Int      @default(3) // solicitudes simultáneas por enfermera
+  allowMultipleApplications Boolean  @default(false) // si permite múltiples postulaciones a una cobertura
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now()) @updatedAt
+
+  @@map("shift_change_policies")
 }
 
 model ShiftChangeApprovals {
@@ -1891,6 +1999,7 @@ enum ChangeApprovalsTypes {
 
 enum RequestStatus {
   AWAITING_OTHER_NURSE
+  PUBLISHED
   REJECTED_BY_NURSE
   ACCEPTED_BY_NURSE
   UNDER_SUPVERSION
@@ -2060,6 +2169,7 @@ model ActivityLog {
 enum ActivityLogType {
   LOGIN
   LOGOUT
+  ASSIGN_SHIFT
   VIEW_SCHEDULE
   EXPORT_REPORT
   CREATE_SHIFT
