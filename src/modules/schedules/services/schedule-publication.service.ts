@@ -1,5 +1,5 @@
 // 📄 schedule-publication.service.ts
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "@infra/database/prisma.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -8,6 +8,64 @@ import { ScheduleStatus, ActivityLogType } from "@prisma/client";
 import { ScheduleValidationService } from "./schedule-validation.service";
 import { ScheduleVersionService } from "./schedule-version.service";
 import { PublishScheduleDto } from "../dto/publish-schedule.dto";
+
+export interface UserOrgContext {
+  organizationId?: string;
+  departmentId?: string;
+  role?: string;
+  id?: string;
+  sub?: string;
+}
+
+/**
+ * Resuelve el departmentId del usuario a partir del JWT.
+ * Si ya viene en userOrg.departmentId, se usa directamente.
+ * Si no, se busca la enfermera asociada al user.id o user.sub.
+ */
+async function resolveUserDepartmentId(prisma: PrismaService, userOrg: UserOrgContext): Promise<string | undefined> {
+  if (userOrg.departmentId) {
+    return userOrg.departmentId;
+  }
+  const userId = userOrg.id || userOrg.sub;
+  if (!userId) return undefined;
+
+  const nurse = await prisma.nurse.findFirst({
+    where: { userId },
+    select: { departmentId: true },
+  });
+  return nurse?.departmentId;
+}
+
+/**
+ * Verifica si el usuario tiene permiso para publicar el horario del departamento indicado.
+ * - SUPER: sin restricciones.
+ * - HR_MANAGER / SYSTEM_ADMIN: cualquier departamento de su organización.
+ * - HEAD_DEPARTMENT / SUPERVISOR: solo su propio departamento.
+ */
+function checkPublishPermission(scheduleDeptId: string, scheduleOrgId: string | undefined, userOrg: UserOrgContext): void {
+  if (!userOrg) {
+    throw new ForbiddenException("Contexto de usuario no disponible.");
+  }
+
+  if (userOrg.role === "SUPER") return; // Sin restricciones
+
+  if (scheduleOrgId && userOrg.organizationId && scheduleOrgId !== userOrg.organizationId) {
+    throw new ForbiddenException("El horario no pertenece a su organización.");
+  }
+
+  if (["HR_MANAGER", "SYSTEM_ADMIN"].includes(userOrg.role!)) {
+    return; // Puede publicar cualquier departamento de su organización
+  }
+
+  if (["HEAD_DEPARTMENT", "NIGHT_SUPERVISOR", "SUPERVISOR"].includes(userOrg.role!)) {
+    if (!userOrg.departmentId || scheduleDeptId !== userOrg.departmentId) {
+      throw new ForbiddenException("Solo puede publicar horarios de su propio departamento.");
+    }
+    return;
+  }
+
+  throw new ForbiddenException("Su rol no tiene permiso para publicar horarios.");
+}
 
 @Injectable()
 export class SchedulePublicationService {
@@ -20,7 +78,7 @@ export class SchedulePublicationService {
     private readonly notificationsQueue: Queue,
   ) { }
 
-  async publish(id: string, dto: PublishScheduleDto, user: any) {
+  async publish(id: string, dto: PublishScheduleDto, userOrg?: UserOrgContext) {
     console.log(dto)
     // 1. Verificación previa de existencia del horario maestro
     const scheduleExists = await this.prisma.schedule.findUnique({
@@ -33,6 +91,7 @@ export class SchedulePublicationService {
         },
         department: {
           select: {
+            id: true,
             organizationId: true,
           },
         },
@@ -42,6 +101,19 @@ export class SchedulePublicationService {
     if (!scheduleExists) {
       throw new NotFoundException(`No schedule with ID was found: ${id}`);
     }
+
+    // 2. Resolver departmentId del usuario si no viene en el contexto
+    const userDeptId = await resolveUserDepartmentId(this.prisma, userOrg ?? {});
+
+    // 3. Verificar permisos según rol
+    checkPublishPermission(
+      scheduleExists.department.id,
+      scheduleExists.department.organizationId,
+      {
+        ...userOrg,
+        departmentId: userDeptId || userOrg?.departmentId,
+      }
+    );
 
     if (scheduleExists.status === ScheduleStatus.PUBLISHED && !dto.forcePublish) {
       throw new BadRequestException("This schedule has already been published.");
@@ -73,16 +145,15 @@ export class SchedulePublicationService {
         data: {
           status: ScheduleStatus.PUBLISHED,
           publishedAt: new Date(),
-          publishedById: user.id || user.sub, // Tolera sub de JWT o id directo
+          publishedById: userOrg!.id || userOrg!.sub!, // Tolera sub de JWT o id directo
         },
       });
 
       // B. Inyección automática en la tabla histórica de auditoría (ActivityLog)
-      // Usamos el enum ActivityLogType definido en tu schema.prisma
       await tx.activityLog.create({
         data: {
-          userId: user.id || user.sub,
-          action: ActivityLogType.SCHEDULE_PUBLISHED, // Mapeado desde tus enums de prisma
+          userId: userOrg!.id || userOrg!.sub!,
+          action: ActivityLogType.SCHEDULE_PUBLISHED,
           details: {
             message: `Schedule for the period successfully published by the administrator.`,
             scheduleId: id,
@@ -102,7 +173,6 @@ export class SchedulePublicationService {
     |--------------------------------------------------------------------------
     */
     if (dto.notifyStaff) {
-      // Extraemos los IDs únicos del personal de enfermería asignado en este bloque
       const nurseIds = Array.from(
         new Set(
           scheduleExists.scheduleEntries
@@ -112,12 +182,11 @@ export class SchedulePublicationService {
       );
 
       if (nurseIds.length > 0) {
-        // Añadimos el trabajo a la cola de BullMQ con parámetros avanzados del DTO
         await this.notificationsQueue.add(
           "schedule-published",
           {
             scheduleId: id,
-            nurseIds, // Enviamos el listado de afectados para que el worker procese en paralelo
+            nurseIds,
             channels: {
               email: dto.sendEmails ?? true,
               push: dto.sendPushNotifications?.publish ?? true,
@@ -125,8 +194,8 @@ export class SchedulePublicationService {
             notes: dto.publicationNotes || "",
           },
           {
-            attempts: 3, // Reintentos automáticos si falla el servidor de correo/push
-            backoff: 5000, // Esperar 5 segundos entre reintentos
+            attempts: 3,
+            backoff: 5000,
           }
         );
       }
@@ -140,7 +209,7 @@ export class SchedulePublicationService {
     this.eventEmitter.emit("schedule.published", {
       scheduleId: id,
       organizationId: scheduleExists.department.organizationId,
-      publishedById: user.id || user.sub,
+      publishedById: userOrg?.id || userOrg?.sub,
       publishedAt: new Date(),
       notifyStaff: dto.notifyStaff ?? false,
     });
