@@ -510,6 +510,7 @@ INSERT INTO "permissions" ("id", "name", "description") VALUES
 ('perm-86', 'UPDATE_SHIFT_CHANGE_DOCUMENT', 'Modificar firmas o detalles del acta de cambio'),
 ('perm-87', 'VERIFY_SHIFT_CHANGE_DOCUMENT', 'Aplicar firma o validación legal al intercambio'),
 ('perm-88', 'DELETE_SHIFT_CHANGE_DOCUMENT', 'Anular el acta formal de cambio de turno'),
+('58d58e99-7ac2-4cf8-a195-a29ea97bbc9d', 'UPLOAD_DOCUMENTS', 'Permiso para subir documentos ya sea para vacaciones, permisos, ausencias o cambios de turno'),
 
 -- Catálogo de Turnos Base (Shifts)
 ('perm-89', 'CREATE_SHIFT', 'Crear una nueva plantilla de turno (ej. Mañana 8h, Noche 12h)'),

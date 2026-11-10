@@ -831,6 +831,7 @@ const DUMMY_PERMISSIONS = [
   { id: "perm-86", name: "UPDATE_SHIFT_CHANGE_DOCUMENT", description: "Modificar firmas o detalles del acta de cambio" },
   { id: "perm-87", name: "VERIFY_SHIFT_CHANGE_DOCUMENT", description: "Aplicar firma o validación legal al intercambio" },
   { id: "perm-88", name: "DELETE_SHIFT_CHANGE_DOCUMENT", description: "Anular el acta formal de cambio de turno" },
+  { id: '58d58e99-7ac2-4cf8-a195-a29ea97bbc9d', name: 'UPLOAD_DOCUMENTS', description: 'Permiso para subir documentos ya sea para vacaciones, permisos, ausencias o cambios de turno' },
   { id: "perm-89", name: "CREATE_SHIFT", description: "Crear una nueva plantilla de turno (ej. Mañana 8h, Noche 12h)" },
   { id: "perm-90", name: "VIEW_SHIFTS", description: "Ver el catálogo maestro de tipos de turnos" },
   { id: "perm-91", name: "VIEW_SHIFT", description: "Ver detalles de horas y reglas de un turno específico" },

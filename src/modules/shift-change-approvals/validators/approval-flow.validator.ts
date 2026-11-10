@@ -7,7 +7,7 @@ import { ApprovalLevel } from '../enums/approval-level.enum';
 @Injectable()
 export class ApprovalFlowValidator implements IApprovalValidator {
   async validate(approval: any, context: ApprovalContext): Promise<ApprovalResult> {
-    if (approval.requiredLevel === ApprovalLevel.DEPARTMENT_HEAD && context.role !== 'ADMIN' && context.role !== 'SUPER') {
+    if (approval.requiredLevel === ApprovalLevel.DEPARTMENT_HEAD && context.role !== 'SYSTEM_ADMIN' && context.role !== 'SUPER') {
       return { valid: false, code: 'INVALID_FLOW_LEVEL', severity: 'MEDIUM', message: 'This flow requires the signature of the Head of Department.' };
     }
     return { valid: true };
